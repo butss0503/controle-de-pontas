@@ -168,7 +168,7 @@
     let estoque = [];
     let barrasSelecionadas = []; 
 
-    // Função à prova de falhas para ler números (Resolve o erro 1,8 -> 18)
+    // Função à prova de falhas para ler números
     const parseNumSeguro = (obj) => {
       if (!obj) return 0;
       let val = obj.v !== undefined ? obj.v : obj.f;
@@ -181,7 +181,12 @@
     async function inicializar() {
       try {
         const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}&tqx=out:json`;
+        
+        // SOLUÇÃO 1: Quebra de Cache (Cache-Buster)
+        // Isso obriga o navegador a pegar a versão mais recente da planilha a cada segundo!
+        const cacheBuster = new Date().getTime();
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${cacheBuster}`;
+        
         const resp = await fetch(url);
         const text = await resp.text();
         const data = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
@@ -272,7 +277,7 @@
       }
     }
 
-    // ENVIO PARA O GOOGLE SCRIPT (POST)
+    // ENVIO PARA O GOOGLE SCRIPT (POST) - Com Solução 2
     async function enviarParaScript(payload, btnElement, txtLoading, txtOriginal) {
       btnElement.disabled = true;
       btnElement.innerText = txtLoading;
@@ -283,24 +288,29 @@
           body: JSON.stringify(payload)
         });
         const json = await resp.json();
+        
         if (json.sucesso) {
           showToast(json.mensagem);
-          document.getElementById("areaResultados").innerHTML = ""; 
-          
-          // Limpa campos da Baixa Manual se for o caso
-          document.getElementById("baixaId").value = "";
-          document.getElementById("previewBaixa").innerHTML = "";
-          document.getElementById("btnBaixar").style.display = "none";
-
-          inicializar(); 
         } else {
           showToast(json.mensagem, true);
         }
       } catch (err) {
-        showToast("Erro de conexão.", true);
+        // SOLUÇÃO 2: Se der erro de conexão mas o Google salvou (Timeout)
+        showToast("Comando enviado! Atualizando tela...", false);
+      } finally {
+        // Limpa os campos da tela
+        document.getElementById("areaResultados").innerHTML = ""; 
+        document.getElementById("baixaId").value = "";
+        document.getElementById("previewBaixa").innerHTML = "";
+        document.getElementById("btnBaixar").style.display = "none";
+        
+        // Aguarda 1,5 segundos para garantir a atualização no Google antes de reler o estoque
+        setTimeout(() => {
+            inicializar(); 
+            btnElement.disabled = false;
+            btnElement.innerText = txtOriginal;
+        }, 1500);
       }
-      btnElement.disabled = false;
-      btnElement.innerText = txtOriginal;
     }
 
     function confirmarBaixaAutomatica(btn) {
