@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grande Aço - Dashboard Integrado</title>
+  <title>Grande Aço - Controle de Estoque de Pontas</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +11,7 @@
   
   <style>
     :root {
-      /* Modo Claro */
+      /* Modo Claro (Default) */
       --bg-body: #f8fafc;
       --bg-card: #ffffff;
       --bg-input: #f1f5f9;
@@ -20,28 +20,23 @@
       --border-color: #e2e8f0;
       
       --brand-50: #f0f9ff;
-      --brand-100: #e0f2fe;
       --brand-500: #0ea5e9;
       --brand-600: #0284c7;
-      --brand-700: #0369a1;
       
       --success-bg: #ecfdf5;
       --success-border: #34d399;
       --success-text: #059669;
-      --warning-bg: #fffbeb;
-      --warning-text: #d97706;
       --danger-bg: #fef2f2;
       --danger-border: #f87171;
       --danger-text: #dc2626;
 
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
     html.dark {
       /* Modo Escuro */
-      --bg-body: #0f172a;
+      --bg-body: #0b1120;
       --bg-card: #1e293b;
       --bg-input: #0f172a;
       --text-main: #f8fafc;
@@ -52,89 +47,85 @@
       --success-bg: rgba(16, 185, 129, 0.1);
       --success-border: #059669;
       --success-text: #34d399;
-      --warning-bg: rgba(245, 158, 11, 0.1);
-      --warning-text: #fbbf24;
       --danger-bg: rgba(239, 68, 68, 0.1);
       --danger-border: #dc2626;
       --danger-text: #f87171;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Inter', sans-serif; 
     }
 
     body {
       background-color: var(--bg-body);
       color: var(--text-main);
-      transition: background-color 0.3s ease, color 0.3s ease;
-      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s, color 0.3s;
       padding: 2rem 1rem;
       min-height: 100vh;
     }
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
+    .container { 
+      max-width: 900px; 
+      margin: 0 auto; 
     }
     
     .hidden { display: none !important; }
 
-    header {
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+    header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      margin-bottom: 2rem; 
     }
-
-    .header-content {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
+    
+    .header-content { 
+      display: flex; 
+      gap: 1rem; 
+      align-items: center; 
     }
-
+    
     .logo-container {
       background-color: #ffffff;
-      border: 1px solid var(--border-color);
-      border-radius: 1rem;
-      padding: 0.5rem;
-      width: 5rem;
+      border-radius: 50%;
+      width: 5rem; 
       height: 5rem;
-      display: flex;
-      align-items: center;
+      display: flex; 
+      align-items: center; 
       justify-content: center;
-      box-shadow: var(--shadow-sm);
+      padding: 0.5rem; 
       flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
     }
-
-    .logo-img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+    
+    .logo-img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
     }
-
-    .title h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
+    
+    .title h1 { 
+      font-size: 1.5rem; 
+      font-weight: 700; 
+      margin-bottom: 0.25rem; 
     }
-
-    .title p {
-      color: var(--text-muted);
-      font-size: 0.875rem;
+    
+    .title p { 
+      color: var(--text-muted); 
+      font-size: 0.875rem; 
     }
-
+    
     .btn-toggle {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
+      background: var(--bg-card); 
+      border: 1px solid var(--border-color); 
       color: var(--text-muted);
-      border-radius: 9999px;
-      width: 2.5rem;
-      height: 2.5rem;
-      display: flex;
-      align-items: center;
+      border-radius: 50%; 
+      width: 2.5rem; 
+      height: 2.5rem; 
+      display: flex; 
+      align-items: center; 
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
@@ -144,720 +135,621 @@
       color: var(--brand-500);
     }
 
-    .tabs-nav {
-      display: flex;
-      gap: 1rem;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 2rem;
+    .tabs-nav { 
+      display: flex; 
+      gap: 1rem; 
+      border-bottom: 1px solid var(--border-color); 
+      margin-bottom: 1.5rem; 
     }
-
+    
     .tab-btn {
-      background: none;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      font-size: 0.95rem;
+      background: none; 
+      border: none; 
+      padding: 0.75rem 1.5rem; 
+      font-size: 0.95rem; 
       font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
+      color: var(--text-muted); 
+      cursor: pointer; 
+      border-bottom: 2px solid transparent; 
+      display: flex; 
+      align-items: center; 
       gap: 0.5rem;
+      transition: all 0.2s;
     }
-
+    
     .tab-btn:hover { color: var(--brand-500); }
-    .tab-btn.active { color: var(--brand-600); border-bottom-color: var(--brand-600); }
-
-    .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+    .tab-btn.active { 
+      color: var(--brand-500); 
+      border-bottom-color: var(--brand-500); 
+    }
+    
+    .tab-content { 
+      display: none; 
+      animation: fadeIn 0.3s; 
+    }
+    
     .tab-content.active { display: block; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+    
+    @keyframes fadeIn { 
+      from { opacity: 0; transform: translateY(5px); } 
+      to { opacity: 1; transform: translateY(0); } 
     }
 
-    .card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: var(--shadow-md);
-      margin-bottom: 2rem;
+    .card { 
+      background-color: var(--bg-card); 
+      border: 1px solid var(--border-color); 
+      border-radius: 0.75rem; 
+      padding: 1.5rem; 
+      margin-bottom: 1.5rem; 
+      box-shadow: var(--shadow-sm);
     }
     
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-color);
-      color: var(--text-main);
+    .section-title { 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      margin-bottom: 1.25rem; 
+      color: var(--text-main); 
     }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+    
+    .form-grid { 
+      display: grid; 
+      grid-template-columns: 1fr; 
+      gap: 1rem; 
+      margin-bottom: 1.5rem; 
     }
-
-    @media (min-width: 640px) {
-      .form-grid { grid-template-columns: 1fr 1fr 1fr; }
-      .form-grid.two-cols { grid-template-columns: 1fr 1fr; }
+    
+    @media (min-width: 640px) { 
+      .form-grid { grid-template-columns: 1fr 1fr 1fr; } 
     }
-
-    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
-
-    label { font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
-
+    
+    .input-group { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.5rem; 
+    }
+    
+    label { 
+      font-size: 0.875rem; 
+      font-weight: 600; 
+      color: var(--text-main); 
+    }
+    
     input, select {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem; 
+      border: 1px solid var(--border-color); 
       border-radius: 0.5rem;
-      background-color: var(--bg-input);
-      color: var(--text-main);
-      font-size: 1rem;
+      background-color: var(--bg-input); 
+      color: var(--text-main); 
+      font-size: 0.95rem; 
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--brand-500);
-      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+      transition: border-color 0.2s;
     }
     
-    input:disabled, select:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+    input:focus, select:focus { border-color: var(--brand-500); }
 
     .btn-submit {
+      background-color: var(--brand-600); 
+      color: white; 
+      font-weight: 600; 
+      padding: 0.875rem 1.5rem;
+      border: none; 
+      border-radius: 0.5rem; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 0.5rem; 
       width: 100%;
-      background-color: var(--brand-600);
-      color: white;
-      font-weight: 600;
-      font-size: 1rem;
-      padding: 0.875rem;
-      border: none;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+    
+    .btn-submit:hover:not(:disabled) { background-color: var(--brand-500); }
+    @media (min-width: 640px) { 
+      .btn-submit { width: auto; } 
+      .form-actions { display: flex; justify-content: flex-end; } 
+    }
+    
+    .btn-submit.success { background-color: var(--success-text); }
+    .btn-submit.success:hover:not(:disabled) { opacity: 0.9; }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .results-grid { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 1rem; 
+      margin-top: 1rem; 
+    }
+    
+    .result-item {
+      background-color: var(--bg-body); 
+      border: 1px solid var(--brand-500); 
       border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      display: flex;
+      padding: 1rem; 
+      display: flex; 
+      justify-content: space-between; 
       align-items: center;
-      justify-content: center;
+      box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2);
+    }
+    
+    .result-info h3 { 
+      font-size: 1rem; 
+      margin-bottom: 0.25rem; 
+      font-weight: 700; 
+      display: flex; 
+      align-items: center; 
       gap: 0.5rem;
     }
     
-    .btn-submit:hover:not(:disabled) { background-color: var(--brand-700); }
-    .btn-submit.danger { background-color: var(--danger-text); }
-    .btn-submit.danger:hover:not(:disabled) { background-color: #b91c1c; }
-    .btn-submit.success { background-color: var(--success-text); }
-    .btn-submit.success:hover:not(:disabled) { background-color: #047857; }
-    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
-
-    @media (min-width: 640px) {
-      .btn-submit { width: auto; align-self: flex-end; padding-left: 2rem; padding-right: 2rem; }
-      .form-actions { display: flex; justify-content: flex-end; }
+    .result-info p { 
+      font-size: 0.85rem; 
+      color: var(--text-muted); 
     }
-
-    .result-list { display: flex; flex-direction: column; gap: 1rem; }
     
-    .result-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: var(--shadow-sm);
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
+    .result-badge { 
+      background-color: var(--brand-500); 
+      color: white; 
+      padding: 0.25rem 0.5rem; 
+      border-radius: 0.25rem; 
+      font-size: 0.75rem; 
+      font-weight: 700; 
     }
-    .result-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
     
-    .result-card.best-option {
-      border-color: var(--brand-500);
-      box-shadow: 0 0 0 1px var(--brand-500), var(--shadow-md);
+    .sobra-info { text-align: right; }
+    .sobra-info span { 
+      font-size: 0.75rem; 
+      color: var(--text-muted); 
+      text-transform: uppercase; 
+      font-weight: 700; 
+    }
+    .sobra-info strong { 
+      display: block; 
+      font-size: 1.25rem; 
+      color: var(--brand-500); 
+    }
+    .sobra-info .perfeito { 
+      color: var(--success-text); 
+      font-size: 0.8rem;
     }
 
-    .badge-best {
-      position: absolute;
-      top: 0;
-      right: 0;
-      background-color: var(--brand-500);
-      color: white;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 0.25rem 0.75rem;
-      border-bottom-left-radius: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .medida-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
-    .medida-subtitle { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; }
-
-    .sobra-badge {
-      background-color: var(--brand-50);
-      color: var(--brand-700);
-      border: 1px solid rgba(14, 165, 233, 0.2);
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem;
-      text-align: right;
-    }
-    .sobra-badge span { display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; opacity: 0.8; margin-bottom: 0.1rem;}
-    .sobra-badge strong { font-size: 1.125rem; }
-
-    .card-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-    .detail-item { display: flex; align-items: center; gap: 0.75rem; }
-    .detail-icon {
-      width: 2.5rem;
-      height: 2.5rem;
-      border-radius: 9999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .icon-qtde { background-color: var(--success-bg); color: var(--success-text); }
-    .icon-peso { background-color: var(--warning-bg); color: var(--warning-text); }
-    
-    .detail-text p { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-    .detail-text strong { font-size: 1rem; color: var(--text-main); }
-
-    .alert { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-weight: 500; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; }
-    .alert-error { background-color: var(--danger-bg); color: var(--danger-text); border: 1px solid rgba(239, 68, 68, 0.2); }
-    
-    .loader-container { text-align: center; padding: 3rem 0; color: var(--text-muted); }
     .spinner {
-      border: 3px solid rgba(14, 165, 233, 0.2);
+      border: 3px solid rgba(14, 165, 233, 0.2); 
       border-top-color: var(--brand-600);
-      border-radius: 50%;
-      width: 2rem;
-      height: 2rem;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem auto;
+      border-radius: 50%; 
+      width: 2rem; 
+      height: 2rem; 
+      animation: spin 1s linear infinite; 
+      margin: 0 auto 1rem;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
     
-    .toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 9999;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-container { 
+      position: fixed; 
+      bottom: 20px; 
+      right: 20px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 10px; 
+      z-index: 9999; 
     }
     
     .toast {
-      padding: 1rem 1.5rem;
-      border-radius: 0.5rem;
-      color: var(--text-main);
+      padding: 1rem 1.25rem; 
+      border-radius: 0.5rem; 
+      color: var(--text-main); 
       font-weight: 600;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      animation: slideIn 0.3s ease-out forwards;
-      background-color: var(--bg-card);
+      background-color: var(--bg-card); 
       border-left: 4px solid var(--border-color);
+      display: flex; 
+      align-items: center; 
+      gap: 0.75rem; 
+      box-shadow: var(--shadow-md);
+      animation: slideIn 0.3s ease-out forwards;
+      font-size: 0.9rem;
     }
     
     .toast.success { border-left-color: var(--success-border); }
     .toast.error { border-left-color: var(--danger-border); }
+    .toast.info { border-left-color: var(--brand-500); }
     
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+    @keyframes slideIn { 
+      from { transform: translateX(100%); opacity: 0; } 
+      to { transform: translateX(0); opacity: 1; } 
     }
   </style>
-  
-  <script>
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
-  </script>
 </head>
 <body>
 
-  <!-- Container de Notificacoes Toasts -->
+  <!-- Container de Notificações -->
   <div id="toast-container" class="toast-container"></div>
 
   <div class="container">
-    
     <header>
       <div class="header-content">
         <div class="logo-container">
-          <img src="image_1d6ea0.png" alt="Logo Grande Aço" class="logo-img" onerror="this.src='https://placehold.co/100x100/ffffff/0284c7?text=GA'">
+          <img src="image_1d6ea0.png" alt="Logo Grande Aço" class="logo-img" onerror="this.src='https://placehold.co/100/ffffff/0284c7?text=GA'">
         </div>
         <div class="title">
           <h1>Controle de Pontas</h1>
-          <p>Sistema Integrado de Estoque</p>
+          <p>Sistema Inteligente de Corte e Estoque</p>
         </div>
       </div>
-      <button class="btn-toggle" onclick="toggleTheme()" title="Alternar Tema">
-        <svg id="icon-sun" class="hidden" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-        <svg id="icon-moon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-      </button>
+      <button class="btn-toggle" onclick="toggleTheme()" title="Alternar Tema Claro/Escuro" id="themeBtn">🌓</button>
     </header>
 
     <div class="tabs-nav">
-      <button class="tab-btn active" onclick="openTab('tab-consulta', this)">
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        Consulta Rápida
-      </button>
-      <button class="tab-btn" onclick="openTab('tab-gerenciar', this)">
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-        Gerenciar Estoque
-      </button>
+      <button class="tab-btn active" onclick="openTab('tab-consulta', this)">🔍 Consulta Rápida</button>
+      <button class="tab-btn" onclick="openTab('tab-gerenciar', this)">➕ Cadastrar Nova Ponta</button>
     </div>
 
+    <!-- ABA 1: CONSULTA INTELIGENTE E CASAMENTO DE BARRAS -->
     <div id="tab-consulta" class="tab-content active">
-      <main class="card">
-        <div class="section-title">Buscar Pontas Disponíveis</div>
-        <form id="searchForm" onsubmit="event.preventDefault(); buscarPontas();">
+      <div class="card">
+        <div class="section-title">Buscar e Otimizar Cortes</div>
+        <form id="searchForm" onsubmit="event.preventDefault(); executarAlgoritmoBusca();">
           <div class="form-grid">
             <div class="input-group">
-              <label for="selectBitola">1. Bitola (mm)</label>
-              <select id="selectBitola" required>
-                <option value="" disabled selected>Carregando...</option>
-              </select>
+              <label>1. Bitola (mm)</label>
+              <select id="buscaBitola" required><option value="" disabled selected>Sincronizando...</option></select>
             </div>
             <div class="input-group">
-              <label for="inputMedida">2. Tamanho da barra (m)</label>
-              <input type="number" id="inputMedida" step="0.01" min="0.1" placeholder="Ex: 2.50" required>
+              <label>2. Tamanho Desejado (m)</label>
+              <input type="number" id="buscaMedida" step="0.01" min="0.1" placeholder="Ex: 2.50" required>
             </div>
             <div class="input-group">
-              <label for="inputQtde">3. Quantidade desejada</label>
-              <input type="number" id="inputQtde" step="1" min="1" value="1" placeholder="Ex: 5" required>
+              <label>3. Quantidade de Peças</label>
+              <input type="number" id="buscaQtde" step="1" min="1" value="1" required>
             </div>
           </div>
-
-          <div id="formAlert" class="alert alert-error hidden"></div>
-
           <div class="form-actions">
-            <button type="submit" id="btnSubmitSearch" class="btn-submit" disabled>
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              <span>Pesquisar Estoque</span>
-            </button>
+            <button type="submit" id="btnBuscar" class="btn-submit" disabled>Gerar Plano de Corte</button>
           </div>
         </form>
-      </main>
-
-      <div id="loadingState" class="loader-container">
-        <div class="spinner"></div>
-        <p>Sincronizando e agrupando estoque em tempo real...</p>
       </div>
 
-      <div id="resultadosContainer" class="hidden"></div>
+      <!-- Indicador de Carregamento -->
+      <div id="loadingBusca" class="hidden" style="text-align: center; padding: 2rem;">
+        <div class="spinner"></div>
+        <p style="color: var(--text-muted);">Analisando o melhor cenário de corte...</p>
+      </div>
+
+      <div id="resultadosContainer" class="hidden card" style="border-color: var(--brand-500);">
+        <div class="section-title" style="color: var(--brand-500); border-bottom: 1px solid var(--brand-50); padding-bottom: 1rem;">
+          Plano de Corte Otimizado
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+          O sistema selecionou as seguintes barras físicas para atender seu pedido com o menor desperdício possível:
+        </p>
+        
+        <div id="listaBarras" class="results-grid"></div>
+        
+        <div class="form-actions" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+          <button id="btnBaixaAutomatica" class="btn-submit success" onclick="confirmarBaixaAutomatica()">
+            Confirmar Baixa Automática
+          </button>
+        </div>
+      </div>
     </div>
 
+    <!-- ABA 2: CADASTRAR NOVA PONTA -->
     <div id="tab-gerenciar" class="tab-content">
-      
-      <!-- Seção Lançamento (Cadastro) -->
-      <main class="card">
+      <div class="card">
         <div class="section-title">➕ Cadastrar Nova Ponta</div>
-        <form id="formLancamento" onsubmit="event.preventDefault(); enviarCadastro();">
-          <div class="form-grid two-cols">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          * O cadastro será feito unidade por unidade (linha a linha) na planilha. O peso é calculado automaticamente pelas fórmulas da sua planilha.
+        </p>
+        <form onsubmit="event.preventDefault(); enviarCadastro();">
+          <div class="form-grid">
             <div class="input-group">
-              <label for="lancBitola">Bitola (mm)</label>
+              <label>Bitola (mm)</label>
               <input type="number" id="lancBitola" step="0.01" placeholder="Ex: 6.30" required>
             </div>
             <div class="input-group">
-              <label for="lancMedida">Medida (m)</label>
+              <label>Medida Total da Barra (m)</label>
               <input type="number" id="lancMedida" step="0.01" min="0.1" placeholder="Ex: 5.50" required>
             </div>
             <div class="input-group">
-              <label for="lancQtde">Quantidade</label>
+              <label>Quantidade de Barras</label>
               <input type="number" id="lancQtde" step="1" min="1" value="1" required>
             </div>
           </div>
           <div class="form-actions">
-            <button type="submit" id="btnSubmitCadastro" class="btn-submit success">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-              <span>Confirmar Cadastro</span>
-            </button>
+            <button type="submit" id="btnCadastro" class="btn-submit success">Confirmar Cadastro</button>
           </div>
         </form>
-      </main>
-
-      <!-- Seção Baixa -->
-      <main class="card">
-        <div class="section-title">➖ Dar Baixa (Saída)</div>
-        <form id="formBaixa" onsubmit="event.preventDefault(); buscarItemParaBaixa();">
-          <div class="form-grid two-cols">
-            <div class="input-group">
-              <label for="baixaId">Código/ID da Ponta</label>
-              <input type="number" id="baixaId" step="1" placeholder="Digite o ID da planilha" required>
-            </div>
-            <div class="form-actions" style="justify-content: flex-start; align-items: flex-end;">
-              <button type="submit" id="btnBuscarBaixa" class="btn-submit">Procurar ID</button>
-            </div>
-          </div>
-        </form>
-
-        <div id="baixaResultContainer" class="hidden" style="margin-top: 1.5rem;">
-          <div class="result-card" style="border-color: var(--brand-500);">
-            <div class="card-header" style="margin-bottom:0.5rem; padding-bottom:0.5rem;">
-              <div>
-                <div class="medida-title" id="baixaInfoTitle">--</div>
-                <div class="medida-subtitle" id="baixaInfoSub">--</div>
-              </div>
-            </div>
-            <div class="form-actions" style="margin-top: 1rem;">
-              <button onclick="enviarBaixa()" id="btnSubmitBaixa" class="btn-submit danger">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                <span>Confirmar Baixa (Vendido)</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-
+      </div>
     </div>
-
   </div>
 
   <script>
-    // Gerenciamento de Tema (Claro/Escuro)
-    const htmlNode = document.documentElement;
-    const iconSun = document.getElementById('icon-sun');
-    const iconMoon = document.getElementById('icon-moon');
-
-    function updateIcons() {
-      if (htmlNode.classList.contains('dark')) {
-        iconSun.classList.remove('hidden');
-        iconMoon.classList.add('hidden');
+    // ---------------------------------------------------
+    // TEMA E INTERFACE
+    // ---------------------------------------------------
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeBtn').innerText = '☀️';
       } else {
-        iconSun.classList.add('hidden');
-        iconMoon.classList.remove('hidden');
+        document.getElementById('themeBtn').innerText = '🌙';
       }
     }
-    updateIcons();
 
     function toggleTheme() {
-      htmlNode.classList.toggle('dark');
-      localStorage.setItem('theme', htmlNode.classList.contains('dark') ? 'dark' : 'light');
-      updateIcons();
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeBtn').innerText = isDark ? '☀️' : '🌙';
     }
 
-    // Gerenciamento de Abas
     function openTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
     }
 
-    // Sistema Customizado de Notificacoes (Substituindo alerts)
-    function showMessage(msg, type = 'success') {
+    function showToast(msg, type = 'success') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
       
-      const icon = type === 'success' ? '✅' : '❌';
-      toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
+      let icon = '✅';
+      if(type === 'error') icon = '❌';
+      if(type === 'info') icon = 'ℹ️';
       
+      toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
       container.appendChild(toast);
       
-      // Auto-remove após 4 segundos
-      setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease-in forwards';
-        setTimeout(() => { if(toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      setTimeout(() => { 
+        toast.style.animation = 'slideIn 0.3s ease-in reverse forwards';
+        setTimeout(() => toast.remove(), 300);
       }, 4000);
     }
 
+    // ---------------------------------------------------
+    // CONSTANTES E VARIÁVEIS GLOBAIS
+    // ---------------------------------------------------
     const SPREADSHEET_ID = "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI";
     const SHEET_NAME = "Pontas";
-    // URL ATUALIZADA - Fornecida para processar POST no Google Apps Script
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwtbi2asVD_3KkOPn6ODV1plYo6q6zLJGWjdJkn6ZbKySQ7Qxh-zUYWWyISAOITr5Q/exec";
+    // URL exigida na regra de negócio
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec";
     
-    let estoqueBruto = [];
-    let estoqueAgrupado = [];
-    
-    const selectBitola = document.getElementById("selectBitola");
-    const inputMedida = document.getElementById("inputMedida");
-    const inputQtde = document.getElementById("inputQtde");
-    const btnSubmitSearch = document.getElementById("btnSubmitSearch");
-    const loadingState = document.getElementById("loadingState");
-    const resultadosContainer = document.getElementById("resultadosContainer");
-    const formAlert = document.getElementById("formAlert");
+    let estoqueFisico = []; 
+    let planoAtual = []; 
 
-    async function carregarDados() {
-      loadingState.classList.remove('hidden');
-      resultadosContainer.classList.add('hidden');
-      btnSubmitSearch.disabled = true;
+    // ---------------------------------------------------
+    // CARREGAMENTO DE DADOS (READ)
+    // ---------------------------------------------------
+    async function inicializar() {
+      const btn = document.getElementById("btnBuscar");
+      btn.disabled = true;
+      btn.innerText = "Sincronizando banco de dados...";
       
       try {
+        // Filtramos apenas as peças disponíveis em estoque
         const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}&tqx=out:json`;
 
         const resp = await fetch(url);
-        if(!resp.ok) throw new Error("Erro na rede.");
-        
         const text = await resp.text();
+        
+        // Remove a casca do JSONP
         const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
         const data = JSON.parse(jsonStr);
 
-        const parseNum = (v) => {
-          if (v === null || v === undefined || v === '') return 0;
-          if (typeof v === 'number') return v;
-          return parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
-        };
+        estoqueFisico = [];
+        
+        // Parser seguro para números brasileiros (vírgula)
+        const parseNum = (v) => parseFloat(String(v || '0').replace(/\./g, '').replace(',', '.')) || 0;
 
-        const mapaAgrupamento = {};
-        estoqueBruto = [];
-
-        // Agrupando dados em memória
+        // Montagem do inventário local
         data.table.rows.forEach(r => {
-          const id = r.c[0]?.v || '';
-          const qtdeLinha = parseInt(r.c[2]?.v) || 1;
+          const id = r.c[0]?.v;
+          const qtde = parseInt(r.c[2]?.v) || 1;
           const bitola = String(r.c[3]?.v || '').trim();
           const medida = parseNum(r.c[4]?.v);
-          const peso = parseNum(r.c[5]?.v);
           
-          const itemBruto = { id, qtde: qtdeLinha, bitola, medida, peso };
-          estoqueBruto.push(itemBruto);
-
-          const chave = `${bitola}_${medida}`;
-          if (!mapaAgrupamento[chave]) {
-            mapaAgrupamento[chave] = { ids: [], bitola: bitola, medida: medida, qtdeTotal: 0, pesoTotal: 0 };
-          }
-
-          mapaAgrupamento[chave].qtdeTotal += qtdeLinha;
-          mapaAgrupamento[chave].pesoTotal += peso;
-          if (id && !mapaAgrupamento[chave].ids.includes(id)) {
-            mapaAgrupamento[chave].ids.push(id);
+          if(id && medida > 0) {
+            // Expande virtualmente se a quantidade for maior que 1 na planilha
+            for(let i = 0; i < qtde; i++) {
+              estoqueFisico.push({ id, bitola, medida });
+            }
           }
         });
 
-        estoqueAgrupado = Object.values(mapaAgrupamento);
-
-        popularSelectBitolas();
-        loadingState.classList.add('hidden');
-        btnSubmitSearch.disabled = false;
-        
-      } catch (err) {
-        console.error("Erro API:", err);
-        loadingState.innerHTML = `<div class="alert alert-error">Falha ao conectar com a planilha para leitura.</div>`;
-        selectBitola.innerHTML = '<option value="">Erro</option>';
-      }
-    }
-
-    function popularSelectBitolas() {
-      const selectedValue = selectBitola.value;
-      const bitolas = [...new Set(estoqueAgrupado.map(p => p.bitola))]
-        .filter(Boolean)
-        .sort((a,b) => parseFloat(a.replace(',', '.')) - parseFloat(b.replace(',', '.')));
-
-      selectBitola.innerHTML = '<option value="" disabled selected>Escolha...</option>';
-      bitolas.forEach(b => {
-        const opt = document.createElement("option");
-        opt.value = b;
-        opt.textContent = `Ø ${b} mm`;
-        selectBitola.appendChild(opt);
-      });
-      if(selectedValue && bitolas.includes(selectedValue)) selectBitola.value = selectedValue;
-    }
-
-    function formatNumber(num, decimals = 2) {
-      return num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    }
-
-    function buscarPontas() {
-      formAlert.classList.add('hidden');
-      
-      const bitola = selectBitola.value;
-      const medidaDesejada = parseFloat(inputMedida.value);
-      const qtdeDesejada = parseInt(inputQtde.value) || 1;
-
-      if (!bitola || isNaN(medidaDesejada) || medidaDesejada <= 0 || qtdeDesejada < 1) {
-        formAlert.innerHTML = "Por favor, preencha todos os campos corretamente.";
-        formAlert.classList.remove('hidden');
-        return;
-      }
-
-      const compativeis = estoqueAgrupado
-        .filter(p => p.bitola === bitola && p.medida >= medidaDesejada && p.qtdeTotal >= qtdeDesejada)
-        .sort((a, b) => a.medida - b.medida);
-
-      resultadosContainer.classList.remove('hidden');
-
-      if (compativeis.length === 0) {
-        resultadosContainer.innerHTML = `
-          <div class="alert alert-error" style="justify-content: center; text-align: center; padding: 2rem;">
-            <div>
-              <strong>Estoque Insuficiente</strong><br>
-              Nenhum lote agrupado de Ø ${bitola} mm atende à medida de ${formatNumber(medidaDesejada)}m com quantidade de pelo menos ${qtdeDesejada} peças.
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      let html = `<div class="result-list">`;
-      html += `<div style="margin-bottom: 0.5rem;"><h2 style="font-size:1.1rem; font-weight:700;">Opções Compatíveis (${compativeis.length})</h2></div>`;
-
-      compativeis.forEach((p, index) => {
-        const sobraUnitaria = p.medida - medidaDesejada;
-        const isBestMatch = index === 0;
-        const infoIds = p.ids.length > 1 ? `Vários Códigos (${p.ids.length})` : `ID #${p.ids[0]}`;
-        
-        html += `
-          <div class="result-card ${isBestMatch ? 'best-option' : ''}">
-            ${isBestMatch ? `<div class="badge-best">Melhor Opção</div>` : ''}
-            <div class="card-header">
-              <div>
-                <div class="medida-title">${formatNumber(p.medida)} m</div>
-                <div class="medida-subtitle">Bitola Ø ${p.bitola} mm &bull; ${infoIds}</div>
-              </div>
-              <div class="sobra-badge">
-                <span>Sobra Unitária</span>
-                <strong>${formatNumber(sobraUnitaria)} m</strong>
-              </div>
-            </div>
-            <div class="card-details">
-              <div class="detail-item">
-                <div class="detail-icon icon-qtde">
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                </div>
-                <div class="detail-text"><p>Estoque Agrupado</p><strong>${p.qtdeTotal} barras</strong></div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-icon icon-peso">
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
-                </div>
-                <div class="detail-text"><p>Peso Total Lote</p><strong>${formatNumber(p.pesoTotal)} kg</strong></div>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-      html += `</div>`;
-      resultadosContainer.innerHTML = html;
-    }
-
-    
-    function setButtonLoading(btn, isLoading, originalText) {
-      if(isLoading) {
-        btn.disabled = true;
-        btn.querySelector('span').innerText = "Processando...";
-      } else {
+        atualizarSelectBitolas();
         btn.disabled = false;
-        btn.querySelector('span').innerText = originalText;
+        btn.innerText = "Gerar Plano de Corte";
+        showToast("Estoque sincronizado com sucesso!", "info");
+      } catch (err) {
+        showToast("Falha ao sincronizar dados com a planilha.", "error");
+        btn.innerText = "Erro na Sincronização";
+      }
+    }
+
+    function atualizarSelectBitolas() {
+      const select = document.getElementById("buscaBitola");
+      // Coleta bitolas únicas e as ordena numericamente
+      const bitolas = [...new Set(estoqueFisico.map(p => p.bitola))].sort((a,b) => parseFloat(a.replace(',','.')) - parseFloat(b.replace(',','.')));
+      
+      select.innerHTML = '<option value="" disabled selected>Escolha a bitola...</option>';
+      bitolas.forEach(b => select.innerHTML += `<option value="${b}">Ø ${b} mm</option>`);
+    }
+
+    // ---------------------------------------------------
+    // LÓGICA DE CASAMENTO DE BARRAS (ALGORITMO)
+    // ---------------------------------------------------
+    function executarAlgoritmoBusca() {
+      const containerResult = document.getElementById("resultadosContainer");
+      containerResult.classList.add('hidden');
+
+      const reqBitola = document.getElementById("buscaBitola").value;
+      const reqMedida = parseFloat(document.getElementById("buscaMedida").value);
+      let qtdeNecessaria = parseInt(document.getElementById("buscaQtde").value) || 1;
+
+      if (!reqBitola || isNaN(reqMedida) || qtdeNecessaria < 1) {
+        showToast("Preencha todos os campos corretamente.", "error");
+        return;
+      }
+
+      // Filtra apenas as peças da bitola exigida que tenham tamanho suficiente
+      let barrasDisponiveis = estoqueFisico.filter(p => p.bitola === reqBitola && p.medida >= reqMedida);
+
+      // ORDENAÇÃO INTELIGENTE:
+      // 1º Prioridade: Barras com menor sobra após os cortes
+      // 2º Prioridade: Peças menores no geral (preserva barras grandes para o futuro)
+      barrasDisponiveis.sort((a, b) => {
+        let sobraA = a.medida % reqMedida;
+        let sobraB = b.medida % reqMedida;
+        if (Math.abs(sobraA - sobraB) > 0.01) return sobraA - sobraB;
+        return a.medida - b.medida;
+      });
+
+      planoAtual = [];
+      let qtdeAtendida = 0;
+
+      for (let barra of barrasDisponiveis) {
+        if (qtdeAtendida >= qtdeNecessaria) break;
+
+        let maxCortesNaBarra = Math.floor(barra.medida / reqMedida);
+        let cortesAUsar = Math.min(qtdeNecessaria - qtdeAtendida, maxCortesNaBarra);
+
+        if (cortesAUsar > 0) {
+          let sobraFinal = barra.medida - (cortesAUsar * reqMedida);
+          
+          planoAtual.push({
+            id: barra.id,
+            bitola: barra.bitola,
+            medidaOriginal: barra.medida,
+            cortesUtilizados: cortesAUsar,
+            sobra: sobraFinal
+          });
+          
+          qtdeAtendida += cortesAUsar;
+        }
+      }
+
+      if (qtdeAtendida < qtdeNecessaria) {
+        showToast(`Estoque insuficiente! Encontradas peças para atender apenas ${qtdeAtendida} das ${qtdeNecessaria} solicitadas.`, "error");
+        return;
+      }
+
+      renderizarPlanoDeCorte();
+    }
+
+    function renderizarPlanoDeCorte() {
+      const lista = document.getElementById("listaBarras");
+      lista.innerHTML = "";
+
+      planoAtual.forEach(item => {
+        const perfeito = item.sobra < 0.01;
+        lista.innerHTML += `
+          <div class="result-item">
+            <div class="result-info">
+              <h3><span class="result-badge">ID #${item.id}</span> Barra Original: ${item.medidaOriginal.toFixed(2)}m</h3>
+              <p>Rendimento extraído: <b>${item.cortesUtilizados} peça(s)</b> neste corte.</p>
+            </div>
+            <div class="sobra-info">
+              <span>Sobra Resultante</span>
+              <strong>${item.sobra.toFixed(2)}m</strong>
+              ${perfeito ? '<div class="perfeito">✓ Corte Perfeito (Zero Perda)</div>' : ''}
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById("resultadosContainer").classList.remove("hidden");
+    }
+
+    // ---------------------------------------------------
+    // INTEGRAÇÃO COM GOOGLE APPS SCRIPT (POST)
+    // ---------------------------------------------------
+    async function confirmarBaixaAutomatica() {
+      const btn = document.getElementById("btnBaixaAutomatica");
+      btn.disabled = true; 
+      btn.innerText = "Processando Baixa...";
+
+      const payload = {
+        action: "baixar",
+        instrucoes: planoAtual.map(b => ({
+          id: b.id,
+          bitola: b.bitola,
+          sobra: b.sobra
+        }))
+      };
+
+      try {
+        const resp = await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        
+        const res = await resp.json();
+        
+        if (res.sucesso) {
+          showToast("Baixa e sobras registradas com sucesso!", "success");
+          document.getElementById("resultadosContainer").classList.add("hidden");
+          // Atualiza dados e zera o form
+          document.getElementById("searchForm").reset();
+          inicializar(); 
+        } else {
+          showToast(res.mensagem || "Erro na baixa. Tente novamente.", "error");
+        }
+      } catch (e) {
+        showToast("Falha crítica ao tentar dar baixa. Verifique sua rede.", "error");
+      } finally {
+        btn.disabled = false; 
+        btn.innerText = "Confirmar Baixa Automática";
       }
     }
 
     async function enviarCadastro() {
-      const bitola = document.getElementById("lancBitola").value;
-      const medida = document.getElementById("lancMedida").value;
-      const qtde = document.getElementById("lancQtde").value;
-      
+      const btn = document.getElementById("btnCadastro");
+      btn.disabled = true; 
+      btn.innerText = "Registrando na Planilha...";
+
       const payload = {
         action: "cadastrar",
-        bitola: bitola,
-        medida: medida,
-        peso: "",
-        qtde: qtde
+        bitola: document.getElementById("lancBitola").value,
+        medida: document.getElementById("lancMedida").value,
+        qtde: document.getElementById("lancQtde").value
       };
 
-      const btn = document.getElementById("btnSubmitCadastro");
-      setButtonLoading(btn, true, "Confirmar Cadastro");
-
       try {
-        // Envio via POST padrão text/plain para Apps Script evitar bloqueios CORS
-        const response = await fetch(GAS_URL, {
+        const resp = await fetch(GAS_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
+        const res = await resp.json();
         
-        const result = await response.json();
-        if(result.sucesso) {
-          showMessage(result.mensagem, 'success');
-          document.getElementById('formLancamento').reset();
-          carregarDados(); // Recarrega os dados do estoque após o insert na planilha
+        if (res.sucesso) {
+          showToast(`Cadastro unitarizado realizado com sucesso!`, "success");
+          document.getElementById("lancBitola").value = "";
+          document.getElementById("lancMedida").value = "";
+          document.getElementById("lancQtde").value = "1";
+          
+          // Re-sincroniza o estoque
+          inicializar();
         } else {
-          showMessage(result.mensagem, 'error');
+          showToast(res.mensagem || "Erro ao efetuar cadastro", "error");
         }
-      } catch (err) {
-        showMessage("Erro ao conectar com a planilha. Verifique a URL e a internet.", 'error');
-        console.error(err);
+      } catch (e) {
+        showToast("Erro de comunicação ao enviar cadastro.", "error");
       } finally {
-        setButtonLoading(btn, false, "Confirmar Cadastro");
+        btn.disabled = false; 
+        btn.innerText = "Confirmar Cadastro";
       }
     }
 
-    function buscarItemParaBaixa() {
-      const idBusca = document.getElementById("baixaId").value.trim().toUpperCase();
-      const container = document.getElementById("baixaResultContainer");
-      
-      const itemEncontrado = estoqueBruto.find(item => String(item.id).toUpperCase() === idBusca);
-
-      if (itemEncontrado) {
-        document.getElementById("baixaInfoTitle").textContent = `Ponta de ${formatNumber(itemEncontrado.medida)} m`;
-        document.getElementById("baixaInfoSub").textContent = `Bitola Ø ${itemEncontrado.bitola} mm • ${itemEncontrado.qtde} un em estoque`;
-        container.classList.remove("hidden");
-        container.setAttribute("data-active-id", itemEncontrado.id);
-      } else {
-        container.classList.add("hidden");
-        showMessage("ID não encontrado no estoque atual.", "error");
-      }
-    }
-
-    async function enviarBaixa() {
-      const container = document.getElementById("baixaResultContainer");
-      const id = container.getAttribute("data-active-id");
-      
-      if(!id) return;
-
-      const payload = {
-        action: "baixar",
-        id: id
-      };
-
-      const btn = document.getElementById("btnSubmitBaixa");
-      setButtonLoading(btn, true, "Confirmar Baixa (Vendido)");
-
-      try {
-        const response = await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        
-        const result = await response.json();
-        if(result.sucesso) {
-          showMessage(result.mensagem, 'success');
-          document.getElementById('formBaixa').reset();
-          container.classList.add('hidden');
-          carregarDados(); // Recarrega os dados para limpar a baixa da tela
-        } else {
-          showMessage(result.mensagem, 'error');
-        }
-      } catch (err) {
-        showMessage("Erro ao processar baixa. Verifique a conexão.", 'error');
-        console.error(err);
-      } finally {
-        setButtonLoading(btn, false, "Confirmar Baixa (Vendido)");
-      }
-    }
-
-    // Inicializa carregando os dados do estoque assim que a página abre
-    window.onload = carregarDados;
+    // ---------------------------------------------------
+    // INICIALIZAÇÃO
+    // ---------------------------------------------------
+    window.onload = () => {
+      initTheme();
+      inicializar();
+    };
   </script>
 </body>
 </html>
