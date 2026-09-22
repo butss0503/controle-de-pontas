@@ -3,582 +3,275 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grande Aço - Controle de Estoque de Pontas</title>
+  <title>Grande Aço - Controle de Estoque</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      /* Modo Claro (Default) */
       --bg-body: #f8fafc;
       --bg-card: #ffffff;
-      --bg-input: #f1f5f9;
+      --bg-input: #f8fafc;
       --text-main: #0f172a;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
-      
-      --brand-50: #f0f9ff;
       --brand-500: #0ea5e9;
       --brand-600: #0284c7;
-      
-      --success-bg: #ecfdf5;
-      --success-border: #34d399;
-      --success-text: #059669;
-      --danger-bg: #fef2f2;
-      --danger-border: #f87171;
-      --danger-text: #dc2626;
-
+      --success: #10b981;
+      --danger: #ef4444;
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     html.dark {
-      /* Modo Escuro */
-      --bg-body: #0b1120;
+      --bg-body: #0f172a;
       --bg-card: #1e293b;
       --bg-input: #0f172a;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border-color: #334155;
-      
-      --brand-50: rgba(14, 165, 233, 0.1);
-      --success-bg: rgba(16, 185, 129, 0.1);
-      --success-border: #059669;
-      --success-text: #34d399;
-      --danger-bg: rgba(239, 68, 68, 0.1);
-      --danger-border: #dc2626;
-      --danger-text: #f87171;
     }
 
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-      font-family: 'Inter', sans-serif; 
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 
     body {
       background-color: var(--bg-body);
       color: var(--text-main);
-      transition: background-color 0.3s, color 0.3s;
+      transition: all 0.3s ease;
       padding: 2rem 1rem;
       min-height: 100vh;
     }
 
-    .container { 
-      max-width: 900px; 
-      margin: 0 auto; 
-    }
+    .container { max-width: 800px; margin: 0 auto; }
     
     .hidden { display: none !important; }
 
+    /* Cabeçalho */
     header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: flex-start; 
-      margin-bottom: 2rem; 
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; 
     }
-    
-    .header-content { 
-      display: flex; 
-      gap: 1rem; 
-      align-items: center; 
-    }
-    
+    .header-content { display: flex; align-items: center; gap: 1rem; }
     .logo-container {
-      background-color: #ffffff;
-      border-radius: 50%;
-      width: 5rem; 
-      height: 5rem;
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      padding: 0.5rem; 
-      flex-shrink: 0;
-      box-shadow: var(--shadow-sm);
+      background-color: #fff; border-radius: 50%; width: 5rem; height: 5rem;
+      display: flex; align-items: center; justify-content: center; padding: 0.5rem;
+      box-shadow: var(--shadow-sm); flex-shrink: 0;
     }
-    
-    .logo-img { 
-      width: 100%; 
-      height: 100%; 
-      object-fit: contain; 
-    }
-    
-    .title h1 { 
-      font-size: 1.5rem; 
-      font-weight: 700; 
-      margin-bottom: 0.25rem; 
-    }
-    
-    .title p { 
-      color: var(--text-muted); 
-      font-size: 0.875rem; 
-    }
+    .logo-img { width: 100%; height: 100%; object-fit: contain; }
+    .title h1 { font-size: 1.5rem; font-weight: 700; }
+    .title p { color: var(--text-muted); font-size: 0.9rem; }
     
     .btn-toggle {
-      background: var(--bg-card); 
-      border: 1px solid var(--border-color); 
-      color: var(--text-muted);
-      border-radius: 50%; 
-      width: 2.5rem; 
-      height: 2.5rem; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-toggle:hover {
-      border-color: var(--brand-500);
-      color: var(--brand-500);
+      background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);
+      border-radius: 50%; width: 2.5rem; height: 2.5rem; cursor: pointer; transition: 0.2s;
     }
 
-    .tabs-nav { 
-      display: flex; 
-      gap: 1rem; 
-      border-bottom: 1px solid var(--border-color); 
-      margin-bottom: 1.5rem; 
-    }
-    
+    /* Abas */
+    .tabs { display: flex; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
     .tab-btn {
-      background: none; 
-      border: none; 
-      padding: 0.75rem 1.5rem; 
-      font-size: 0.95rem; 
-      font-weight: 600;
-      color: var(--text-muted); 
-      cursor: pointer; 
-      border-bottom: 2px solid transparent; 
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem;
-      transition: all 0.2s;
+      background: none; border: none; padding: 0.75rem 1.5rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s;
     }
-    
-    .tab-btn:hover { color: var(--brand-500); }
-    .tab-btn.active { 
-      color: var(--brand-500); 
-      border-bottom-color: var(--brand-500); 
-    }
-    
-    .tab-content { 
-      display: none; 
-      animation: fadeIn 0.3s; 
-    }
-    
+    .tab-btn.active { color: var(--brand-500); border-bottom-color: var(--brand-500); }
+    .tab-content { display: none; animation: fadeIn 0.3s; }
     .tab-content.active { display: block; }
-    
-    @keyframes fadeIn { 
-      from { opacity: 0; transform: translateY(5px); } 
-      to { opacity: 1; transform: translateY(0); } 
-    }
 
-    .card { 
-      background-color: var(--bg-card); 
-      border: 1px solid var(--border-color); 
-      border-radius: 0.75rem; 
-      padding: 1.5rem; 
-      margin-bottom: 1.5rem; 
-      box-shadow: var(--shadow-sm);
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards e Formulários */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);
     }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
     
-    .section-title { 
-      font-size: 1.1rem; 
-      font-weight: 700; 
-      margin-bottom: 1.25rem; 
-      color: var(--text-main); 
-    }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    @media (min-width: 600px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
     
-    .form-grid { 
-      display: grid; 
-      grid-template-columns: 1fr; 
-      gap: 1rem; 
-      margin-bottom: 1.5rem; 
-    }
-    
-    @media (min-width: 640px) { 
-      .form-grid { grid-template-columns: 1fr 1fr 1fr; } 
-    }
-    
-    .input-group { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 0.5rem; 
-    }
-    
-    label { 
-      font-size: 0.875rem; 
-      font-weight: 600; 
-      color: var(--text-main); 
-    }
-    
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-size: 0.85rem; font-weight: 600; }
     input, select {
-      padding: 0.75rem 1rem; 
-      border: 1px solid var(--border-color); 
-      border-radius: 0.5rem;
-      background-color: var(--bg-input); 
-      color: var(--text-main); 
-      font-size: 0.95rem; 
-      outline: none;
-      transition: border-color 0.2s;
+      padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem;
+      background: var(--bg-input); color: var(--text-main); font-size: 0.95rem; outline: none;
     }
-    
     input:focus, select:focus { border-color: var(--brand-500); }
 
     .btn-submit {
-      background-color: var(--brand-600); 
-      color: white; 
-      font-weight: 600; 
-      padding: 0.875rem 1.5rem;
-      border: none; 
-      border-radius: 0.5rem; 
-      cursor: pointer; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      gap: 0.5rem; 
-      width: 100%;
-      transition: background-color 0.2s, opacity 0.2s;
+      background: var(--brand-600); color: white; padding: 0.875rem 1.5rem; border: none;
+      border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%;
     }
-    
-    .btn-submit:hover:not(:disabled) { background-color: var(--brand-500); }
-    @media (min-width: 640px) { 
-      .btn-submit { width: auto; } 
-      .form-actions { display: flex; justify-content: flex-end; } 
-    }
-    
-    .btn-submit.success { background-color: var(--success-text); }
-    .btn-submit.success:hover:not(:disabled) { opacity: 0.9; }
+    .btn-submit:hover:not(:disabled) { background: var(--brand-500); }
     .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover:not(:disabled) { background: #059669; }
 
-    .results-grid { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 1rem; 
-      margin-top: 1rem; 
+    /* Resultados da Consulta (Cards Individuais) */
+    .result-card {
+      background: var(--bg-body); border: 1px solid var(--border-color); border-left: 4px solid var(--brand-500);
+      border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    
-    .result-item {
-      background-color: var(--bg-body); 
-      border: 1px solid var(--brand-500); 
-      border-radius: 0.5rem;
-      padding: 1rem; 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2);
-    }
-    
-    .result-info h3 { 
-      font-size: 1rem; 
-      margin-bottom: 0.25rem; 
-      font-weight: 700; 
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem;
-    }
-    
-    .result-info p { 
-      font-size: 0.85rem; 
-      color: var(--text-muted); 
-    }
-    
-    .result-badge { 
-      background-color: var(--brand-500); 
-      color: white; 
-      padding: 0.25rem 0.5rem; 
-      border-radius: 0.25rem; 
-      font-size: 0.75rem; 
-      font-weight: 700; 
-    }
-    
-    .sobra-info { text-align: right; }
-    .sobra-info span { 
-      font-size: 0.75rem; 
-      color: var(--text-muted); 
-      text-transform: uppercase; 
-      font-weight: 700; 
-    }
-    .sobra-info strong { 
-      display: block; 
-      font-size: 1.25rem; 
-      color: var(--brand-500); 
-    }
-    .sobra-info .perfeito { 
-      color: var(--success-text); 
-      font-size: 0.8rem;
-    }
+    .result-info h3 { font-size: 1rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .result-info p { font-size: 0.85rem; color: var(--text-muted); }
+    .badge-id { background: var(--brand-500); color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+    .sobra-box { text-align: right; }
+    .sobra-box span { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+    .sobra-box strong { display: block; font-size: 1.25rem; color: var(--brand-500); }
 
-    .spinner {
-      border: 3px solid rgba(14, 165, 233, 0.2); 
-      border-top-color: var(--brand-600);
-      border-radius: 50%; 
-      width: 2rem; 
-      height: 2rem; 
-      animation: spin 1s linear infinite; 
-      margin: 0 auto 1rem;
-    }
-    
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .btn-link {
-      background: none;
-      border: none;
-      color: var(--brand-500);
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-left: 0.5rem;
-      transition: color 0.2s;
-    }
-    .btn-link:hover { color: var(--brand-600); }
-    
-    .ids-dropdown {
-      display: none;
-      padding-top: 1rem;
-      margin-top: 1rem;
-      border-top: 1px dashed var(--border-color);
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .ids-dropdown.active { 
-      display: flex; 
-    }
-    
-    .id-badge-small {
-      background-color: var(--brand-50);
-      color: var(--brand-600);
-      padding: 0.3rem 0.6rem;
-      border-radius: 999px; /* Formato de pílula arredondada */
-      font-size: 0.75rem;
-      font-weight: 700;
-      border: 1px solid rgba(14, 165, 233, 0.2);
-    }
-
-    .toast-container { 
-      position: fixed; 
-      bottom: 20px; 
-      right: 20px; 
-      display: flex; 
-      flex-direction: column; 
-      gap: 10px; 
-      z-index: 9999; 
-    }
-    
+    /* Toasts */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
     .toast {
-      padding: 1rem 1.25rem; 
-      border-radius: 0.5rem; 
-      color: var(--text-main); 
-      font-weight: 600;
-      background-color: var(--bg-card); 
-      border-left: 4px solid var(--border-color);
-      display: flex; 
-      align-items: center; 
-      gap: 0.75rem; 
-      box-shadow: var(--shadow-md);
-      animation: slideIn 0.3s ease-out forwards;
-      font-size: 0.9rem;
+      padding: 1rem 1.25rem; border-radius: 0.5rem; background: var(--bg-card); color: var(--text-main);
+      border-left: 4px solid var(--border-color); display: flex; align-items: center; gap: 0.75rem;
+      box-shadow: var(--shadow-md); animation: slideIn 0.3s forwards; font-weight: 600; font-size: 0.9rem;
     }
-    
-    .toast.success { border-left-color: var(--success-border); }
-    .toast.error { border-left-color: var(--danger-border); }
-    .toast.info { border-left-color: var(--brand-500); }
-    
-    @keyframes slideIn { 
-      from { transform: translateX(100%); opacity: 0; } 
-      to { transform: translateX(0); opacity: 1; } 
-    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   </style>
 </head>
 <body>
 
-  <!-- Container de Notificações -->
   <div id="toast-container" class="toast-container"></div>
 
   <div class="container">
     <header>
       <div class="header-content">
         <div class="logo-container">
-          <img src="image_1d6ea0.png" alt="Logo Grande Aço" class="logo-img" onerror="this.src='https://placehold.co/100/ffffff/0284c7?text=GA'">
+          <img src="image_1d6ea0.png" alt="Logo" class="logo-img" onerror="this.src='https://placehold.co/100/ffffff/0284c7?text=GA'">
         </div>
         <div class="title">
           <h1>Controle de Pontas</h1>
-          <p>Sistema Inteligente de Corte e Estoque</p>
+          <p>Painel Corporativo de Estoque</p>
         </div>
       </div>
-      <button class="btn-toggle" onclick="toggleTheme()" title="Alternar Tema Claro/Escuro" id="themeBtn">🌓</button>
+      <button class="btn-toggle" onclick="toggleTheme()" id="themeBtn">🌓</button>
     </header>
 
-    <div class="tabs-nav">
-      <button class="tab-btn active" onclick="openTab('tab-consulta', this)">🔍 Consulta Rápida</button>
-      <button class="tab-btn" onclick="openTab('tab-gerenciar', this)">➕ Cadastrar Nova Ponta</button>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-consulta', this)">🔍 Consulta Rápida</button>
+      <button class="tab-btn" onclick="switchTab('tab-gerenciar', this)">⚙️ Gerenciar Estoque</button>
     </div>
 
-    <!-- ABA 1: CONSULTA INTELIGENTE E CASAMENTO DE BARRAS -->
     <div id="tab-consulta" class="tab-content active">
       <div class="card">
-        <div class="section-title">Buscar e Otimizar Cortes</div>
-        <form id="searchForm" onsubmit="event.preventDefault(); executarAlgoritmoBusca();">
-          <div class="form-grid">
-            <div class="input-group">
-              <label>1. Bitola (mm)</label>
-              <select id="buscaBitola" required><option value="" disabled selected>Sincronizando...</option></select>
-            </div>
-            <div class="input-group">
-              <label>2. Tamanho Desejado (m)</label>
-              <input type="number" id="buscaMedida" step="0.01" min="0.1" placeholder="Ex: 2.50" required>
-            </div>
-            <div class="input-group">
-              <label>3. Quantidade de Peças</label>
-              <input type="number" id="buscaQtde" step="1" min="1" value="1" required>
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="submit" id="btnBuscar" class="btn-submit" disabled>Gerar Plano de Corte</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Indicador de Carregamento -->
-      <div id="loadingBusca" class="hidden" style="text-align: center; padding: 2rem;">
-        <div class="spinner"></div>
-        <p style="color: var(--text-muted);">Analisando o melhor cenário de corte...</p>
-      </div>
-
-      <div id="resultadosContainer" class="hidden card" style="border-color: var(--brand-500);">
-        <div class="section-title" style="color: var(--brand-500); border-bottom: 1px solid var(--brand-50); padding-bottom: 1rem;">
-          Plano de Corte Otimizado
-        </div>
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
-          O sistema selecionou as seguintes barras físicas para atender seu pedido com o menor desperdício possível:
-        </p>
-        
-        <div id="listaBarras" class="results-grid"></div>
-        
-        <div class="form-actions" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-          <button id="btnBaixaAutomatica" class="btn-submit success" onclick="confirmarBaixaAutomatica()">
-            Confirmar Baixa Automática
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABA 2: CADASTRAR NOVA PONTA -->
-    <div id="tab-gerenciar" class="tab-content">
-      <div class="card">
-        <div class="section-title">➕ Cadastrar Nova Ponta</div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-          * O cadastro será feito unidade por unidade (linha a linha) na planilha. O peso é calculado automaticamente pelas fórmulas da sua planilha.
-        </p>
-        <form onsubmit="event.preventDefault(); enviarCadastro();">
+        <div class="section-title">Buscar Barras Disponíveis</div>
+        <form onsubmit="event.preventDefault(); buscarPontas();">
           <div class="form-grid">
             <div class="input-group">
               <label>Bitola (mm)</label>
-              <input type="number" id="lancBitola" step="0.01" placeholder="Ex: 6.30" required>
+              <select id="buscaBitola" required><option value="" disabled selected>Carregando...</option></select>
             </div>
             <div class="input-group">
-              <label>Medida Total da Barra (m)</label>
-              <input type="number" id="lancMedida" step="0.01" min="0.1" placeholder="Ex: 5.50" required>
+              <label>Tamanho (m)</label>
+              <input type="number" id="buscaMedida" step="0.01" min="0.1" placeholder="Ex: 2.50" required>
             </div>
             <div class="input-group">
-              <label>Quantidade de Barras</label>
-              <input type="number" id="lancQtde" step="1" min="1" value="1" required>
+              <label>Quantidade</label>
+              <input type="number" id="buscaQtde" step="1" min="1" value="1" required>
             </div>
           </div>
-          <div class="form-actions">
-            <button type="submit" id="btnCadastro" class="btn-submit success">Confirmar Cadastro</button>
+          <button type="submit" id="btnBuscar" class="btn-submit">Pesquisar Estoque</button>
+        </form>
+      </div>
+
+      <div id="areaResultados" class="card hidden" style="border-color: var(--brand-500);">
+        <div class="section-title" style="color: var(--brand-500);">Pontas Selecionadas</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">O sistema selecionou as seguintes barras individualmente, priorizando a menor sobra:</p>
+        
+        <div id="listaCards"></div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+          <button id="btnBaixaAuto" class="btn-submit btn-success" onclick="confirmarBaixa()">Confirmar Baixa Automática</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-gerenciar" class="tab-content">
+      <div class="card">
+        <div class="section-title">Cadastrar Nova Ponta</div>
+        <form onsubmit="event.preventDefault(); cadastrarPonta();">
+          <div class="form-grid">
+            <div class="input-group">
+              <label>Bitola (mm)</label>
+              <input type="number" id="cadBitola" step="0.01" placeholder="Ex: 8.00" required>
+            </div>
+            <div class="input-group">
+              <label>Medida (m)</label>
+              <input type="number" id="cadMedida" step="0.01" min="0.1" placeholder="Ex: 3.50" required>
+            </div>
+            <div class="input-group">
+              <label>Quantidade</label>
+              <input type="number" id="cadQtde" step="1" min="1" value="1" required>
+            </div>
           </div>
+          <button type="submit" id="btnCadastrar" class="btn-submit btn-success" style="width: auto;">Cadastrar no Estoque</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Baixa Manual (Saída)</div>
+        <form onsubmit="event.preventDefault(); baixarManual();">
+          <div class="input-group" style="max-width: 300px; margin-bottom: 1rem;">
+            <label>Código/ID da Ponta</label>
+            <input type="number" id="baixaId" step="1" min="1" placeholder="Digite o ID da planilha" required>
+          </div>
+          <button type="submit" id="btnBaixaManual" class="btn-submit" style="width: auto; background: var(--danger);">Confirmar Baixa do ID</button>
         </form>
       </div>
     </div>
   </div>
 
   <script>
-    // ---------------------------------------------------
-    // TEMA E INTERFACE
-    // ---------------------------------------------------
+    const SHEET_ID = "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI";
+    const POST_URL = "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec";
+    
+    let estoquePontas = [];
+    let selecaoAtual = [];
+
+    // --- UTILS (Tema e Tabs) ---
     function initTheme() {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'dark') {
+      if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark');
         document.getElementById('themeBtn').innerText = '☀️';
       } else {
         document.getElementById('themeBtn').innerText = '🌙';
       }
     }
-
     function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.classList.toggle('dark');
+      const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
       document.getElementById('themeBtn').innerText = isDark ? '☀️' : '🌙';
     }
-
-    function openTab(tabId, btn) {
+    function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      btn.classList.add('active');
+      btnElement.classList.add('active');
     }
-
     function showToast(msg, type = 'success') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      
-      let icon = '✅';
-      if(type === 'error') icon = '❌';
-      if(type === 'info') icon = 'ℹ️';
-      
-      toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
-      container.appendChild(toast);
-      
-      setTimeout(() => { 
-        toast.style.animation = 'slideIn 0.3s ease-in reverse forwards';
-        setTimeout(() => toast.remove(), 300);
-      }, 4000);
+      const box = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> <span>${msg}</span>`;
+      box.appendChild(t);
+      setTimeout(() => { t.remove(); }, 4000);
     }
 
-    // ---------------------------------------------------
-    // CONSTANTES E VARIÁVEIS GLOBAIS
-    // ---------------------------------------------------
-    const SPREADSHEET_ID = "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI";
-    const SHEET_NAME = "Pontas";
-    // URL exigida na regra de negócio
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec";
-    
-    let estoqueFisico = []; 
-    let planoAtual = []; 
-
-    // ---------------------------------------------------
-    // CARREGAMENTO DE DADOS (READ)
-    // ---------------------------------------------------
-    async function inicializar() {
-      const btn = document.getElementById("btnBuscar");
-      btn.disabled = true;
-      btn.innerText = "Sincronizando banco de dados...";
-      
+    // --- LEITURA DE DADOS (GET) ---
+    async function carregarEstoque() {
       try {
-        // Filtramos apenas as peças disponíveis em estoque
         const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}&tqx=out:json`;
-
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Pontas&tq=${query}&tqx=out:json`;
+        
         const resp = await fetch(url);
         const text = await resp.text();
+        const data = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
         
-        // Remove a casca do JSONP
-        const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-        const data = JSON.parse(jsonStr);
-
-        estoqueFisico = [];
-        
-        // Parser seguro para números brasileiros (vírgula)
+        estoquePontas = [];
         const parseNum = (v) => parseFloat(String(v || '0').replace(/\./g, '').replace(',', '.')) || 0;
 
-        // Montagem do inventário local
         data.table.rows.forEach(r => {
           const id = r.c[0]?.v;
           const qtde = parseInt(r.c[2]?.v) || 1;
@@ -586,242 +279,157 @@
           const medida = parseNum(r.c[4]?.v);
           
           if(id && medida > 0) {
-            // Expande virtualmente se a quantidade for maior que 1 na planilha
             for(let i = 0; i < qtde; i++) {
-              estoqueFisico.push({ id, bitola, medida });
+              estoquePontas.push({ id, bitola, medida });
             }
           }
         });
 
-        atualizarSelectBitolas();
-        btn.disabled = false;
-        btn.innerText = "Gerar Plano de Corte";
-        showToast("Estoque sincronizado com sucesso!", "info");
+        // Preenche dropdown
+        const sel = document.getElementById("buscaBitola");
+        const bitolas = [...new Set(estoquePontas.map(p => p.bitola))].sort((a,b) => parseFloat(a.replace(',','.')) - parseFloat(b.replace(',','.')));
+        sel.innerHTML = '<option value="" disabled selected>Escolha a bitola...</option>';
+        bitolas.forEach(b => sel.innerHTML += `<option value="${b}">Ø ${b} mm</option>`);
       } catch (err) {
-        showToast("Falha ao sincronizar dados com a planilha.", "error");
-        btn.innerText = "Erro na Sincronização";
+        showToast("Erro ao ler dados da planilha.", "error");
       }
     }
 
-    function atualizarSelectBitolas() {
-      const select = document.getElementById("buscaBitola");
-      // Coleta bitolas únicas e as ordena numericamente
-      const bitolas = [...new Set(estoqueFisico.map(p => p.bitola))].sort((a,b) => parseFloat(a.replace(',','.')) - parseFloat(b.replace(',','.')));
+    // --- LÓGICA DE BUSCA (CASAMENTO INDIVIDUAL) ---
+    function buscarPontas() {
+      const bitolaReq = document.getElementById("buscaBitola").value;
+      const medidaReq = parseFloat(document.getElementById("buscaMedida").value);
+      const qtdeReq = parseInt(document.getElementById("buscaQtde").value);
+
+      if (!bitolaReq || isNaN(medidaReq) || qtdeReq < 1) return;
+
+      // Filtra as que servem e ordena da menor sobra para a maior sobra
+      let barrasAptas = estoquePontas.filter(p => p.bitola === bitolaReq && p.medida >= medidaReq);
+      barrasAptas.sort((a, b) => (a.medida - medidaReq) - (b.medida - medidaReq));
+
+      if (barrasAptas.length < qtdeReq) {
+        showToast(`Estoque insuficiente! Encontradas apenas ${barrasAptas.length} barras aptas.`, "error");
+        document.getElementById("areaResultados").classList.add("hidden");
+        return;
+      }
+
+      // Seleciona exatamente a quantidade pedida (1 card para cada)
+      selecaoAtual = barrasAptas.slice(0, qtdeReq).map(b => ({
+        id: b.id,
+        bitola: b.bitola,
+        medidaOriginal: b.medida,
+        sobra: b.medida - medidaReq
+      }));
+
+      renderizarCards();
+    }
+
+    function renderizarCards() {
+      const div = document.getElementById("listaCards");
+      div.innerHTML = "";
       
-      select.innerHTML = '<option value="" disabled selected>Escolha a bitola...</option>';
-      bitolas.forEach(b => select.innerHTML += `<option value="${b}">Ø ${b} mm</option>`);
-    }
-
-    // ---------------------------------------------------
-    // LÓGICA DE CASAMENTO DE BARRAS (ALGORITMO)
-    // ---------------------------------------------------
-    function executarAlgoritmoBusca() {
-      const containerResult = document.getElementById("resultadosContainer");
-      containerResult.classList.add('hidden');
-
-      const reqBitola = document.getElementById("buscaBitola").value;
-      const reqMedida = parseFloat(document.getElementById("buscaMedida").value);
-      let qtdeNecessaria = parseInt(document.getElementById("buscaQtde").value) || 1;
-
-      if (!reqBitola || isNaN(reqMedida) || qtdeNecessaria < 1) {
-        showToast("Preencha todos os campos corretamente.", "error");
-        return;
-      }
-
-      // Filtra apenas as peças da bitola exigida que tenham tamanho suficiente
-      let barrasDisponiveis = estoqueFisico.filter(p => p.bitola === reqBitola && p.medida >= reqMedida);
-
-      // ORDENAÇÃO INTELIGENTE:
-      // 1º Prioridade: Barras com menor sobra após os cortes
-      // 2º Prioridade: Peças menores no geral (preserva barras grandes para o futuro)
-      barrasDisponiveis.sort((a, b) => {
-        let sobraA = a.medida % reqMedida;
-        let sobraB = b.medida % reqMedida;
-        if (Math.abs(sobraA - sobraB) > 0.01) return sobraA - sobraB;
-        return a.medida - b.medida;
-      });
-
-      planoAtual = [];
-      let qtdeAtendida = 0;
-
-      for (let barra of barrasDisponiveis) {
-        if (qtdeAtendida >= qtdeNecessaria) break;
-
-        let maxCortesNaBarra = Math.floor(barra.medida / reqMedida);
-        let cortesAUsar = Math.min(qtdeNecessaria - qtdeAtendida, maxCortesNaBarra);
-
-        if (cortesAUsar > 0) {
-          let sobraFinal = barra.medida - (cortesAUsar * reqMedida);
-          
-          planoAtual.push({
-            id: barra.id,
-            bitola: barra.bitola,
-            medidaOriginal: barra.medida,
-            cortesUtilizados: cortesAUsar,
-            sobra: sobraFinal
-          });
-          
-          qtdeAtendida += cortesAUsar;
-        }
-      }
-
-      if (qtdeAtendida < qtdeNecessaria) {
-        showToast(`Estoque insuficiente! Encontradas peças para atender apenas ${qtdeAtendida} das ${qtdeNecessaria} solicitadas.`, "error");
-        return;
-      }
-
-      renderizarPlanoDeCorte();
-    }
-
-    function renderizarPlanoDeCorte() {
-      const lista = document.getElementById("listaBarras");
-      lista.innerHTML = "";
-
-      // Agrupa barras com a mesma medida original e quantidade de cortes para não poluir a tela
-      const grupos = [];
-      planoAtual.forEach(barra => {
-        let grupo = grupos.find(g => g.medidaOriginal === barra.medidaOriginal && g.cortesUtilizados === barra.cortesUtilizados);
-        if(grupo) {
-          grupo.quantidade++;
-          grupo.ids.push(barra.id);
-        } else {
-          grupos.push({
-            medidaOriginal: barra.medidaOriginal,
-            cortesUtilizados: barra.cortesUtilizados,
-            sobra: barra.sobra,
-            quantidade: 1,
-            ids: [barra.id]
-          });
-        }
-      });
-
-      grupos.forEach((grupo, index) => {
-        const perfeito = grupo.sobra < 0.01;
-        const uid = 'dropdown-ids-' + index;
-        
-        let tituloId = '';
-        let dropdownHtml = '';
-        
-        if (grupo.quantidade === 1) {
-          tituloId = `<span class="result-badge">ID #${grupo.ids[0]}</span>`;
-        } else {
-          tituloId = `<span class="result-badge">Vários Códigos (${grupo.quantidade})</span>
-                      <button type="button" class="btn-link" onclick="document.getElementById('${uid}').classList.toggle('active')">Ver IDs ▼</button>`;
-          
-          dropdownHtml = `<div id="${uid}" class="ids-dropdown">
-                            ${grupo.ids.map(id => `<span class="id-badge-small">#${id}</span>`).join('')}
-                          </div>`;
-        }
-
-        lista.innerHTML += `
-          <div class="result-item" style="flex-direction: column; align-items: stretch;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div class="result-info">
-                <h3>${tituloId} Barra Original: ${grupo.medidaOriginal.toFixed(2)}m</h3>
-                <p>Rendimento extraído: <b>${grupo.cortesUtilizados * grupo.quantidade} peça(s)</b> usando ${grupo.quantidade} barra(s).</p>
-              </div>
-              <div class="sobra-info">
-                <span>Sobra Unitária</span>
-                <strong>${grupo.sobra.toFixed(2)}m</strong>
-                ${perfeito ? '<div class="perfeito">✓ Corte Perfeito (Zero Perda)</div>' : ''}
-              </div>
+      selecaoAtual.forEach(item => {
+        div.innerHTML += `
+          <div class="result-card">
+            <div class="result-info">
+              <h3><span class="badge-id">ID #${item.id}</span> Barra Original de ${item.medidaOriginal.toFixed(2)}m</h3>
+              <p>Bitola Ø ${item.bitola} mm</p>
             </div>
-            ${dropdownHtml}
+            <div class="sobra-box">
+              <span>Sobra Estimada</span>
+              <strong>${item.sobra.toFixed(2)}m</strong>
+            </div>
           </div>
         `;
       });
-      
-      document.getElementById("resultadosContainer").classList.remove("hidden");
+      document.getElementById("areaResultados").classList.remove("hidden");
     }
 
-    // ---------------------------------------------------
-    // INTEGRAÇÃO COM GOOGLE APPS SCRIPT (POST)
-    // ---------------------------------------------------
-    async function confirmarBaixaAutomatica() {
-      const btn = document.getElementById("btnBaixaAutomatica");
-      btn.disabled = true; 
-      btn.innerText = "Processando Baixa...";
-
-      const payload = {
-        action: "baixar",
-        instrucoes: planoAtual.map(b => ({
-          id: b.id,
-          bitola: b.bitola,
-          sobra: b.sobra
-        }))
-      };
+    // --- ENVIOS PARA A PLANILHA (POST) ---
+    async function confirmarBaixa() {
+      const btn = document.getElementById("btnBaixaAuto");
+      btn.disabled = true; btn.innerText = "Processando...";
+      
+      // Monta payload de acordo com o Apps Script: array 'instrucoes' com {id, bitola, sobra}
+      const payload = { action: "baixar", instrucoes: selecaoAtual };
 
       try {
-        const resp = await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        
+        const resp = await fetch(POST_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
         const res = await resp.json();
-        
         if (res.sucesso) {
-          showToast("Baixa e sobras registradas com sucesso!", "success");
-          document.getElementById("resultadosContainer").classList.add("hidden");
-          // Atualiza dados e zera o form
-          document.getElementById("searchForm").reset();
-          inicializar(); 
+          showToast("Baixa registrada com sucesso!", "success");
+          document.getElementById("areaResultados").classList.add("hidden");
+          carregarEstoque(); // Atualiza a tela
         } else {
-          showToast(res.mensagem || "Erro na baixa. Tente novamente.", "error");
+          showToast(res.mensagem, "error");
         }
-      } catch (e) {
-        showToast("Falha crítica ao tentar dar baixa. Verifique sua rede.", "error");
+      } catch (err) {
+        showToast("Erro de rede ao confirmar baixa.", "error");
       } finally {
-        btn.disabled = false; 
-        btn.innerText = "Confirmar Baixa Automática";
+        btn.disabled = false; btn.innerText = "Confirmar Baixa Automática";
       }
     }
 
-    async function enviarCadastro() {
-      const btn = document.getElementById("btnCadastro");
-      btn.disabled = true; 
-      btn.innerText = "Registrando na Planilha...";
-
+    async function cadastrarPonta() {
+      const btn = document.getElementById("btnCadastrar");
+      btn.disabled = true; btn.innerText = "Enviando...";
+      
       const payload = {
         action: "cadastrar",
-        bitola: document.getElementById("lancBitola").value,
-        medida: document.getElementById("lancMedida").value,
-        qtde: document.getElementById("lancQtde").value
+        bitola: document.getElementById("cadBitola").value,
+        medida: document.getElementById("cadMedida").value,
+        qtde: document.getElementById("cadQtde").value
       };
 
       try {
-        const resp = await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
+        const resp = await fetch(POST_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
         const res = await resp.json();
-        
         if (res.sucesso) {
-          showToast(`Cadastro unitarizado realizado com sucesso!`, "success");
-          document.getElementById("lancBitola").value = "";
-          document.getElementById("lancMedida").value = "";
-          document.getElementById("lancQtde").value = "1";
-          
-          // Re-sincroniza o estoque
-          inicializar();
+          showToast("Cadastrado com sucesso!", "success");
+          document.getElementById("cadBitola").value = "";
+          document.getElementById("cadMedida").value = "";
+          document.getElementById("cadQtde").value = "1";
+          carregarEstoque();
         } else {
-          showToast(res.mensagem || "Erro ao efetuar cadastro", "error");
+          showToast("Erro ao cadastrar.", "error");
         }
-      } catch (e) {
-        showToast("Erro de comunicação ao enviar cadastro.", "error");
+      } catch (err) {
+        showToast("Erro de comunicação.", "error");
       } finally {
-        btn.disabled = false; 
-        btn.innerText = "Confirmar Cadastro";
+        btn.disabled = false; btn.innerText = "Cadastrar no Estoque";
       }
     }
 
-    // ---------------------------------------------------
-    // INICIALIZAÇÃO
-    // ---------------------------------------------------
+    async function baixarManual() {
+      const btn = document.getElementById("btnBaixaManual");
+      const idVal = document.getElementById("baixaId").value;
+      if(!idVal) return;
+      
+      btn.disabled = true; btn.innerText = "Baixando...";
+      // Para baixa manual, enviamos a instrução com sobra 0 para não gerar retalhos acidentais
+      const payload = { action: "baixar", instrucoes: [{ id: parseInt(idVal), sobra: 0 }] };
+
+      try {
+        const resp = await fetch(POST_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        const res = await resp.json();
+        if (res.sucesso) {
+          showToast(`Baixa do ID ${idVal} confirmada!`, "success");
+          document.getElementById("baixaId").value = "";
+          carregarEstoque();
+        } else {
+          showToast(res.mensagem || "ID não encontrado.", "error");
+        }
+      } catch (err) {
+        showToast("Erro na ligação.", "error");
+      } finally {
+        btn.disabled = false; btn.innerText = "Confirmar Baixa do ID";
+      }
+    }
+
+    // --- INICIALIZAÇÃO ---
     window.onload = () => {
       initTheme();
-      inicializar();
+      carregarEstoque();
     };
   </script>
 </body>
