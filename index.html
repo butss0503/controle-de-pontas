@@ -144,10 +144,14 @@
         <div class="form-grid">
           <div class="form-group">
             <label>ID da Planilha</label>
-            <input type="number" id="baixaId" placeholder="Ex: 342">
+            <input type="number" id="baixaId" placeholder="Ex: 342" oninput="preverBaixa()">
           </div>
         </div>
-        <button class="btn btn-danger" id="btnBaixar" onclick="baixarManual()">Confirmar Baixa (Vendido)</button>
+        
+        <!-- Área onde aparece a barra ao ser pesquisada -->
+        <div id="previewBaixa" style="margin-bottom: 15px;"></div>
+        
+        <button class="btn btn-danger" id="btnBaixar" onclick="baixarManual()" style="display:none;">Confirmar Baixa (Vendido)</button>
       </div>
     </div>
   </div>
@@ -155,14 +159,14 @@
   <div id="toast">Notificação</div>
 
   <script>
-    // URL DO SEU SCRIPT (Atualizada e Definitiva)
+    // URL DO SEU SCRIPT
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec";
     
     // Leitura Google Sheets
     const SPREADSHEET_ID = "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI";
     const SHEET_NAME = "Pontas";
     let estoque = [];
-    let barrasSelecionadas = []; // Para a baixa automática
+    let barrasSelecionadas = []; 
 
     // Função à prova de falhas para ler números (Resolve o erro 1,8 -> 18)
     const parseNumSeguro = (obj) => {
@@ -170,8 +174,6 @@
       let val = obj.v !== undefined ? obj.v : obj.f;
       if (val === null || val === undefined || val === "") return 0;
       if (typeof val === 'number') return val;
-      
-      // Converte para string e troca vírgula por ponto. Ex: "1,8" vira "1.8"
       let strNum = String(val).replace(',', '.');
       return parseFloat(strNum) || 0;
     };
@@ -207,7 +209,6 @@
       
       if (!bitola || isNaN(medidaReq)) { showToast("Preencha bitola e tamanho.", true); return; }
 
-      // Filtra as que servem e ordena da MENOR para a MAIOR (Best-Fit para gerar menor sobra)
       let candidatas = estoque.filter(p => p.bitola === bitola && p.medida >= medidaReq)
                               .sort((a, b) => a.medida - b.medida);
 
@@ -216,7 +217,6 @@
         return;
       }
 
-      // Seleciona as peças necessárias individualmente
       barrasSelecionadas = candidatas.slice(0, qtdeReq).map(c => ({
         id: c.id,
         medidaOriginal: c.medida,
@@ -243,6 +243,35 @@
       res.innerHTML = html;
     }
 
+    // PREVISÃO DA BARRA NA BAIXA MANUAL
+    function preverBaixa() {
+      const id = document.getElementById("baixaId").value;
+      const previewDiv = document.getElementById("previewBaixa");
+      const btnBaixar = document.getElementById("btnBaixar");
+
+      if (!id) {
+        previewDiv.innerHTML = "";
+        btnBaixar.style.display = "none";
+        return;
+      }
+
+      const barraEncontrada = estoque.find(b => b.id.toString() === id.toString());
+
+      if (barraEncontrada) {
+        previewDiv.innerHTML = `
+          <div class="result-card" style="border-left-color: var(--danger); margin-top: 5px;">
+            <div class="result-info">
+              <h3><span class="badge" style="background:var(--danger)">ID #${barraEncontrada.id}</span> Barra Encontrada</h3>
+              <p>Bitola Ø ${barraEncontrada.bitola.toFixed(2)} mm • Medida: ${barraEncontrada.medida.toFixed(2)}m</p>
+            </div>
+          </div>`;
+        btnBaixar.style.display = "block";
+      } else {
+        previewDiv.innerHTML = `<div style="color: var(--danger); font-size: 0.9rem; margin-top: 10px;">❌ ID não encontrado no estoque ou já vendido.</div>`;
+        btnBaixar.style.display = "none";
+      }
+    }
+
     // ENVIO PARA O GOOGLE SCRIPT (POST)
     async function enviarParaScript(payload, btnElement, txtLoading, txtOriginal) {
       btnElement.disabled = true;
@@ -256,8 +285,14 @@
         const json = await resp.json();
         if (json.sucesso) {
           showToast(json.mensagem);
-          document.getElementById("areaResultados").innerHTML = ""; // limpa a tela de busca
-          inicializar(); // recarrega o estoque fresco
+          document.getElementById("areaResultados").innerHTML = ""; 
+          
+          // Limpa campos da Baixa Manual se for o caso
+          document.getElementById("baixaId").value = "";
+          document.getElementById("previewBaixa").innerHTML = "";
+          document.getElementById("btnBaixar").style.display = "none";
+
+          inicializar(); 
         } else {
           showToast(json.mensagem, true);
         }
