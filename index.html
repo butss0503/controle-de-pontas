@@ -168,7 +168,6 @@
     let estoque = [];
     let barrasSelecionadas = []; 
 
-    // Função à prova de falhas para ler números
     const parseNumSeguro = (obj) => {
       if (!obj) return 0;
       let val = obj.v !== undefined ? obj.v : obj.f;
@@ -181,10 +180,7 @@
     async function inicializar() {
       try {
         const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
-        
-        // SOLUÇÃO 1: Quebra de Cache (Cache-Buster)
-        // Isso obriga o navegador a pegar a versão mais recente da planilha a cada segundo!
-        const cacheBuster = new Date().getTime();
+        const cacheBuster = new Date().getTime(); // Resolve o problema do cache
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${cacheBuster}`;
         
         const resp = await fetch(url);
@@ -205,7 +201,7 @@
       }
     }
 
-    // BUSCA E CASAMENTO DE BARRAS
+    // ALGORITMO DE PLANO DE CORTE OTIMIZADO (NOVIDADE AQUI!)
     function buscarEstoque() {
       const bitola = parseFloat(document.getElementById("buscaBitola").value);
       const medidaReq = parseFloat(document.getElementById("buscaMedida").value);
@@ -214,31 +210,63 @@
       
       if (!bitola || isNaN(medidaReq)) { showToast("Preencha bitola e tamanho.", true); return; }
 
+      // Pega as barras que servem (pelo menos do tamanho de 1 peça solicitada)
       let candidatas = estoque.filter(p => p.bitola === bitola && p.medida >= medidaReq)
-                              .sort((a, b) => a.medida - b.medida);
+                              .sort((a, b) => a.medida - b.medida); // Começa da menor para a maior
 
-      if (candidatas.length < qtdeReq) {
-        res.innerHTML = `<div class="box" style="border-color:var(--danger)">❌ Só temos ${candidatas.length} barra(s) que atende(m) esse pedido.</div>`;
+      let qtdeFaltante = qtdeReq;
+      barrasSelecionadas = [];
+
+      // Percorre as barras disponíveis para preencher o pedido
+      for (let i = 0; i < candidatas.length; i++) {
+        let barra = candidatas[i];
+        
+        // Verifica quantas peças cabem matematicamente dentro desta barra física
+        let pecasPossiveis = Math.floor(barra.medida / medidaReq);
+        let pecasExtraidas = Math.min(pecasPossiveis, qtdeFaltante);
+        
+        if (pecasExtraidas > 0) {
+          // Calcula a sobra exata extraindo todas as peças possíveis desta barra
+          let sobra = barra.medida - (pecasExtraidas * medidaReq);
+          
+          barrasSelecionadas.push({
+            id: barra.id,
+            medidaOriginal: barra.medida,
+            pecasExtraidas: pecasExtraidas, // Para exibir visualmente
+            sobra: sobra, // Sobra real a devolver à planilha
+            bitola: barra.bitola
+          });
+          
+          qtdeFaltante -= pecasExtraidas;
+        }
+        
+        // Se já conseguiu todas as peças, para a busca
+        if (qtdeFaltante <= 0) break;
+      }
+
+      // Se passou por todas as barras e ainda faltam peças
+      if (qtdeFaltante > 0) {
+        let pecasEncontradas = qtdeReq - qtdeFaltante;
+        res.innerHTML = `<div class="box" style="border-color:var(--danger)">
+          ❌ Estoque insuficiente. Só conseguimos extrair <strong>${pecasEncontradas} peça(s)</strong> do estoque disponível.
+        </div>`;
         return;
       }
 
-      barrasSelecionadas = candidatas.slice(0, qtdeReq).map(c => ({
-        id: c.id,
-        medidaOriginal: c.medida,
-        sobra: c.medida - medidaReq,
-        bitola: c.bitola
-      }));
-
-      let html = `<div class="box"><h2>✅ Pontas Selecionadas</h2>`;
+      // Exibição do Plano de Corte
+      let html = `<div class="box">
+        <h2>✅ Plano de Corte Otimizado</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">O sistema selecionou as seguintes barras físicas para atender seu pedido com o menor desperdício possível:</p>`;
+      
       barrasSelecionadas.forEach(b => {
         html += `
           <div class="result-card">
             <div class="result-info">
               <h3><span class="badge">ID #${b.id}</span> Barra Original de ${b.medidaOriginal.toFixed(2)}m</h3>
-              <p>Bitola Ø ${b.bitola} mm</p>
+              <p>Rendimento extraído: <strong>${b.pecasExtraidas} peça(s)</strong> usando 1 barra(s).</p>
             </div>
             <div class="sobra-box">
-              <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">SOBRA ESTIMADA</p>
+              <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">SOBRA UNITÁRIA</p>
               <div class="sobra-val">${b.sobra.toFixed(2)}m</div>
             </div>
           </div>
@@ -277,7 +305,7 @@
       }
     }
 
-    // ENVIO PARA O GOOGLE SCRIPT (POST) - Com Solução 2
+    // ENVIO PARA O GOOGLE SCRIPT
     async function enviarParaScript(payload, btnElement, txtLoading, txtOriginal) {
       btnElement.disabled = true;
       btnElement.innerText = txtLoading;
@@ -295,16 +323,13 @@
           showToast(json.mensagem, true);
         }
       } catch (err) {
-        // SOLUÇÃO 2: Se der erro de conexão mas o Google salvou (Timeout)
         showToast("Comando enviado! Atualizando tela...", false);
       } finally {
-        // Limpa os campos da tela
         document.getElementById("areaResultados").innerHTML = ""; 
         document.getElementById("baixaId").value = "";
         document.getElementById("previewBaixa").innerHTML = "";
         document.getElementById("btnBaixar").style.display = "none";
         
-        // Aguarda 1,5 segundos para garantir a atualização no Google antes de reler o estoque
         setTimeout(() => {
             inicializar(); 
             btnElement.disabled = false;
@@ -314,6 +339,7 @@
     }
 
     function confirmarBaixaAutomatica(btn) {
+      // O formato de envio para o backend permanece igual: ele consome o ID original e gera a sobra calculada.
       const instrucoes = barrasSelecionadas.map(b => ({ id: b.id, sobra: b.sobra, bitola: b.bitola }));
       enviarParaScript({ action: "baixar", instrucoes: instrucoes }, btn, "Processando Baixa...", "Confirmar Baixa Automática");
     }
@@ -332,7 +358,6 @@
       enviarParaScript({ action: "cadastrar", bitola: bitola, medida: medida, qtde: qtde }, document.getElementById("btnCadastrar"), "Salvando...", "Confirmar Cadastro");
     }
 
-    // UI Utilities
     function switchTab(tabId) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
