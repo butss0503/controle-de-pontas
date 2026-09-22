@@ -323,6 +323,41 @@
     
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--brand-500);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: 0.5rem;
+      transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--brand-600); }
+    
+    .ids-dropdown {
+      display: none;
+      padding-top: 1rem;
+      margin-top: 1rem;
+      border-top: 1px dashed var(--border-color);
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .ids-dropdown.active { 
+      display: flex; 
+    }
+    
+    .id-badge-small {
+      background-color: var(--brand-50);
+      color: var(--brand-600);
+      padding: 0.3rem 0.6rem;
+      border-radius: 999px; /* Formato de pílula arredondada */
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
     .toast-container { 
       position: fixed; 
       bottom: 20px; 
@@ -642,22 +677,60 @@
       const lista = document.getElementById("listaBarras");
       lista.innerHTML = "";
 
-      planoAtual.forEach(item => {
-        const perfeito = item.sobra < 0.01;
+      // Agrupa barras com a mesma medida original e quantidade de cortes para não poluir a tela
+      const grupos = [];
+      planoAtual.forEach(barra => {
+        let grupo = grupos.find(g => g.medidaOriginal === barra.medidaOriginal && g.cortesUtilizados === barra.cortesUtilizados);
+        if(grupo) {
+          grupo.quantidade++;
+          grupo.ids.push(barra.id);
+        } else {
+          grupos.push({
+            medidaOriginal: barra.medidaOriginal,
+            cortesUtilizados: barra.cortesUtilizados,
+            sobra: barra.sobra,
+            quantidade: 1,
+            ids: [barra.id]
+          });
+        }
+      });
+
+      grupos.forEach((grupo, index) => {
+        const perfeito = grupo.sobra < 0.01;
+        const uid = 'dropdown-ids-' + index;
+        
+        let tituloId = '';
+        let dropdownHtml = '';
+        
+        if (grupo.quantidade === 1) {
+          tituloId = `<span class="result-badge">ID #${grupo.ids[0]}</span>`;
+        } else {
+          tituloId = `<span class="result-badge">Vários Códigos (${grupo.quantidade})</span>
+                      <button type="button" class="btn-link" onclick="document.getElementById('${uid}').classList.toggle('active')">Ver IDs ▼</button>`;
+          
+          dropdownHtml = `<div id="${uid}" class="ids-dropdown">
+                            ${grupo.ids.map(id => `<span class="id-badge-small">#${id}</span>`).join('')}
+                          </div>`;
+        }
+
         lista.innerHTML += `
-          <div class="result-item">
-            <div class="result-info">
-              <h3><span class="result-badge">ID #${item.id}</span> Barra Original: ${item.medidaOriginal.toFixed(2)}m</h3>
-              <p>Rendimento extraído: <b>${item.cortesUtilizados} peça(s)</b> neste corte.</p>
+          <div class="result-item" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="result-info">
+                <h3>${tituloId} Barra Original: ${grupo.medidaOriginal.toFixed(2)}m</h3>
+                <p>Rendimento extraído: <b>${grupo.cortesUtilizados * grupo.quantidade} peça(s)</b> usando ${grupo.quantidade} barra(s).</p>
+              </div>
+              <div class="sobra-info">
+                <span>Sobra Unitária</span>
+                <strong>${grupo.sobra.toFixed(2)}m</strong>
+                ${perfeito ? '<div class="perfeito">✓ Corte Perfeito (Zero Perda)</div>' : ''}
+              </div>
             </div>
-            <div class="sobra-info">
-              <span>Sobra Resultante</span>
-              <strong>${item.sobra.toFixed(2)}m</strong>
-              ${perfeito ? '<div class="perfeito">✓ Corte Perfeito (Zero Perda)</div>' : ''}
-            </div>
+            ${dropdownHtml}
           </div>
         `;
       });
+      
       document.getElementById("resultadosContainer").classList.remove("hidden");
     }
 
