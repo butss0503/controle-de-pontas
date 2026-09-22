@@ -61,9 +61,9 @@
     .btn-danger:hover { background: #dc2626; }
 
     /* Results */
-    .result-card { background: var(--bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .result-card { background: var(--bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .result-info h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
-    .result-info p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+    .result-info p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
     .badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 6px; }
     .sobra-box { text-align: right; }
     .sobra-val { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
@@ -201,7 +201,7 @@
       }
     }
 
-    // ALGORITMO DE PLANO DE CORTE OTIMIZADO (NOVIDADE AQUI!)
+    // ALGORITMO DE PLANO DE CORTE OTIMIZADO 
     function buscarEstoque() {
       const bitola = parseFloat(document.getElementById("buscaBitola").value);
       const medidaReq = parseFloat(document.getElementById("buscaMedida").value);
@@ -210,41 +210,35 @@
       
       if (!bitola || isNaN(medidaReq)) { showToast("Preencha bitola e tamanho.", true); return; }
 
-      // Pega as barras que servem (pelo menos do tamanho de 1 peça solicitada)
       let candidatas = estoque.filter(p => p.bitola === bitola && p.medida >= medidaReq)
                               .sort((a, b) => a.medida - b.medida); // Começa da menor para a maior
 
       let qtdeFaltante = qtdeReq;
       barrasSelecionadas = [];
 
-      // Percorre as barras disponíveis para preencher o pedido
       for (let i = 0; i < candidatas.length; i++) {
         let barra = candidatas[i];
         
-        // Verifica quantas peças cabem matematicamente dentro desta barra física
         let pecasPossiveis = Math.floor(barra.medida / medidaReq);
         let pecasExtraidas = Math.min(pecasPossiveis, qtdeFaltante);
         
         if (pecasExtraidas > 0) {
-          // Calcula a sobra exata extraindo todas as peças possíveis desta barra
           let sobra = barra.medida - (pecasExtraidas * medidaReq);
           
           barrasSelecionadas.push({
             id: barra.id,
             medidaOriginal: barra.medida,
-            pecasExtraidas: pecasExtraidas, // Para exibir visualmente
-            sobra: sobra, // Sobra real a devolver à planilha
+            pecasExtraidas: pecasExtraidas,
+            sobra: sobra,
             bitola: barra.bitola
           });
           
           qtdeFaltante -= pecasExtraidas;
         }
         
-        // Se já conseguiu todas as peças, para a busca
         if (qtdeFaltante <= 0) break;
       }
 
-      // Se passou por todas as barras e ainda faltam peças
       if (qtdeFaltante > 0) {
         let pecasEncontradas = qtdeReq - qtdeFaltante;
         res.innerHTML = `<div class="box" style="border-color:var(--danger)">
@@ -259,11 +253,15 @@
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">O sistema selecionou as seguintes barras físicas para atender seu pedido com o menor desperdício possível:</p>`;
       
       barrasSelecionadas.forEach(b => {
+        // Cálculo do peso total da barra para exibir na tela: ((Bitola²) / 162) * MedidaOriginal
+        let pesoTotal = (Math.pow(b.bitola, 2) / 162) * b.medidaOriginal;
+
         html += `
           <div class="result-card">
             <div class="result-info">
               <h3><span class="badge">ID #${b.id}</span> Barra Original de ${b.medidaOriginal.toFixed(2)}m</h3>
               <p>Rendimento extraído: <strong>${b.pecasExtraidas} peça(s)</strong> usando 1 barra(s).</p>
+              <p>Peso Total da Barra: <strong>${pesoTotal.toFixed(2)} kg</strong></p>
             </div>
             <div class="sobra-box">
               <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">SOBRA UNITÁRIA</p>
@@ -291,11 +289,14 @@
       const barraEncontrada = estoque.find(b => b.id.toString() === id.toString());
 
       if (barraEncontrada) {
+        let pesoEncontrada = (Math.pow(barraEncontrada.bitola, 2) / 162) * barraEncontrada.medida;
+        
         previewDiv.innerHTML = `
           <div class="result-card" style="border-left-color: var(--danger); margin-top: 5px;">
             <div class="result-info">
               <h3><span class="badge" style="background:var(--danger)">ID #${barraEncontrada.id}</span> Barra Encontrada</h3>
               <p>Bitola Ø ${barraEncontrada.bitola.toFixed(2)} mm • Medida: ${barraEncontrada.medida.toFixed(2)}m</p>
+              <p>Peso Total: <strong>${pesoEncontrada.toFixed(2)} kg</strong></p>
             </div>
           </div>`;
         btnBaixar.style.display = "block";
@@ -339,7 +340,6 @@
     }
 
     function confirmarBaixaAutomatica(btn) {
-      // O formato de envio para o backend permanece igual: ele consome o ID original e gera a sobra calculada.
       const instrucoes = barrasSelecionadas.map(b => ({ id: b.id, sobra: b.sobra, bitola: b.bitola }));
       enviarParaScript({ action: "baixar", instrucoes: instrucoes }, btn, "Processando Baixa...", "Confirmar Baixa Automática");
     }
