@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Controle de Pontas - Grande Aço</title>
   <style>
+    /* ==========================================================================
+       1. VARIÁVEIS DE TEMA E CONFIGURAÇÕES GLOBAIS
+       ========================================================================== */
     :root {
       --primary: #0ea5e9;
       --primary-hover: #0284c7;
@@ -14,7 +17,12 @@
       --text-muted: #64748b;
       --border: #e2e8f0;
       --success: #10b981;
+      --success-hover: #059669;
       --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: 0.25s ease;
     }
 
     [data-theme="dark"] {
@@ -27,361 +35,652 @@
       --border: #334155;
     }
 
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
-    .container { max-width: 800px; margin: 0 auto; }
-    
-    /* Header */
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .logo-container { display: flex; align-items: center; gap: 16px; }
-    .logo-img { width: 80px; height: 80px; object-fit: contain; border-radius: 50%; background: #fff; padding: 4px; }
+    * { 
+      box-sizing: border-box; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    }
+
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      margin: 0; 
+      padding: 20px; 
+      transition: background var(--transition), color var(--transition); 
+    }
+
+    .container { 
+      max-width: 800px; 
+      margin: 0 auto; 
+    }
+
+    /* ==========================================================================
+       2. CABEÇALHO E NAVEGAÇÃO (TABS)
+       ========================================================================== */
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 24px; 
+    }
+
+    .logo-container { 
+      display: flex; 
+      align-items: center; 
+      gap: 16px; 
+    }
+
+    .logo-img { 
+      width: 72px; 
+      height: 72px; 
+      object-fit: contain; 
+      border-radius: 50%; 
+      background: #fff; 
+      padding: 4px; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
     .header-titles h1 { margin: 0; font-size: 1.5rem; }
     .header-titles p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
     
-    .theme-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-    
-    /* Tabs */
-    .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
-    .tab { padding: 10px 20px; cursor: pointer; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .theme-btn { 
+      background: var(--card); 
+      border: 1px solid var(--border); 
+      color: var(--text); 
+      padding: 10px 14px; 
+      border-radius: var(--radius-md); 
+      cursor: pointer; 
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
+
+    .tabs { 
+      display: flex; 
+      gap: 10px; 
+      border-bottom: 2px solid var(--border); 
+      margin-bottom: 20px; 
+    }
+
+    .tab { 
+      padding: 10px 20px; 
+      cursor: pointer; 
+      color: var(--text-muted); 
+      font-weight: 600; 
+      border-bottom: 2px solid transparent; 
+      margin-bottom: -2px; 
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .tab.active { 
+      color: var(--primary); 
+      border-bottom-color: var(--primary); 
+    }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Forms */
-    .box { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-    .box h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-    select, input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 1rem; }
-    .btn { background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; }
-    .btn:hover { background: var(--primary-hover); }
-    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    /* ==========================================================================
+       3. FORMULÁRIOS, CAIXAS E BOTÕES
+       ========================================================================== */
+    .box { 
+      background: var(--card); 
+      padding: 20px; 
+      border-radius: var(--radius-lg); 
+      border: 1px solid var(--border); 
+      margin-bottom: 20px; 
+    }
+
+    .box h2 { 
+      margin-top: 0; 
+      font-size: 1.1rem; 
+      border-bottom: 1px solid var(--border); 
+      padding-bottom: 10px; 
+    }
+
+    .form-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 16px; 
+      margin-bottom: 16px; 
+    }
+
+    .form-group { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 6px; 
+    }
+
+    label { 
+      font-size: 0.85rem; 
+      font-weight: 600; 
+      color: var(--text-muted); 
+    }
+
+    select, input { 
+      padding: 10px 12px; 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius-md); 
+      background: var(--bg); 
+      color: var(--text); 
+      font-size: 1rem; 
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    select:focus, input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn { 
+      background: var(--primary); 
+      color: #fff; 
+      border: none; 
+      padding: 12px; 
+      border-radius: var(--radius-md); 
+      font-weight: 600; 
+      font-size: 1rem;
+      cursor: pointer; 
+      transition: var(--transition); 
+      width: 100%; 
+    }
+
+    .btn:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .btn-success { background: var(--success); margin-top: 10px; }
+    .btn-success:hover:not(:disabled) { background: var(--success-hover); }
+
     .btn-danger { background: var(--danger); }
-    .btn-danger:hover { background: #dc2626; }
+    .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
 
-    /* Results */
-    .result-card { background: var(--bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-    .result-info h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
+    /* ==========================================================================
+       4. CARTÕES DE RESULTADO E NOTIFICAÇÕES
+       ========================================================================== */
+    .result-card { 
+      background: var(--bg); 
+      border: 1px solid var(--border); 
+      border-left: 4px solid var(--primary); 
+      border-radius: var(--radius-md); 
+      padding: 16px; 
+      margin-bottom: 12px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      flex-wrap: wrap; 
+      gap: 12px; 
+    }
+
+    .result-card.danger-border { border-left-color: var(--danger); }
+
+    .result-info h3 { margin: 0 0 6px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
     .result-info p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
-    .badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 6px; }
-    .sobra-box { text-align: right; }
-    .sobra-val { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+    
+    .badge { 
+      background: var(--primary); 
+      color: #fff; 
+      padding: 3px 8px; 
+      border-radius: 4px; 
+      font-size: 0.8rem; 
+      font-weight: 700; 
+    }
+    .badge.danger-bg { background: var(--danger); }
 
-    /* Toasts */
-    #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 6px; padding: 16px; position: fixed; z-index: 1; bottom: 30px; left: 50%; transform: translateX(-50%); font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 3.5s; }
+    .sobra-box { text-align: right; }
+    .sobra-label { margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .sobra-val { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+
+    #toast { 
+      visibility: hidden; 
+      min-width: 260px; 
+      background-color: var(--success); 
+      color: #fff; 
+      text-align: center; 
+      border-radius: var(--radius-md); 
+      padding: 14px 20px; 
+      position: fixed; 
+      z-index: 1000; 
+      bottom: 30px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      font-weight: 600; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    }
+
+    #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 3.7s; }
     #toast.error { background-color: var(--danger); }
-    @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-    @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+    @keyframes fadein { from { bottom: 10px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 10px; opacity: 0; } }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="header">
+    <!-- CABEÇALHO -->
+    <header class="header">
       <div class="logo-container">
-        <img src="image_1d6ea0.png" alt="Logo" class="logo-img">
+        <img src="image_1d6ea0.png" alt="Logo Grande Aço" class="logo-img">
         <div class="header-titles">
           <h1>Controle de Pontas</h1>
           <p>Sistema Integrado de Estoque</p>
         </div>
       </div>
-      <button class="theme-btn" onclick="toggleTheme()" id="btnTheme">🌙</button>
-    </div>
+      <button class="theme-btn" id="btnTheme" title="Alternar Tema">🌙</button>
+    </header>
 
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('consulta')">🔍 Consulta Rápida</div>
-      <div class="tab" onclick="switchTab('gerenciar')">📋 Gerenciar Estoque</div>
-    </div>
+    <!-- NAVEGAÇÃO -->
+    <nav class="tabs">
+      <div class="tab active" data-target="consulta">🔍 Consulta Rápida</div>
+      <div class="tab" data-target="gerenciar">📋 Gerenciar Estoque</div>
+    </nav>
 
-    <!-- ABA CONSULTA -->
-    <div id="consulta" class="tab-content active">
-      <div class="box">
+    <!-- ABA 1: CONSULTA E PLANO DE CORTE -->
+    <main id="consulta" class="tab-content active">
+      <section class="box">
         <h2>Buscar Pontas Disponíveis</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>1. Bitola (mm)</label>
+            <label for="buscaBitola">1. Bitola (mm)</label>
             <select id="buscaBitola"><option value="">Carregando...</option></select>
           </div>
           <div class="form-group">
-            <label>2. Tamanho da barra (m)</label>
-            <input type="number" id="buscaMedida" step="0.05" min="0" placeholder="Ex: 2.50">
+            <label for="buscaMedida">2. Tamanho da barra (m)</label>
+            <input type="number" id="buscaMedida" step="0.05" min="0.05" placeholder="Ex: 2.50">
           </div>
           <div class="form-group">
-            <label>3. Quantidade desejada</label>
+            <label for="buscaQtde">3. Quantidade desejada</label>
             <input type="number" id="buscaQtde" min="1" value="1">
           </div>
         </div>
-        <button class="btn" onclick="buscarEstoque()">Procurar Estoque</button>
-      </div>
-      <div id="areaResultados"></div>
-    </div>
+        <button class="btn" id="btnBuscar">Procurar Estoque</button>
+      </section>
+      
+      <section id="areaResultados"></section>
+    </main>
 
-    <!-- ABA GERENCIAR -->
-    <div id="gerenciar" class="tab-content">
+    <!-- ABA 2: GERENCIAMENTO (CADASTRO E BAIXA MANUAL) -->
+    <section id="gerenciar" class="tab-content">
       <div class="box">
         <h2>➕ Cadastrar Nova Ponta</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>Bitola (mm)</label>
-            <input type="number" id="cadBitola" step="0.01" placeholder="Ex: 6.30">
+            <label for="cadBitola">Bitola (mm)</label>
+            <input type="number" id="cadBitola" step="0.01" min="0.1" placeholder="Ex: 6.30">
           </div>
           <div class="form-group">
-            <label>Medida (m)</label>
-            <input type="number" id="cadMedida" step="0.01" placeholder="Ex: 5.50">
+            <label for="cadMedida">Medida (m)</label>
+            <input type="number" id="cadMedida" step="0.01" min="0.05" placeholder="Ex: 5.50">
           </div>
           <div class="form-group">
-            <label>Quantidade</label>
+            <label for="cadQtde">Quantidade</label>
             <input type="number" id="cadQtde" min="1" value="1">
           </div>
         </div>
-        <button class="btn" id="btnCadastrar" onclick="cadastrarPontas()">Confirmar Cadastro</button>
+        <button class="btn" id="btnCadastrar">Confirmar Cadastro</button>
       </div>
 
       <div class="box">
         <h2>➖ Dar Baixa Manual (Saída)</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>ID da Planilha</label>
-            <input type="number" id="baixaId" placeholder="Ex: 342" oninput="preverBaixa()">
+            <label for="baixaId">ID da Planilha</label>
+            <input type="number" id="baixaId" placeholder="Digite o ID (Ex: 342)">
           </div>
         </div>
-        
-        <!-- Área onde aparece a barra ao ser pesquisada -->
         <div id="previewBaixa" style="margin-bottom: 15px;"></div>
-        
-        <button class="btn btn-danger" id="btnBaixar" onclick="baixarManual()" style="display:none;">Confirmar Baixa (Vendido)</button>
+        <button class="btn btn-danger" id="btnBaixar" style="display:none;">Confirmar Baixa (Vendido)</button>
       </div>
-    </div>
+    </section>
   </div>
 
-  <div id="toast">Notificação</div>
+  <div id="toast"></div>
 
   <script>
-    // URL DO SEU SCRIPT
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec";
-    
-    // Leitura Google Sheets
-    const SPREADSHEET_ID = "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI";
-    const SHEET_NAME = "Pontas";
-    let estoque = [];
-    let barrasSelecionadas = []; 
-
-    const parseNumSeguro = (obj) => {
-      if (!obj) return 0;
-      let val = obj.v !== undefined ? obj.v : obj.f;
-      if (val === null || val === undefined || val === "") return 0;
-      if (typeof val === 'number') return val;
-      let strNum = String(val).replace(',', '.');
-      return parseFloat(strNum) || 0;
+    /**
+     * ============================================================================
+     * 1. CONFIGURAÇÕES E ESTADO DA APLICAÇÃO
+     * ============================================================================
+     */
+    const CONFIG = {
+      SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec",
+      SPREADSHEET_ID: "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI",
+      SHEET_NAME: "Pontas",
+      FATOR_PESO_ACO: 162,
+      DELAY_ATUALIZACAO_MS: 1500
     };
 
-    async function inicializar() {
-      try {
-        const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
-        const cacheBuster = new Date().getTime(); // Resolve o problema do cache
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${cacheBuster}`;
-        
-        const resp = await fetch(url);
-        const text = await resp.text();
-        const data = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    const state = {
+      estoque: [],
+      planoDeCorteAtual: []
+    };
 
-        estoque = data.table.rows.map(r => ({
-          id: r.c[0]?.v || '',
-          bitola: parseNumSeguro(r.c[3]),
-          medida: parseNumSeguro(r.c[4])
-        }));
+    /**
+     * ============================================================================
+     * 2. FUNÇÕES UTILITÁRIAS (MATEMÁTICA E FORMATAÇÃO)
+     * ============================================================================
+     */
+    const Utils = {
+      // Converte valores da planilha com segurança (trata "1,8" e 1.8 igualmente)
+      parseNumeroPlanilha(celula) {
+        if (!celula) return 0;
+        const raw = celula.v !== undefined ? celula.v : celula.f;
+        if (raw === null || raw === undefined || raw === "") return 0;
+        if (typeof raw === "number") return raw;
+        return parseFloat(String(raw).replace(",", ".")) || 0;
+      },
 
-        const select = document.getElementById("buscaBitola");
-        const bitolas = [...new Set(estoque.map(p => p.bitola))].filter(b => b > 0).sort((a,b) => a - b);
-        select.innerHTML = '<option value="">Selecione...</option>' + bitolas.map(b => `<option value="${b}">${b.toFixed(2)}</option>`).join('');
-      } catch (err) {
-        showToast("Erro ao carregar planilha. Verifique a internet.", true);
+      // Fórmula padrão: ((Bitola²) / 162) * Medida
+      calcularPesoAco(bitola, medida) {
+        return (Math.pow(bitola, 2) / CONFIG.FATOR_PESO_ACO) * medida;
+      },
+
+      // Evita dízimas periódicas do JavaScript (ex: 4.67 - 4 = 0.6700000000000002)
+      arredondarMedida(valor) {
+        return Math.round(valor * 1000) / 1000;
       }
-    }
+    };
 
-    // ALGORITMO DE PLANO DE CORTE OTIMIZADO 
-    function buscarEstoque() {
-      const bitola = parseFloat(document.getElementById("buscaBitola").value);
-      const medidaReq = parseFloat(document.getElementById("buscaMedida").value);
-      const qtdeReq = parseInt(document.getElementById("buscaQtde").value) || 1;
-      const res = document.getElementById("areaResultados");
-      
-      if (!bitola || isNaN(medidaReq)) { showToast("Preencha bitola e tamanho.", true); return; }
+    /**
+     * ============================================================================
+     * 3. CONTROLE DE INTERFACE (UI)
+     * ============================================================================
+     */
+    const UI = {
+      elementos: {
+        selectBitola: document.getElementById("buscaBitola"),
+        inputBuscaMedida: document.getElementById("buscaMedida"),
+        inputBuscaQtde: document.getElementById("buscaQtde"),
+        areaResultados: document.getElementById("areaResultados"),
+        inputCadBitola: document.getElementById("cadBitola"),
+        inputCadMedida: document.getElementById("cadMedida"),
+        inputCadQtde: document.getElementById("cadQtde"),
+        inputBaixaId: document.getElementById("baixaId"),
+        previewBaixa: document.getElementById("previewBaixa"),
+        btnBaixar: document.getElementById("btnBaixar"),
+        btnCadastrar: document.getElementById("btnCadastrar"),
+        btnBuscar: document.getElementById("btnBuscar"),
+        btnTheme: document.getElementById("btnTheme"),
+        toast: document.getElementById("toast")
+      },
 
-      let candidatas = estoque.filter(p => p.bitola === bitola && p.medida >= medidaReq)
-                              .sort((a, b) => a.medida - b.medida); // Começa da menor para a maior
+      mostrarNotificacao(mensagem, isErro = false) {
+        const { toast } = this.elementos;
+        toast.textContent = mensagem;
+        toast.className = isErro ? "show error" : "show";
+        setTimeout(() => { toast.className = ""; }, 4000);
+      },
 
-      let qtdeFaltante = qtdeReq;
-      barrasSelecionadas = [];
+      atualizarSelectBitolas(estoque) {
+        const bitolasUnicas = [...new Set(estoque.map(item => item.bitola))]
+          .filter(b => b > 0)
+          .sort((a, b) => a - b);
 
-      for (let i = 0; i < candidatas.length; i++) {
-        let barra = candidatas[i];
+        this.elementos.selectBitola.innerHTML = '<option value="">Selecione...</option>' + 
+          bitolasUnicas.map(b => `<option value="${b}">${b.toFixed(2)}</option>`).join("");
+      },
+
+      limparFormulariosOperacao() {
+        this.elementos.areaResultados.innerHTML = "";
+        this.elementos.inputBaixaId.value = "";
+        this.elementos.previewBaixa.innerHTML = "";
+        this.elementos.btnBaixar.style.display = "none";
+      },
+
+      alternarTema() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute("data-theme") === "dark";
+        const novoTema = isDark ? "light" : "dark";
         
-        let pecasPossiveis = Math.floor(barra.medida / medidaReq);
-        let pecasExtraidas = Math.min(pecasPossiveis, qtdeFaltante);
-        
-        if (pecasExtraidas > 0) {
-          let sobra = barra.medida - (pecasExtraidas * medidaReq);
-          
-          barrasSelecionadas.push({
-            id: barra.id,
-            medidaOriginal: barra.medida,
-            pecasExtraidas: pecasExtraidas,
-            sobra: sobra,
-            bitola: barra.bitola
-          });
-          
-          qtdeFaltante -= pecasExtraidas;
+        html.setAttribute("data-theme", novoTema);
+        this.elementos.btnTheme.textContent = isDark ? "🌙" : "☀️";
+        localStorage.setItem("theme", novoTema);
+      },
+
+      carregarTemaSalvo() {
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+          this.elementos.btnTheme.textContent = "☀️";
         }
-        
-        if (qtdeFaltante <= 0) break;
       }
+    };
 
-      if (qtdeFaltante > 0) {
-        let pecasEncontradas = qtdeReq - qtdeFaltante;
-        res.innerHTML = `<div class="box" style="border-color:var(--danger)">
-          ❌ Estoque insuficiente. Só conseguimos extrair <strong>${pecasEncontradas} peça(s)</strong> do estoque disponível.
-        </div>`;
-        return;
+    /**
+     * ============================================================================
+     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS (API)
+     * ============================================================================
+     */
+    const API = {
+      async carregarEstoque() {
+        try {
+          const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
+          const cacheBuster = Date.now();
+          const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${cacheBuster}`;
+          
+          const response = await fetch(url);
+          const text = await response.text();
+          const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+          const data = JSON.parse(jsonString);
+
+          state.estoque = data.table.rows.map(row => ({
+            id: row.c[0]?.v || "",
+            bitola: Utils.parseNumeroPlanilha(row.c[3]),
+            medida: Utils.parseNumeroPlanilha(row.c[4])
+          }));
+
+          UI.atualizarSelectBitolas(state.estoque);
+        } catch (error) {
+          UI.mostrarNotificacao("Erro ao carregar planilha. Verifique a conexão.", true);
+        }
+      },
+
+      async enviarRequisicao(payload, botaoElemento, textoCarregando, textoOriginal) {
+        botaoElemento.disabled = true;
+        botaoElemento.textContent = textoCarregando;
+
+        try {
+          const response = await fetch(CONFIG.SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+          const resultado = await response.json();
+          UI.mostrarNotificacao(resultado.mensagem, !resultado.sucesso);
+        } catch (error) {
+          // Tratamento para falsos erros de CORS/Timeout do Google Apps Script
+          UI.mostrarNotificacao("Comando enviado! Atualizando estoque...", false);
+        } finally {
+          UI.limparFormulariosOperacao();
+          setTimeout(async () => {
+            await this.carregarEstoque();
+            botaoElemento.disabled = false;
+            botaoElemento.textContent = textoOriginal;
+          }, CONFIG.DELAY_ATUALIZACAO_MS);
+        }
       }
+    };
 
-      // Exibição do Plano de Corte
-      let html = `<div class="box">
-        <h2>✅ Plano de Corte Otimizado</h2>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">O sistema selecionou as seguintes barras físicas para atender seu pedido com o menor desperdício possível:</p>`;
-      
-      barrasSelecionadas.forEach(b => {
-        // Cálculo do peso total da barra para exibir na tela: ((Bitola²) / 162) * MedidaOriginal
-        let pesoTotal = (Math.pow(b.bitola, 2) / 162) * b.medidaOriginal;
+    /**
+     * ============================================================================
+     * 5. REGRAS DE NEGÓCIO (BUSCA, CORTE OTIMIZADO E OPERAÇÕES)
+     * ============================================================================
+     */
+    const Controlador = {
+      gerarPlanoDeCorte() {
+        const bitola = parseFloat(UI.elementos.selectBitola.value);
+        const medidaDesejada = parseFloat(UI.elementos.inputBuscaMedida.value);
+        const qtdeDesejada = parseInt(UI.elementos.inputBuscaQtde.value, 10) || 1;
+        const container = UI.elementos.areaResultados;
 
-        html += `
+        if (!bitola || isNaN(medidaDesejada) || medidaDesejada <= 0) {
+          UI.mostrarNotificacao("Preencha a bitola e um tamanho válido.", true);
+          return;
+        }
+
+        // Filtra barras compatíveis e ordena da menor para a maior (Best-Fit)
+        const candidatas = state.estoque
+          .filter(barra => barra.bitola === bitola && barra.medida >= medidaDesejada)
+          .sort((a, b) => a.medida - b.medida);
+
+        let qtdeFaltante = qtdeDesejada;
+        state.planoDeCorteAtual = [];
+
+        for (const barra of candidatas) {
+          const pecasPossiveisNaBarra = Math.floor(barra.medida / medidaDesejada);
+          const pecasParaExtrair = Math.min(pecasPossiveisNaBarra, qtdeFaltante);
+
+          if (pecasParaExtrair > 0) {
+            const comprimentoConsumido = pecasParaExtrair * medidaDesejada;
+            const sobraCalculada = Utils.arredondarMedida(barra.medida - comprimentoConsumido);
+            const pesoOriginal = Utils.calcularPesoAco(barra.bitola, barra.medida);
+
+            state.planoDeCorteAtual.push({
+              id: barra.id,
+              bitola: barra.bitola,
+              medidaOriginal: barra.medida,
+              pecasExtraidas: pecasParaExtrair,
+              sobra: sobraCalculada,
+              pesoTotal: pesoOriginal
+            });
+
+            qtdeFaltante -= pecasParaExtrair;
+          }
+
+          if (qtdeFaltante <= 0) break;
+        }
+
+        this.renderizarResultadoCorte(qtdeDesejada, qtdeFaltante, container);
+      },
+
+      renderizarResultadoCorte(qtdeDesejada, qtdeFaltante, container) {
+        if (qtdeFaltante > 0) {
+          const pecasEncontradas = qtdeDesejada - qtdeFaltante;
+          container.innerHTML = `
+            <div class="box" style="border-color: var(--danger)">
+              ❌ Estoque insuficiente. Só é possível extrair <strong>${pecasEncontradas} peça(s)</strong> do estoque atual.
+            </div>`;
+          return;
+        }
+
+        const cartoesHtml = state.planoDeCorteAtual.map(item => `
           <div class="result-card">
             <div class="result-info">
-              <h3><span class="badge">ID #${b.id}</span> Barra Original de ${b.medidaOriginal.toFixed(2)}m</h3>
-              <p>Rendimento extraído: <strong>${b.pecasExtraidas} peça(s)</strong> usando 1 barra(s).</p>
-              <p>Peso Total da Barra: <strong>${pesoTotal.toFixed(2)} kg</strong></p>
+              <h3><span class="badge">ID #${item.id}</span> Barra Original de ${item.medidaOriginal.toFixed(2)}m</h3>
+              <p>Rendimento extraído: <strong>${item.pecasExtraidas} peça(s)</strong> usando 1 barra.</p>
+              <p>Peso Total da Barra: <strong>${item.pesoTotal.toFixed(2)} kg</strong></p>
             </div>
             <div class="sobra-box">
-              <p style="margin:0; font-size:0.8rem; color:var(--text-muted)">SOBRA UNITÁRIA</p>
-              <div class="sobra-val">${b.sobra.toFixed(2)}m</div>
+              <p class="sobra-label">Sobra Unitária</p>
+              <div class="sobra-val">${item.sobra.toFixed(2)}m</div>
             </div>
           </div>
-        `;
-      });
-      html += `<button class="btn" style="background:#10b981; margin-top:10px" onclick="confirmarBaixaAutomatica(this)">Confirmar Baixa Automática</button></div>`;
-      res.innerHTML = html;
-    }
+        `).join("");
 
-    // PREVISÃO DA BARRA NA BAIXA MANUAL
-    function preverBaixa() {
-      const id = document.getElementById("baixaId").value;
-      const previewDiv = document.getElementById("previewBaixa");
-      const btnBaixar = document.getElementById("btnBaixar");
-
-      if (!id) {
-        previewDiv.innerHTML = "";
-        btnBaixar.style.display = "none";
-        return;
-      }
-
-      const barraEncontrada = estoque.find(b => b.id.toString() === id.toString());
-
-      if (barraEncontrada) {
-        let pesoEncontrada = (Math.pow(barraEncontrada.bitola, 2) / 162) * barraEncontrada.medida;
-        
-        previewDiv.innerHTML = `
-          <div class="result-card" style="border-left-color: var(--danger); margin-top: 5px;">
-            <div class="result-info">
-              <h3><span class="badge" style="background:var(--danger)">ID #${barraEncontrada.id}</span> Barra Encontrada</h3>
-              <p>Bitola Ø ${barraEncontrada.bitola.toFixed(2)} mm • Medida: ${barraEncontrada.medida.toFixed(2)}m</p>
-              <p>Peso Total: <strong>${pesoEncontrada.toFixed(2)} kg</strong></p>
-            </div>
+        container.innerHTML = `
+          <div class="box">
+            <h2>✅ Plano de Corte Otimizado</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+              O sistema selecionou as seguintes barras físicas para atender ao pedido com o menor desperdício:
+            </p>
+            ${cartoesHtml}
+            <button class="btn btn-success" id="btnConfirmarCorte">Confirmar Baixa Automática</button>
           </div>`;
-        btnBaixar.style.display = "block";
-      } else {
-        previewDiv.innerHTML = `<div style="color: var(--danger); font-size: 0.9rem; margin-top: 10px;">❌ ID não encontrado no estoque ou já vendido.</div>`;
-        btnBaixar.style.display = "none";
-      }
-    }
 
-    // ENVIO PARA O GOOGLE SCRIPT
-    async function enviarParaScript(payload, btnElement, txtLoading, txtOriginal) {
-      btnElement.disabled = true;
-      btnElement.innerText = txtLoading;
-      try {
-        const resp = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
+        document.getElementById("btnConfirmarCorte").addEventListener("click", (e) => {
+          this.executarBaixaAutomatica(e.target);
         });
-        const json = await resp.json();
-        
-        if (json.sucesso) {
-          showToast(json.mensagem);
-        } else {
-          showToast(json.mensagem, true);
+      },
+
+      preverBaixaManual() {
+        const idDigitado = UI.elementos.inputBaixaId.value.trim();
+        const { previewBaixa, btnBaixar } = UI.elementos;
+
+        if (!idDigitado) {
+          previewBaixa.innerHTML = "";
+          btnBaixar.style.display = "none";
+          return;
         }
-      } catch (err) {
-        showToast("Comando enviado! Atualizando tela...", false);
-      } finally {
-        document.getElementById("areaResultados").innerHTML = ""; 
-        document.getElementById("baixaId").value = "";
-        document.getElementById("previewBaixa").innerHTML = "";
-        document.getElementById("btnBaixar").style.display = "none";
-        
-        setTimeout(() => {
-            inicializar(); 
-            btnElement.disabled = false;
-            btnElement.innerText = txtOriginal;
-        }, 1500);
+
+        const barra = state.estoque.find(item => String(item.id) === idDigitado);
+
+        if (barra) {
+          const peso = Utils.calcularPesoAco(barra.bitola, barra.medida);
+          previewBaixa.innerHTML = `
+            <div class="result-card danger-border" style="margin-top: 5px;">
+              <div class="result-info">
+                <h3><span class="badge danger-bg">ID #${barra.id}</span> Barra Encontrada</h3>
+                <p>Bitola Ø ${barra.bitola.toFixed(2)} mm • Medida: ${barra.medida.toFixed(2)}m</p>
+                <p>Peso Total: <strong>${peso.toFixed(2)} kg</strong></p>
+              </div>
+            </div>`;
+          btnBaixar.style.display = "block";
+        } else {
+          previewBaixa.innerHTML = `
+            <div style="color: var(--danger); font-size: 0.9rem; margin-top: 10px;">
+              ❌ ID não encontrado no estoque ou já vendido.
+            </div>`;
+          btnBaixar.style.display = "none";
+        }
+      },
+
+      executarBaixaAutomatica(botao) {
+        const instrucoes = state.planoDeCorteAtual.map(item => ({
+          id: item.id,
+          sobra: item.sobra,
+          bitola: item.bitola
+        }));
+        API.enviarRequisicao({ action: "baixar", instrucoes }, botao, "Processando Baixa...", "Confirmar Baixa Automática");
+      },
+
+      executarBaixaManual() {
+        const id = UI.elementos.inputBaixaId.value.trim();
+        if (!id) return;
+        const payload = { action: "baixar", instrucoes: [{ id, sobra: 0, bitola: 0 }] };
+        API.enviarRequisicao(payload, UI.elementos.btnBaixar, "Processando...", "Confirmar Baixa (Vendido)");
+      },
+
+      executarCadastro() {
+        const bitola = UI.elementos.inputCadBitola.value;
+        const medida = UI.elementos.inputCadMedida.value;
+        const qtde = UI.elementos.inputCadQtde.value;
+
+        if (!bitola || !medida) {
+          UI.mostrarNotificacao("Preencha a bitola e a medida.", true);
+          return;
+        }
+
+        const payload = { action: "cadastrar", bitola, medida, qtde };
+        API.enviarRequisicao(payload, UI.elementos.btnCadastrar, "Salvando...", "Confirmar Cadastro");
       }
+    };
+
+    /**
+     * ============================================================================
+     * 6. INICIALIZAÇÃO E EVENTOS (LISTENERS)
+     * ============================================================================
+     */
+    function iniciarAplicacao() {
+      UI.carregarTemaSalvo();
+      API.carregarEstoque();
+
+      // Eventos de Navegação (Abas)
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab, .tab-content").forEach(el => el.classList.remove("active"));
+          tab.classList.add("active");
+          document.getElementById(tab.dataset.target).classList.add("active");
+        });
+      });
+
+      // Eventos de Botões e Inputs
+      UI.elementos.btnTheme.addEventListener("click", () => UI.alternarTema());
+      UI.elementos.btnBuscar.addEventListener("click", () => Controlador.gerarPlanoDeCorte());
+      UI.elementos.btnCadastrar.addEventListener("click", () => Controlador.executarCadastro());
+      UI.elementos.btnBaixar.addEventListener("click", () => Controlador.executarBaixaManual());
+      UI.elementos.inputBaixaId.addEventListener("input", () => Controlador.preverBaixaManual());
     }
 
-    function confirmarBaixaAutomatica(btn) {
-      const instrucoes = barrasSelecionadas.map(b => ({ id: b.id, sobra: b.sobra, bitola: b.bitola }));
-      enviarParaScript({ action: "baixar", instrucoes: instrucoes }, btn, "Processando Baixa...", "Confirmar Baixa Automática");
-    }
-
-    function baixarManual() {
-      const id = document.getElementById("baixaId").value;
-      if (!id) return;
-      enviarParaScript({ action: "baixar", instrucoes: [{ id: id, sobra: 0, bitola: 0 }] }, document.getElementById("btnBaixar"), "Processando...", "Confirmar Baixa (Vendido)");
-    }
-
-    function cadastrarPontas() {
-      const bitola = document.getElementById("cadBitola").value;
-      const medida = document.getElementById("cadMedida").value;
-      const qtde = document.getElementById("cadQtde").value;
-      if(!bitola || !medida) { showToast("Preencha todos os campos", true); return; }
-      enviarParaScript({ action: "cadastrar", bitola: bitola, medida: medida, qtde: qtde }, document.getElementById("btnCadastrar"), "Salvando...", "Confirmar Cadastro");
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
-      document.getElementById(tabId).classList.add('active');
-    }
-
-    function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      document.getElementById('btnTheme').innerText = isDark ? '🌙' : '☀️';
-      localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    }
-
-    function showToast(msg, isError = false) {
-      const toast = document.getElementById("toast");
-      toast.innerText = msg;
-      toast.className = isError ? "show error" : "show";
-      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 4000);
-    }
-
-    if (localStorage.getItem('theme') === 'dark') toggleTheme();
-    inicializar();
+    // Inicia quando o DOM estiver pronto
+    document.addEventListener("DOMContentLoaded", iniciarAplicacao);
   </script>
 </body>
 </html>
