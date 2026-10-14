@@ -18,11 +18,14 @@
       --border: #e2e8f0;
       --success: #10b981;
       --success-hover: #059669;
+      --whatsapp: #25d366;
+      --whatsapp-hover: #1da851;
       --danger: #ef4444;
       --danger-hover: #dc2626;
+      --warning: #f59e0b;
       --radius-md: 8px;
       --radius-lg: 12px;
-      --transition: 0.25s ease;
+      --transition: 0.2s ease;
     }
 
     [data-theme="dark"] {
@@ -49,7 +52,7 @@
     }
 
     .container { 
-      max-width: 800px; 
+      max-width: 900px; 
       margin: 0 auto; 
     }
 
@@ -61,6 +64,8 @@
       justify-content: space-between; 
       align-items: center; 
       margin-bottom: 24px; 
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .logo-container { 
@@ -76,32 +81,44 @@
       border-radius: 50%; 
       background: #fff; 
       padding: 4px; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
     .header-titles h1 { margin: 0; font-size: 1.5rem; }
-    .header-titles p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+    .header-titles p { margin: 2px 0 0 0; color: var(--text-muted); font-size: 0.9rem; }
     
-    .theme-btn { 
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-btn { 
       background: var(--card); 
       border: 1px solid var(--border); 
       color: var(--text); 
       padding: 10px 14px; 
       border-radius: var(--radius-md); 
       cursor: pointer; 
-      font-size: 1.1rem;
+      font-size: 1rem;
+      font-weight: 600;
       transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+    .icon-btn:hover { border-color: var(--primary); }
 
     .tabs { 
       display: flex; 
-      gap: 10px; 
+      gap: 6px; 
       border-bottom: 2px solid var(--border); 
       margin-bottom: 20px; 
+      overflow-x: auto;
     }
 
     .tab { 
-      padding: 10px 20px; 
+      padding: 12px 18px; 
       cursor: pointer; 
       color: var(--text-muted); 
       font-weight: 600; 
@@ -109,6 +126,7 @@
       margin-bottom: -2px; 
       transition: var(--transition);
       user-select: none;
+      white-space: nowrap;
     }
 
     .tab.active { 
@@ -135,11 +153,14 @@
       font-size: 1.1rem; 
       border-bottom: 1px solid var(--border); 
       padding-bottom: 10px; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .form-grid { 
       display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
       gap: 16px; 
       margin-bottom: 16px; 
     }
@@ -165,37 +186,92 @@
       font-size: 1rem; 
       outline: none;
       transition: border-color var(--transition);
+      width: 100%;
     }
 
-    select:focus, input:focus {
-      border-color: var(--primary);
-    }
+    select:focus, input:focus { border-color: var(--primary); }
 
     .btn { 
       background: var(--primary); 
       color: #fff; 
       border: none; 
-      padding: 12px; 
+      padding: 12px 16px; 
       border-radius: var(--radius-md); 
       font-weight: 600; 
       font-size: 1rem;
       cursor: pointer; 
       transition: var(--transition); 
       width: 100%; 
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
     }
 
     .btn:hover:not(:disabled) { background: var(--primary-hover); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     
-    .btn-success { background: var(--success); margin-top: 10px; }
+    .btn-success { background: var(--success); }
     .btn-success:hover:not(:disabled) { background: var(--success-hover); }
+
+    .btn-whatsapp { background: var(--whatsapp); color: #fff; }
+    .btn-whatsapp:hover:not(:disabled) { background: var(--whatsapp-hover); }
 
     .btn-danger { background: var(--danger); }
     .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
 
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      width: auto;
+    }
+
+    .actions-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
     /* ==========================================================================
-       4. CARTÕES DE RESULTADO E NOTIFICAÇÕES
+       4. PAINÉIS DE RESUMO (KPIs) E CARTÕES DE CORTE
        ========================================================================== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .kpi-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      text-align: center;
+    }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
     .result-card { 
       background: var(--bg); 
       border: 1px solid var(--border); 
@@ -212,7 +288,7 @@
 
     .result-card.danger-border { border-left-color: var(--danger); }
 
-    .result-info h3 { margin: 0 0 6px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+    .result-info h3 { margin: 0 0 6px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .result-info p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
     
     .badge { 
@@ -229,9 +305,69 @@
     .sobra-label { margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .sobra-val { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
 
+    /* ==========================================================================
+       5. VISÃO GERAL DO ESTOQUE (CARDS POR BITOLA E TABELA)
+       ========================================================================== */
+    .bitola-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .bitola-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .bitola-card:hover, .bitola-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+    }
+
+    .bitola-card h4 { margin: 0 0 6px 0; color: var(--primary); font-size: 1rem; }
+    .bitola-card p { margin: 2px 0; font-size: 0.8rem; color: var(--text-muted); }
+    .bitola-card strong { color: var(--text); }
+
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(14, 165, 233, 0.04); }
+
+    /* ==========================================================================
+       6. NOTIFICAÇÕES (TOAST)
+       ========================================================================== */
     #toast { 
       visibility: hidden; 
-      min-width: 260px; 
+      min-width: 280px; 
       background-color: var(--success); 
       color: #fff; 
       text-align: center; 
@@ -243,7 +379,7 @@
       left: 50%; 
       transform: translateX(-50%); 
       font-weight: 600; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
     }
 
     #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 3.7s; }
@@ -262,16 +398,20 @@
         <img src="image_1d6ea0.png" alt="Logo Grande Aço" class="logo-img">
         <div class="header-titles">
           <h1>Controle de Pontas</h1>
-          <p>Sistema Integrado de Estoque</p>
+          <p>Sistema Integrado de Estoque e Corte Otimizado</p>
         </div>
       </div>
-      <button class="theme-btn" id="btnTheme" title="Alternar Tema">🌙</button>
+      <div class="header-actions">
+        <button class="icon-btn" id="btnRecarregar" title="Atualizar Estoque Agora">🔄 Atualizar</button>
+        <button class="icon-btn" id="btnTheme" title="Alternar Tema">🌙</button>
+      </div>
     </header>
 
     <!-- NAVEGAÇÃO -->
     <nav class="tabs">
-      <div class="tab active" data-target="consulta">🔍 Consulta Rápida</div>
-      <div class="tab" data-target="gerenciar">📋 Gerenciar Estoque</div>
+      <div class="tab active" data-target="consulta">🔍 Consulta & Corte</div>
+      <div class="tab" data-target="estoque">📦 Visão Geral (<span id="contadorEstoque">0</span>)</div>
+      <div class="tab" data-target="gerenciar">📋 Cadastrar / Baixar</div>
     </nav>
 
     <!-- ABA 1: CONSULTA E PLANO DE CORTE -->
@@ -284,47 +424,114 @@
             <select id="buscaBitola"><option value="">Carregando...</option></select>
           </div>
           <div class="form-group">
-            <label for="buscaMedida">2. Tamanho da barra (m)</label>
+            <label for="buscaMedida">2. Tamanho do Corte (m)</label>
             <input type="number" id="buscaMedida" step="0.05" min="0.05" placeholder="Ex: 2.50">
           </div>
           <div class="form-group">
-            <label for="buscaQtde">3. Quantidade desejada</label>
+            <label for="buscaQtde">3. Quantidade de Peças</label>
             <input type="number" id="buscaQtde" min="1" value="1">
           </div>
         </div>
-        <button class="btn" id="btnBuscar">Procurar Estoque</button>
+        <button class="btn" id="btnBuscar">Calcular Melhor Aproveitamento</button>
       </section>
       
       <section id="areaResultados"></section>
     </main>
 
-    <!-- ABA 2: GERENCIAMENTO (CADASTRO E BAIXA MANUAL) -->
+    <!-- ABA 2: VISÃO GERAL DO ESTOQUE (INVENTÁRIO) -->
+    <section id="estoque" class="tab-content">
+      <div class="box">
+        <h2>
+          <span>Resumo Geral do Pátio</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">Clique em uma bitola para filtrar</span>
+        </h2>
+        <div class="summary-grid" id="kpisEstoque"></div>
+        <div class="bitola-grid" id="cardsBitolaEstoque"></div>
+
+        <div class="form-grid" style="margin-top: 10px;">
+          <div class="form-group">
+            <label for="filtroTabelaBitola">Filtrar por Bitola</label>
+            <select id="filtroTabelaBitola"><option value="TODAS">Todas as Bitolas</option></select>
+          </div>
+          <div class="form-group">
+            <label for="filtroTabelaBusca">Buscar por ID ou Medida Mínima (m)</label>
+            <input type="text" id="filtroTabelaBusca" placeholder="Ex: #314 ou 3.50">
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Bitola</th>
+                <th>Medida</th>
+                <th>Peso Est.</th>
+                <th>Origem / Obs</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaEstoqueBody">
+              <tr><td colspan="7" style="text-align:center;">Carregando estoque...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 3: GERENCIAMENTO (CADASTRO PADRONIZADO E BAIXA MANUAL) -->
     <section id="gerenciar" class="tab-content">
       <div class="box">
         <h2>➕ Cadastrar Nova Ponta</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label for="cadBitola">Bitola (mm)</label>
-            <input type="number" id="cadBitola" step="0.01" min="0.1" placeholder="Ex: 6.30">
+            <label for="cadBitolaSelect">Bitola Comercial (mm)</label>
+            <select id="cadBitolaSelect">
+              <option value="4.20">4.20 mm</option>
+              <option value="5.00">5.00 mm</option>
+              <option value="6.30">6.30 mm (1/4")</option>
+              <option value="8.00" selected>8.00 mm (5/16")</option>
+              <option value="10.00">10.00 mm (3/8")</option>
+              <option value="12.50">12.50 mm (1/2")</option>
+              <option value="16.00">16.00 mm (5/8")</option>
+              <option value="20.00">20.00 mm (3/4")</option>
+              <option value="25.00">25.00 mm (1")</option>
+              <option value="32.00">32.00 mm (1.1/4")</option>
+              <option value="OUTRA">Outra medida...</option>
+            </select>
+          </div>
+          <div class="form-group" id="grupoBitolaCustom" style="display:none;">
+            <label for="cadBitolaCustom">Digite a Bitola (mm)</label>
+            <input type="number" id="cadBitolaCustom" step="0.01" min="1" placeholder="Ex: 9.50">
           </div>
           <div class="form-group">
-            <label for="cadMedida">Medida (m)</label>
+            <label for="cadMedida">Medida da Barra (m)</label>
             <input type="number" id="cadMedida" step="0.01" min="0.05" placeholder="Ex: 5.50">
           </div>
           <div class="form-group">
-            <label for="cadQtde">Quantidade</label>
+            <label for="cadQtde">Quantidade de Barras</label>
             <input type="number" id="cadQtde" min="1" value="1">
           </div>
+          <div class="form-group">
+            <label for="cadObs">Origem / Observação (Opcional)</label>
+            <input type="text" id="cadObs" placeholder="Ex: Sobra de obra / Lote 4">
+          </div>
         </div>
+        <div id="previewPesoCadastro" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;"></div>
         <button class="btn" id="btnCadastrar">Confirmar Cadastro</button>
       </div>
 
       <div class="box">
-        <h2>➖ Dar Baixa Manual (Saída)</h2>
+        <h2>➖ Dar Baixa Manual por ID (Saída Inteira)</h2>
         <div class="form-grid">
           <div class="form-group">
             <label for="baixaId">ID da Planilha</label>
             <input type="number" id="baixaId" placeholder="Digite o ID (Ex: 342)">
+          </div>
+          <div class="form-group">
+            <label for="baixaClienteManual">Cliente / Nº do Pedido (Opcional)</label>
+            <input type="text" id="baixaClienteManual" placeholder="Ex: Construtora Silva - Ped 1045">
           </div>
         </div>
         <div id="previewBaixa" style="margin-bottom: 15px;"></div>
@@ -342,7 +549,7 @@
      * ============================================================================
      */
     const CONFIG = {
-      SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxyg4MHYtu4-GPzV-Nz_7oy0sroUusx5HuIjkPFCQr9rno_q3GFcUPTVgwuXkz6ZrRy/exec",
+      SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzqFeQkl6CUksPI2HZcu-on-lT48DuecISBStdTe-ughyKNLo-AHL3Z8M_uOICILXK8/exec",
       SPREADSHEET_ID: "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI",
       SHEET_NAME: "Pontas",
       FATOR_PESO_ACO: 162,
@@ -351,7 +558,8 @@
 
     const state = {
       estoque: [],
-      planoDeCorteAtual: []
+      planoDeCorteAtual: [],
+      parametrosBuscaAtual: null
     };
 
     /**
@@ -360,7 +568,6 @@
      * ============================================================================
      */
     const Utils = {
-      // Converte valores da planilha com segurança (trata "1,8" e 1.8 igualmente)
       parseNumeroPlanilha(celula) {
         if (!celula) return 0;
         const raw = celula.v !== undefined ? celula.v : celula.f;
@@ -369,12 +576,17 @@
         return parseFloat(String(raw).replace(",", ".")) || 0;
       },
 
+      parseTextoPlanilha(celula) {
+        if (!celula) return "-";
+        return String(celula.f || celula.v || "-");
+      },
+
       // Fórmula padrão: ((Bitola²) / 162) * Medida
       calcularPesoAco(bitola, medida) {
+        if (!bitola || !medida) return 0;
         return (Math.pow(bitola, 2) / CONFIG.FATOR_PESO_ACO) * medida;
       },
 
-      // Evita dízimas periódicas do JavaScript (ex: 4.67 - 4 = 0.6700000000000002)
       arredondarMedida(valor) {
         return Math.round(valor * 1000) / 1000;
       }
@@ -386,28 +598,50 @@
      * ============================================================================
      */
     const UI = {
-      elementos: {
+      el: {
         selectBitola: document.getElementById("buscaBitola"),
         inputBuscaMedida: document.getElementById("buscaMedida"),
         inputBuscaQtde: document.getElementById("buscaQtde"),
         areaResultados: document.getElementById("areaResultados"),
-        inputCadBitola: document.getElementById("cadBitola"),
+        
+        cadBitolaSelect: document.getElementById("cadBitolaSelect"),
+        grupoBitolaCustom: document.getElementById("grupoBitolaCustom"),
+        cadBitolaCustom: document.getElementById("cadBitolaCustom"),
         inputCadMedida: document.getElementById("cadMedida"),
         inputCadQtde: document.getElementById("cadQtde"),
+        inputCadObs: document.getElementById("cadObs"),
+        previewPesoCadastro: document.getElementById("previewPesoCadastro"),
+
         inputBaixaId: document.getElementById("baixaId"),
+        inputBaixaClienteManual: document.getElementById("baixaClienteManual"),
         previewBaixa: document.getElementById("previewBaixa"),
+        
+        contadorEstoque: document.getElementById("contadorEstoque"),
+        kpisEstoque: document.getElementById("kpisEstoque"),
+        cardsBitolaEstoque: document.getElementById("cardsBitolaEstoque"),
+        filtroTabelaBitola: document.getElementById("filtroTabelaBitola"),
+        filtroTabelaBusca: document.getElementById("filtroTabelaBusca"),
+        tabelaEstoqueBody: document.getElementById("tabelaEstoqueBody"),
+
         btnBaixar: document.getElementById("btnBaixar"),
         btnCadastrar: document.getElementById("btnCadastrar"),
         btnBuscar: document.getElementById("btnBuscar"),
+        btnRecarregar: document.getElementById("btnRecarregar"),
         btnTheme: document.getElementById("btnTheme"),
         toast: document.getElementById("toast")
       },
 
       mostrarNotificacao(mensagem, isErro = false) {
-        const { toast } = this.elementos;
+        const { toast } = this.el;
         toast.textContent = mensagem;
         toast.className = isErro ? "show error" : "show";
         setTimeout(() => { toast.className = ""; }, 4000);
+      },
+
+      alternarAba(abaId) {
+        document.querySelectorAll(".tab, .tab-content").forEach(el => el.classList.remove("active"));
+        document.querySelector(`.tab[data-target="${abaId}"]`).classList.add("active");
+        document.getElementById(abaId).classList.add("active");
       },
 
       atualizarSelectBitolas(estoque) {
@@ -415,31 +649,37 @@
           .filter(b => b > 0)
           .sort((a, b) => a - b);
 
-        this.elementos.selectBitola.innerHTML = '<option value="">Selecione...</option>' + 
-          bitolasUnicas.map(b => `<option value="${b}">${b.toFixed(2)}</option>`).join("");
+        this.el.selectBitola.innerHTML = '<option value="">Selecione a bitola...</option>' + 
+          bitolasUnicas.map(b => `<option value="${b}">${b.toFixed(2)} mm</option>`).join("");
+
+        this.el.filtroTabelaBitola.innerHTML = '<option value="TODAS">Todas as Bitolas</option>' + 
+          bitolasUnicas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
       },
 
       limparFormulariosOperacao() {
-        this.elementos.areaResultados.innerHTML = "";
-        this.elementos.inputBaixaId.value = "";
-        this.elementos.previewBaixa.innerHTML = "";
-        this.elementos.btnBaixar.style.display = "none";
+        this.el.areaResultados.innerHTML = "";
+        this.el.inputBaixaId.value = "";
+        this.el.inputBaixaClienteManual.value = "";
+        this.el.previewBaixa.innerHTML = "";
+        this.el.btnBaixar.style.display = "none";
+        this.el.inputCadMedida.value = "";
+        this.el.inputCadObs.value = "";
+        this.el.previewPesoCadastro.innerHTML = "";
       },
 
       alternarTema() {
         const html = document.documentElement;
         const isDark = html.getAttribute("data-theme") === "dark";
         const novoTema = isDark ? "light" : "dark";
-        
         html.setAttribute("data-theme", novoTema);
-        this.elementos.btnTheme.textContent = isDark ? "🌙" : "☀️";
+        this.el.btnTheme.textContent = isDark ? "🌙" : "☀️";
         localStorage.setItem("theme", novoTema);
       },
 
       carregarTemaSalvo() {
         if (localStorage.getItem("theme") === "dark") {
           document.documentElement.setAttribute("data-theme", "dark");
-          this.elementos.btnTheme.textContent = "☀️";
+          this.el.btnTheme.textContent = "☀️";
         }
       }
     };
@@ -450,9 +690,10 @@
      * ============================================================================
      */
     const API = {
-      async carregarEstoque() {
+      async carregarEstoque(silencioso = false) {
         try {
-          const query = encodeURIComponent("SELECT A, B, C, D, E, F, G WHERE G = 'Em estoque'");
+          if (!silencioso) UI.el.btnRecarregar.textContent = "⏳...";
+          const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H WHERE G = 'Em estoque'");
           const cacheBuster = Date.now();
           const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${cacheBuster}`;
           
@@ -461,15 +702,26 @@
           const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
           const data = JSON.parse(jsonString);
 
-          state.estoque = data.table.rows.map(row => ({
-            id: row.c[0]?.v || "",
-            bitola: Utils.parseNumeroPlanilha(row.c[3]),
-            medida: Utils.parseNumeroPlanilha(row.c[4])
-          }));
+          state.estoque = data.table.rows.map(row => {
+            const bitola = Utils.parseNumeroPlanilha(row.c[3]);
+            const medida = Utils.parseNumeroPlanilha(row.c[4]);
+            return {
+              id: row.c[0]?.v || "",
+              data: Utils.parseTextoPlanilha(row.c[1]),
+              bitola: bitola,
+              medida: medida,
+              peso: Utils.calcularPesoAco(bitola, medida),
+              obs: Utils.parseTextoPlanilha(row.c[7])
+            };
+          });
 
+          UI.el.contadorEstoque.textContent = state.estoque.length;
           UI.atualizarSelectBitolas(state.estoque);
+          Controlador.renderizarVisaoGeralEstoque();
         } catch (error) {
           UI.mostrarNotificacao("Erro ao carregar planilha. Verifique a conexão.", true);
+        } finally {
+          UI.el.btnRecarregar.textContent = "🔄 Atualizar";
         }
       },
 
@@ -486,12 +738,11 @@
           const resultado = await response.json();
           UI.mostrarNotificacao(resultado.mensagem, !resultado.sucesso);
         } catch (error) {
-          // Tratamento para falsos erros de CORS/Timeout do Google Apps Script
-          UI.mostrarNotificacao("Comando enviado! Atualizando estoque...", false);
+          UI.mostrarNotificacao("Comando enviado! Sincronizando estoque...", false);
         } finally {
           UI.limparFormulariosOperacao();
           setTimeout(async () => {
-            await this.carregarEstoque();
+            await this.carregarEstoque(true);
             botaoElemento.disabled = false;
             botaoElemento.textContent = textoOriginal;
           }, CONFIG.DELAY_ATUALIZACAO_MS);
@@ -501,28 +752,28 @@
 
     /**
      * ============================================================================
-     * 5. REGRAS DE NEGÓCIO (BUSCA, CORTE OTIMIZADO E OPERAÇÕES)
+     * 5. REGRAS DE NEGÓCIO (CORTE OTIMIZADO, WHATSAPP, VISÃO GERAL E OPERAÇÕES)
      * ============================================================================
      */
     const Controlador = {
       gerarPlanoDeCorte() {
-        const bitola = parseFloat(UI.elementos.selectBitola.value);
-        const medidaDesejada = parseFloat(UI.elementos.inputBuscaMedida.value);
-        const qtdeDesejada = parseInt(UI.elementos.inputBuscaQtde.value, 10) || 1;
-        const container = UI.elementos.areaResultados;
+        const bitola = parseFloat(UI.el.selectBitola.value);
+        const medidaDesejada = parseFloat(UI.el.inputBuscaMedida.value);
+        const qtdeDesejada = parseInt(UI.el.inputBuscaQtde.value, 10) || 1;
+        const container = UI.el.areaResultados;
 
         if (!bitola || isNaN(medidaDesejada) || medidaDesejada <= 0) {
           UI.mostrarNotificacao("Preencha a bitola e um tamanho válido.", true);
           return;
         }
 
-        // Filtra barras compatíveis e ordena da menor para a maior (Best-Fit)
         const candidatas = state.estoque
           .filter(barra => barra.bitola === bitola && barra.medida >= medidaDesejada)
           .sort((a, b) => a.medida - b.medida);
 
         let qtdeFaltante = qtdeDesejada;
         state.planoDeCorteAtual = [];
+        state.parametrosBuscaAtual = { bitola, medidaDesejada, qtdeDesejada };
 
         for (const barra of candidatas) {
           const pecasPossiveisNaBarra = Math.floor(barra.medida / medidaDesejada);
@@ -532,14 +783,17 @@
             const comprimentoConsumido = pecasParaExtrair * medidaDesejada;
             const sobraCalculada = Utils.arredondarMedida(barra.medida - comprimentoConsumido);
             const pesoOriginal = Utils.calcularPesoAco(barra.bitola, barra.medida);
+            const pesoLiquidoExtraido = Utils.calcularPesoAco(barra.bitola, comprimentoConsumido);
 
             state.planoDeCorteAtual.push({
               id: barra.id,
               bitola: barra.bitola,
               medidaOriginal: barra.medida,
+              medidaCorte: medidaDesejada,
               pecasExtraidas: pecasParaExtrair,
               sobra: sobraCalculada,
-              pesoTotal: pesoOriginal
+              pesoTotal: pesoOriginal,
+              pesoLiquido: pesoLiquidoExtraido
             });
 
             qtdeFaltante -= pecasParaExtrair;
@@ -556,20 +810,28 @@
           const pecasEncontradas = qtdeDesejada - qtdeFaltante;
           container.innerHTML = `
             <div class="box" style="border-color: var(--danger)">
-              ❌ Estoque insuficiente. Só é possível extrair <strong>${pecasEncontradas} peça(s)</strong> do estoque atual.
+              ❌ Estoque insuficiente. Só é possível extrair <strong>${pecasEncontradas} de ${qtdeDesejada} peça(s)</strong> nas barras disponíveis.
             </div>`;
           return;
         }
 
+        const totalBarrasFisicas = state.planoDeCorteAtual.length;
+        const pesoBrutoTotal = state.planoDeCorteAtual.reduce((acc, b) => acc + b.pesoTotal, 0);
+        const pesoLiquidoTotal = state.planoDeCorteAtual.reduce((acc, b) => acc + b.pesoLiquido, 0);
+        const pesoSobraTotal = Math.max(0, pesoBrutoTotal - pesoLiquidoTotal);
+
         const cartoesHtml = state.planoDeCorteAtual.map(item => `
           <div class="result-card">
             <div class="result-info">
-              <h3><span class="badge">ID #${item.id}</span> Barra Original de ${item.medidaOriginal.toFixed(2)}m</h3>
-              <p>Rendimento extraído: <strong>${item.pecasExtraidas} peça(s)</strong> usando 1 barra.</p>
-              <p>Peso Total da Barra: <strong>${item.pesoTotal.toFixed(2)} kg</strong></p>
+              <h3>
+                <span class="badge">ID #${item.id}</span> 
+                Barra Original de ${item.medidaOriginal.toFixed(2)}m
+              </h3>
+              <p>Cortar: <strong>${item.pecasExtraidas} peça(s) de ${item.medidaCorte.toFixed(2)}m</strong></p>
+              <p>Peso Total da Barra: <strong>${item.pesoTotal.toFixed(2)} kg</strong> (Peso dos cortes: ${item.pesoLiquido.toFixed(2)} kg)</p>
             </div>
             <div class="sobra-box">
-              <p class="sobra-label">Sobra Unitária</p>
+              <p class="sobra-label">Sobra Gerada</p>
               <div class="sobra-val">${item.sobra.toFixed(2)}m</div>
             </div>
           </div>
@@ -578,21 +840,208 @@
         container.innerHTML = `
           <div class="box">
             <h2>✅ Plano de Corte Otimizado</h2>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-              O sistema selecionou as seguintes barras físicas para atender ao pedido com o menor desperdício:
-            </p>
+            
+            <div class="summary-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">Barras Físicas</div>
+                <div class="kpi-value">${totalBarrasFisicas} un</div>
+                <div class="kpi-sub">P/ fazer ${qtdeDesejada} peça(s)</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Peso Bruto (Barras)</div>
+                <div class="kpi-value">${pesoBrutoTotal.toFixed(2)} kg</div>
+                <div class="kpi-sub">Total movimentado</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Peso Líquido (Cliente)</div>
+                <div class="kpi-value" style="color: var(--success)">${pesoLiquidoTotal.toFixed(2)} kg</div>
+                <div class="kpi-sub">Apenas os cortes</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Peso Retorno (Sobras)</div>
+                <div class="kpi-value" style="color: var(--warning)">${pesoSobraTotal.toFixed(2)} kg</div>
+                <div class="kpi-sub">Volta p/ estoque</div>
+              </div>
+            </div>
+
             ${cartoesHtml}
-            <button class="btn btn-success" id="btnConfirmarCorte">Confirmar Baixa Automática</button>
+
+            <div class="form-group" style="margin-top: 16px;">
+              <label for="inputClienteCorte">Cliente / Nº do Pedido (Para registrar na planilha)</label>
+              <input type="text" id="inputClienteCorte" placeholder="Ex: João / Pedido 4510 (Opcional)">
+            </div>
+
+            <div class="actions-row">
+              <button class="btn btn-whatsapp" id="btnCopiarWhatsApp">📲 Copiar Ordem p/ WhatsApp</button>
+              <button class="btn btn-success" id="btnConfirmarCorte">✔️ Confirmar Baixa Automática</button>
+            </div>
           </div>`;
 
-        document.getElementById("btnConfirmarCorte").addEventListener("click", (e) => {
-          this.executarBaixaAutomatica(e.target);
+        document.getElementById("btnCopiarWhatsApp").addEventListener("click", () => this.copiarOrdemWhatsApp());
+        document.getElementById("btnConfirmarCorte").addEventListener("click", (e) => this.executarBaixaAutomatica(e.target));
+      },
+
+      copiarOrdemWhatsApp() {
+        if (!state.planoDeCorteAtual.length || !state.parametrosBuscaAtual) return;
+
+        const { bitola, medidaDesejada, qtdeDesejada } = state.parametrosBuscaAtual;
+        const clienteInput = document.getElementById("inputClienteCorte")?.value.trim();
+        const pesoLiquidoTotal = state.planoDeCorteAtual.reduce((acc, b) => acc + b.pesoLiquido, 0);
+
+        let linhasTexto = [
+          `✂️ *ORDEM DE CORTE - GRANDE AÇO*`,
+          clienteInput ? `👤 *Cliente/Ped:* ${clienteInput}` : null,
+          `🔩 *Pedido:* ${qtdeDesejada}x de ${medidaDesejada.toFixed(2)}m (Bitola Ø ${bitola.toFixed(2)}mm)`,
+          `⚖️ *Peso Líquido:* ${pesoLiquidoTotal.toFixed(2)} kg`,
+          `----------------------------------`
+        ].filter(Boolean);
+
+        state.planoDeCorteAtual.forEach(b => {
+          linhasTexto.push(
+            `▪ *ID #${b.id}* (Barra de ${b.medidaOriginal.toFixed(2)}m)\n` +
+            `   ↳ Cortar *${b.pecasExtraidas}x* de ${b.medidaCorte.toFixed(2)}m | *Sobra:* ${b.sobra.toFixed(2)}m`
+          );
+        });
+
+        const textoFinal = linhasTexto.join("\n");
+        navigator.clipboard.writeText(textoFinal).then(() => {
+          UI.mostrarNotificacao("Ordem de corte copiada! Pronto para colar no WhatsApp.");
+        }).catch(() => {
+          UI.mostrarNotificacao("Não foi possível copiar automaticamente.", true);
         });
       },
 
+      renderizarVisaoGeralEstoque() {
+        const estoque = state.estoque;
+        const totalBarras = estoque.length;
+        const totalMetros = estoque.reduce((acc, b) => acc + b.medida, 0);
+        const totalQuilos = estoque.reduce((acc, b) => acc + b.peso, 0);
+
+        UI.el.kpisEstoque.innerHTML = `
+          <div class="kpi-card">
+            <div class="kpi-label">Total de Pontas</div>
+            <div class="kpi-value">${totalBarras}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Metragem Linear</div>
+            <div class="kpi-value">${totalMetros.toFixed(1)} m</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Peso Total em Estoque</div>
+            <div class="kpi-value">${totalQuilos.toFixed(1)} kg</div>
+          </div>
+        `;
+
+        const mapaBitolas = {};
+        estoque.forEach(b => {
+          if (!b.bitola) return;
+          if (!mapaBitolas[b.bitola]) {
+            mapaBitolas[b.bitola] = { qtde: 0, metros: 0, peso: 0 };
+          }
+          mapaBitolas[b.bitola].qtde += 1;
+          mapaBitolas[b.bitola].metros += b.medida;
+          mapaBitolas[b.bitola].peso += b.peso;
+        });
+
+        const bitolasOrdenadas = Object.keys(mapaBitolas).map(Number).sort((a, b) => a - b);
+        const filtroAtual = UI.el.filtroTabelaBitola.value;
+
+        UI.el.cardsBitolaEstoque.innerHTML = bitolasOrdenadas.map(bit => {
+          const info = mapaBitolas[bit];
+          const isAtivo = String(filtroAtual) === String(bit) ? "active" : "";
+          return `
+            <div class="bitola-card ${isAtivo}" data-bitola="${bit}">
+              <h4>Ø ${bit.toFixed(2)} mm</h4>
+              <p>Barras: <strong>${info.qtde} un</strong></p>
+              <p>Total: <strong>${info.metros.toFixed(1)} m</strong></p>
+              <p>Peso: <strong>${info.peso.toFixed(1)} kg</strong></p>
+            </div>
+          `;
+        }).join("");
+
+        document.querySelectorAll(".bitola-card").forEach(card => {
+          card.addEventListener("click", () => {
+            const bit = card.dataset.bitola;
+            UI.el.filtroTabelaBitola.value = String(UI.el.filtroTabelaBitola.value) === String(bit) ? "TODAS" : bit;
+            this.renderizarVisaoGeralEstoque();
+          });
+        });
+
+        this.renderizarTabelaEstoque();
+      },
+
+      renderizarTabelaEstoque() {
+        const bitolaFiltro = UI.el.filtroTabelaBitola.value;
+        const termoBusca = UI.el.filtroTabelaBusca.value.trim().toLowerCase();
+
+        let listaFiltrada = state.estoque.filter(item => {
+          if (bitolaFiltro !== "TODAS" && item.bitola !== parseFloat(bitolaFiltro)) return false;
+          if (termoBusca) {
+            const limpo = termoBusca.replace("#", "").replace(",", ".");
+            const matchId = String(item.id).includes(limpo);
+            const numBusca = parseFloat(limpo);
+            const matchMedida = !isNaN(numBusca) && item.medida >= numBusca;
+            return matchId || matchMedida;
+          }
+          return true;
+        });
+
+        listaFiltrada.sort((a, b) => a.bitola - b.bitola || b.medida - a.medida);
+
+        if (listaFiltrada.length === 0) {
+          UI.el.tabelaEstoqueBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Nenhuma barra encontrada para este filtro.</td></tr>`;
+          return;
+        }
+
+        UI.el.tabelaEstoqueBody.innerHTML = listaFiltrada.map(b => `
+          <tr>
+            <td><span class="badge">#${b.id}</span></td>
+            <td>${b.data}</td>
+            <td><strong>Ø ${b.bitola.toFixed(2)} mm</strong></td>
+            <td><strong>${b.medida.toFixed(2)} m</strong></td>
+            <td>${b.peso.toFixed(2)} kg</td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">${b.obs}</td>
+            <td>
+              <button class="btn btn-danger btn-sm btn-baixa-rapida" data-id="${b.id}">Dar Baixa</button>
+            </td>
+          </tr>
+        `).join("");
+
+        document.querySelectorAll(".btn-baixa-rapida").forEach(btn => {
+          btn.addEventListener("click", () => {
+            UI.alternarAba("gerenciar");
+            UI.el.inputBaixaId.value = btn.dataset.id;
+            this.preverBaixaManual();
+            UI.el.inputBaixaId.scrollIntoView({ behavior: "smooth" });
+          });
+        });
+      },
+
+      obterBitolaCadastro() {
+        const valorSelect = UI.el.cadBitolaSelect.value;
+        if (valorSelect === "OUTRA") {
+          return parseFloat(UI.el.cadBitolaCustom.value);
+        }
+        return parseFloat(valorSelect);
+      },
+
+      atualizarPreviewPesoCadastro() {
+        const bitola = this.obterBitolaCadastro();
+        const medida = parseFloat(UI.el.inputCadMedida.value);
+        const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
+
+        if (bitola > 0 && medida > 0) {
+          const pesoUnitario = Utils.calcularPesoAco(bitola, medida);
+          const pesoTotal = pesoUnitario * qtde;
+          UI.el.previewPesoCadastro.innerHTML = `⚖️ Peso estimado: <strong>${pesoUnitario.toFixed(2)} kg/barra</strong> (Total do lote: <strong>${pesoTotal.toFixed(2)} kg</strong>)`;
+        } else {
+          UI.el.previewPesoCadastro.innerHTML = "";
+        }
+      },
+
       preverBaixaManual() {
-        const idDigitado = UI.elementos.inputBaixaId.value.trim();
-        const { previewBaixa, btnBaixar } = UI.elementos;
+        const idDigitado = UI.el.inputBaixaId.value.trim();
+        const { previewBaixa, btnBaixar } = UI.el;
 
         if (!idDigitado) {
           previewBaixa.innerHTML = "";
@@ -603,53 +1052,60 @@
         const barra = state.estoque.find(item => String(item.id) === idDigitado);
 
         if (barra) {
-          const peso = Utils.calcularPesoAco(barra.bitola, barra.medida);
           previewBaixa.innerHTML = `
             <div class="result-card danger-border" style="margin-top: 5px;">
               <div class="result-info">
-                <h3><span class="badge danger-bg">ID #${barra.id}</span> Barra Encontrada</h3>
-                <p>Bitola Ø ${barra.bitola.toFixed(2)} mm • Medida: ${barra.medida.toFixed(2)}m</p>
-                <p>Peso Total: <strong>${peso.toFixed(2)} kg</strong></p>
+                <h3><span class="badge danger-bg">ID #${barra.id}</span> Barra Selecionada para Baixa</h3>
+                <p>Bitola Ø ${barra.bitola.toFixed(2)} mm • Medida: <strong>${barra.medida.toFixed(2)}m</strong></p>
+                <p>Peso Total: <strong>${barra.peso.toFixed(2)} kg</strong> • Origem: ${barra.obs}</p>
               </div>
             </div>`;
-          btnBaixar.style.display = "block";
+          btnBaixar.style.display = "inline-flex";
         } else {
           previewBaixa.innerHTML = `
             <div style="color: var(--danger); font-size: 0.9rem; margin-top: 10px;">
-              ❌ ID não encontrado no estoque ou já vendido.
+              ❌ ID #${idDigitado} não encontrado no estoque ativo ou já foi vendido.
             </div>`;
           btnBaixar.style.display = "none";
         }
       },
 
       executarBaixaAutomatica(botao) {
+        const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "";
         const instrucoes = state.planoDeCorteAtual.map(item => ({
           id: item.id,
           sobra: item.sobra,
           bitola: item.bitola
         }));
-        API.enviarRequisicao({ action: "baixar", instrucoes }, botao, "Processando Baixa...", "Confirmar Baixa Automática");
+        API.enviarRequisicao({ action: "baixar", instrucoes, cliente }, botao, "Processando Baixa...", "✔️ Confirmar Baixa Automática");
       },
 
       executarBaixaManual() {
-        const id = UI.elementos.inputBaixaId.value.trim();
+        const id = UI.el.inputBaixaId.value.trim();
+        const cliente = UI.el.inputBaixaClienteManual.value.trim();
         if (!id) return;
-        const payload = { action: "baixar", instrucoes: [{ id, sobra: 0, bitola: 0 }] };
-        API.enviarRequisicao(payload, UI.elementos.btnBaixar, "Processando...", "Confirmar Baixa (Vendido)");
+
+        const payload = { 
+          action: "baixar", 
+          cliente: cliente,
+          instrucoes: [{ id, sobra: 0, bitola: 0 }] 
+        };
+        API.enviarRequisicao(payload, UI.el.btnBaixar, "Processando...", "Confirmar Baixa (Vendido)");
       },
 
       executarCadastro() {
-        const bitola = UI.elementos.inputCadBitola.value;
-        const medida = UI.elementos.inputCadMedida.value;
-        const qtde = UI.elementos.inputCadQtde.value;
+        const bitola = this.obterBitolaCadastro();
+        const medida = parseFloat(UI.el.inputCadMedida.value);
+        const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
+        const obs = UI.el.inputCadObs.value.trim();
 
-        if (!bitola || !medida) {
-          UI.mostrarNotificacao("Preencha a bitola e a medida.", true);
+        if (!bitola || isNaN(bitola) || !medida || isNaN(medida)) {
+          UI.mostrarNotificacao("Preencha a bitola e a medida corretamente.", true);
           return;
         }
 
-        const payload = { action: "cadastrar", bitola, medida, qtde };
-        API.enviarRequisicao(payload, UI.elementos.btnCadastrar, "Salvando...", "Confirmar Cadastro");
+        const payload = { action: "cadastrar", bitola, medida, qtde, obs };
+        API.enviarRequisicao(payload, UI.el.btnCadastrar, "Salvando...", "Confirmar Cadastro");
       }
     };
 
@@ -662,24 +1118,31 @@
       UI.carregarTemaSalvo();
       API.carregarEstoque();
 
-      // Eventos de Navegação (Abas)
       document.querySelectorAll(".tab").forEach(tab => {
-        tab.addEventListener("click", () => {
-          document.querySelectorAll(".tab, .tab-content").forEach(el => el.classList.remove("active"));
-          tab.classList.add("active");
-          document.getElementById(tab.dataset.target).classList.add("active");
-        });
+        tab.addEventListener("click", () => UI.alternarAba(tab.dataset.target));
       });
 
-      // Eventos de Botões e Inputs
-      UI.elementos.btnTheme.addEventListener("click", () => UI.alternarTema());
-      UI.elementos.btnBuscar.addEventListener("click", () => Controlador.gerarPlanoDeCorte());
-      UI.elementos.btnCadastrar.addEventListener("click", () => Controlador.executarCadastro());
-      UI.elementos.btnBaixar.addEventListener("click", () => Controlador.executarBaixaManual());
-      UI.elementos.inputBaixaId.addEventListener("input", () => Controlador.preverBaixaManual());
+      UI.el.btnTheme.addEventListener("click", () => UI.alternarTema());
+      UI.el.btnRecarregar.addEventListener("click", () => API.carregarEstoque());
+
+      UI.el.btnBuscar.addEventListener("click", () => Controlador.gerarPlanoDeCorte());
+
+      UI.el.filtroTabelaBitola.addEventListener("change", () => Controlador.renderizarVisaoGeralEstoque());
+      UI.el.filtroTabelaBusca.addEventListener("input", () => Controlador.renderizarTabelaEstoque());
+
+      UI.el.cadBitolaSelect.addEventListener("change", (e) => {
+        UI.el.grupoBitolaCustom.style.display = e.target.value === "OUTRA" ? "flex" : "none";
+        Controlador.atualizarPreviewPesoCadastro();
+      });
+      UI.el.cadBitolaCustom.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
+      UI.el.inputCadMedida.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
+      UI.el.inputCadQtde.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
+      UI.el.btnCadastrar.addEventListener("click", () => Controlador.executarCadastro());
+
+      UI.el.inputBaixaId.addEventListener("input", () => Controlador.preverBaixaManual());
+      UI.el.btnBaixar.addEventListener("click", () => Controlador.executarBaixaManual());
     }
 
-    // Inicia quando o DOM estiver pronto
     document.addEventListener("DOMContentLoaded", iniciarAplicacao);
   </script>
 </body>
