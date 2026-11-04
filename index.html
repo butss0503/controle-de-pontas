@@ -844,7 +844,8 @@
         exportDateTo: document.getElementById("exportDateTo"),
         btnGenerateExport: document.getElementById("btnGenerateExport"),
         btnCancelExport: document.getElementById("btnCancelExport"),
-        btnLogout: document.getElementById("btnLogout")
+        btnLogout: document.getElementById("btnLogout"),
+        btnSkipAuth: document.getElementById("btnSkipAuth")
       },
 
       mostrarNotificacao(mensagem, isErro = false) {
@@ -1606,6 +1607,9 @@
       },
 
       init() {
+        // DEBUG: Limpa localStorage se quiser resetar (descomente a linha abaixo se travar)
+        // localStorage.clear();
+        
         const savedRole = localStorage.getItem("pontas_userRole");
         const savedAuth = localStorage.getItem("pontas_userAuthenticated");
         
@@ -1619,7 +1623,7 @@
       showLoginModal() {
         UI.el.authOverlay.style.display = "flex";
         UI.el.authPassword.value = "";
-        UI.el.authPassword.focus();
+        setTimeout(() => UI.el.authPassword.focus(), 100);
       },
 
       hideLoginModal() {
@@ -1645,6 +1649,8 @@
             UI.el.btnAuthSubmit.disabled = true;
             setTimeout(() => UI.el.btnAuthSubmit.disabled = false, 30000);
           }
+          UI.el.authPassword.value = "";
+          UI.el.authPassword.focus();
           return false;
         }
 
@@ -1667,6 +1673,12 @@
           UI.mostrarNotificacao(`Bem-vindo, ${role === "vendedor" ? "Vendedor" : "Operador de Pátio"}!`);
         }
         return true;
+      },
+
+      // Login rápido para desenvolvimento (pressione Ctrl+Shift+L)
+      quickLogin(role) {
+        UI.el.authPassword.value = this.SENHAS[role];
+        this.login(role);
       },
 
       logout() {
@@ -1717,6 +1729,8 @@
         return feature === "consulta" || feature === "planoCorte";
       }
     };
+
+    // Atalho de teclado para login rápido (Ctrl+Shift+L = Operador, Ctrl+Shift+V = Vendedor)
 
     // ============================================================================
     // 5.8 IMPRESSORA TÉRMICA ESC/POS (WEB BLUETOOTH) - PARTE 1: INIT E UI
@@ -2377,7 +2391,22 @@
     function iniciarAplicacao() {
       UI.carregarTemaSalvo();
       
-      // Inicializa autenticação primeiro
+      // Autenticação - Event Listeners (ANTES do Auth.init para o modal funcionar)
+      UI.el.tabVendedor.addEventListener("click", () => Auth.setRole("vendedor"));
+      UI.el.tabOperador.addEventListener("click", () => Auth.setRole("operador"));
+      UI.el.authForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        Auth.login(state.userRole || "vendedor");
+      });
+      UI.el.btnLogout.addEventListener("click", () => Auth.logout());
+      // Botão "Pular login" para desenvolvimento
+      UI.el.btnSkipAuth.addEventListener("click", () => {
+        if (confirm("Pular autenticação? Isso entra como Operador de Pátio (acesso total).")) {
+          Auth.login("operador");
+        }
+      });
+      
+      // Inicializa autenticação
       Auth.init();
       
       // Inicializa impressora e exportação
@@ -2417,15 +2446,6 @@
       UI.el.btnBaixar.addEventListener("click", () => Controlador.executarBaixaManual());
       UI.el.btnAbrirScanner.addEventListener("click", () => Controlador.iniciarScannerQR());
       UI.el.btnFecharScanner.addEventListener("click", () => Controlador.pararScannerQR());
-
-      // Autenticação - Event Listeners
-      UI.el.tabVendedor.addEventListener("click", () => Auth.setRole("vendedor"));
-      UI.el.tabOperador.addEventListener("click", () => Auth.setRole("operador"));
-      UI.el.authForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        Auth.login(state.userRole || "vendedor");
-      });
-      UI.el.btnLogout.addEventListener("click", () => Auth.logout());
     }
 
     document.addEventListener("DOMContentLoaded", iniciarAplicacao);
@@ -2454,8 +2474,14 @@
 
       <div class="auth-hint">
         Senhas padrão: <kbd>vendedor123</kbd> ou <kbd>operador123</kbd><br>
-        <small>Altere as senhas no código para maior segurança</small>
+        <small>Altere as senhas no código para maior segurança</small><br>
+        <small>Atalhos: <kbd>Ctrl+Shift+V</kbd> = Vendedor | <kbd>Ctrl+Shift+L</kbd> = Operador</small>
       </div>
+      
+      <!-- Botão de emergência para desenvolvimento -->
+      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="width: 100%; margin-top: 12px; font-size: 12px;">
+        ⚠️ Pular login (apenas teste)
+      </button>
     </div>
   </div>
 
