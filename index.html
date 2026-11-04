@@ -361,9 +361,6 @@
     .printer-status.connected { background: var(--brand-bg); border: 1px solid var(--brand-border); }
     .printer-status .status-dot { background: var(--danger); box-shadow: none; }
     .printer-status.connected .status-dot { background: var(--brand); }
-    .printer-device-list { max-height: 180px; overflow-y: auto; margin-bottom: 16px; }
-    .printer-device-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; }
-    .printer-device-item.selected, .printer-device-item:hover { border-color: var(--brand); background: var(--brand-bg); }
 
     .export-options { display: grid; gap: 10px; margin-bottom: 16px; }
     .export-option { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; }
@@ -385,7 +382,7 @@
     @keyframes fadeout { from { bottom: 26px; opacity: 1; } to { bottom: 10px; opacity: 0; } }
 
     /* ==========================================================================
-       6. ESTILOS DE IMPRESSÃO (ETIQUETAS TÉRMICAS COM QR CODE LOCAL)
+       6. ESTILOS DE IMPRESSÃO (ETIQUETAS TÉRMICAS USB COM QR CODE LOCAL)
        ========================================================================== */
     #printArea { display: none; }
 
@@ -431,7 +428,7 @@
       </div>
       <div class="header-right">
         <span class="profile-badge" id="profileBadge" title="Clique para alternar perfil">👤 <span id="profileRole">Operador</span></span>
-        <button class="btn-printer" id="btnPrinter" title="Configurar Impressora Térmica Bluetooth">🖨️ Impressora</button>
+        <button class="btn-printer connected" id="btnPrinter" title="Configurar Tamanho da Etiqueta USB">🖨️ Etiqueta USB</button>
         <button class="btn-export" id="btnExport" title="Exportar Relatório Excel / PDF">📊 Exportar</button>
         <button class="icon-btn" id="btnLogout" title="Trocar Usuário / Senha">🔐 Perfil</button>
         <button class="icon-btn" id="btnRecarregar" title="Sincronizar Planilha">🔄 Sincronizar</button>
@@ -663,37 +660,43 @@
     </div>
   </div>
 
-  <!-- MODAL DE IMPRESSORA TÉRMICA (ESC/POS) -->
+  <!-- MODAL DE CONFIGURAÇÃO DE IMPRESSORA VIA CABO (USB) -->
   <div class="auth-overlay" id="printerOverlay">
     <div class="auth-modal printer-modal">
-      <h2>🖨️ Impressora Térmica ESC/POS</h2>
-      <p class="subtitle">Conecte via Bluetooth para impressão direta em 1 clique</p>
+      <h2>🖨️ Configuração de Impressora (Cabo USB)</h2>
+      <p class="subtitle">Ajuste o formato para a sua impressora de etiquetas do Windows</p>
       
-      <div class="printer-status" id="printerStatus">
+      <div class="printer-status connected" id="printerStatus">
         <span class="status-dot"></span>
-        <span id="printerStatusText">Desconectado — Selecione uma impressora</span>
+        <span id="printerStatusText">Pronta — Impressão direta via Driver USB do Sistema</span>
       </div>
 
-      <div class="printer-device-list" id="printerDeviceList">
-        <p style="text-align: center; color: var(--text-muted); padding: 14px;">Clique em "Buscar Impressoras" para parear via Bluetooth</p>
-      </div>
-
-      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <button class="btn btn-secondary" id="btnScanPrinters" style="flex: 1;">🔍 Buscar Impressoras</button>
-        <button class="btn" id="btnConnectPrinter" style="flex: 1;" disabled>🔗 Conectar</button>
-      </div>
-
-      <div class="form-group" style="margin-bottom: 16px;">
-        <label>Modelo de Etiqueta Direta</label>
-        <select id="printerTemplate">
-          <option value="completa">Completa (com QR Code, ID, Medida e Peso)</option>
-          <option value="simples">Simples (Texto Rápido)</option>
-          <option value="corte">Romaneio de Plano de Corte</option>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="printerPaperSize">Tamanho da Etiqueta / Papel na Impressora</label>
+        <select id="printerPaperSize" class="mono">
+          <option value="100x50">Etiqueta Térmica 100mm x 50mm (10x5 cm - Padrão Pátio)</option>
+          <option value="80x40">Etiqueta Térmica 80mm x 40mm (8x4 cm)</option>
+          <option value="60x40">Etiqueta Térmica 60mm x 40mm (6x4 cm)</option>
+          <option value="a4">Folha Comum A4 (Várias etiquetas por folha)</option>
         </select>
       </div>
 
-      <button class="btn" id="btnTestPrint" disabled>🖨️ Imprimir Etiqueta de Teste</button>
-      <button class="btn btn-secondary" id="btnClosePrinter" style="margin-top: 10px;">Fechar</button>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="printerAutoPrint">Comportamento ao Gerar Sobras</label>
+        <select id="printerAutoPrint">
+          <option value="manual">Imprimir somente quando eu clicar no botão 🏷️</option>
+          <option value="auto">Abrir impressão automaticamente ao gerar sobras</option>
+        </select>
+      </div>
+
+      <div style="background: var(--surface-200); padding: 12px; border-radius: var(--radius-md); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; border: 1px solid var(--border);">
+        💡 <strong>Dica para Impressão em 1 Clique:</strong><br>
+        1. Na janela de impressão do Chrome, selecione sua impressora USB e desmarque <em>"Cabeçalhos e rodapés"</em>.<br>
+        2. Em <em>Margens</em>, escolha <strong>"Nenhuma"</strong>. O navegador salvará essa preferência!
+      </div>
+
+      <button class="btn" id="btnTestPrint">🖨️ Imprimir Etiqueta de Teste Agora</button>
+      <button class="btn btn-secondary" id="btnClosePrinter" style="margin-top: 10px;">Salvar e Fechar</button>
     </div>
   </div>
 
@@ -719,14 +722,14 @@
           <input type="radio" name="exportFormat" value="excel" checked>
           <div>
             <div style="font-weight: 600; font-size: 0.9rem;">📈 Planilha Excel (.xlsx)</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Abas separadas: Resumo, Estoque Ativo, Vendidos e Sobras</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Abas separadas: Estoque Ativo e Histórico de Vendidos</div>
           </div>
         </label>
         <label class="export-option">
           <input type="radio" name="exportFormat" value="pdf">
           <div>
             <div style="font-weight: 600; font-size: 0.9rem;">📄 Relatório em PDF (.pdf)</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Documento pronto para impressão com KPIs e tabelas por bitola</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Documento pronto para impressão com KPIs e tabelas</div>
           </div>
         </label>
         <label class="export-option">
@@ -757,7 +760,6 @@
      * ============================================================================
      */
     const CONFIG = {
-      // Caso gere uma nova implantação no Apps Script, cole a URL abaixo:
       SCRIPT_URL: "https://script.google.com/macros/s/AKfycby3X2Ho0H7BM1iwm204huX_e-ONEeApfL3JNFEDPilEo25QdwnVW2PlPPw2tpHENH5M/exec",
       SPREADSHEET_ID: "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI",
       SHEET_NAME: "Pontas",
@@ -773,14 +775,7 @@
       resumoCorteAtual: null,
       maxIdPlanilha: 0,
       qrScanner: null,
-      userRole: "operador",
-      userAuthenticated: true,
-      authAttempts: 0,
-      printerDevice: null,
-      printerCharacteristic: null,
-      printerConnected: false,
-      printerDevices: [],
-      selectedPrinterDevice: null
+      userRole: "operador"
     };
 
     /**
@@ -882,12 +877,6 @@
         tabVendedor: document.getElementById("tabVendedor"),
         tabOperador: document.getElementById("tabOperador"),
         printerOverlay: document.getElementById("printerOverlay"),
-        printerStatus: document.getElementById("printerStatus"),
-        printerStatusText: document.getElementById("printerStatusText"),
-        printerDeviceList: document.getElementById("printerDeviceList"),
-        btnScanPrinters: document.getElementById("btnScanPrinters"),
-        btnConnectPrinter: document.getElementById("btnConnectPrinter"),
-        printerTemplate: document.getElementById("printerTemplate"),
         btnTestPrint: document.getElementById("btnTestPrint"),
         btnClosePrinter: document.getElementById("btnClosePrinter"),
         exportOverlay: document.getElementById("exportOverlay"),
@@ -957,7 +946,7 @@
 
     /**
      * ============================================================================
-     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS (LEITURA DUPLA COM FALLBACK AUTOMÁTICO)
+     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS (ALTA VELOCIDADE E À PROVA DE FALHAS)
      * ============================================================================
      */
     const API = {
@@ -965,7 +954,6 @@
         try {
           if (!silencioso) UI.el.btnRecarregar.textContent = "⏳...";
           
-          // Leitura direta de alta velocidade via Google Visualization JSON (nunca falha por CORS)
           const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H");
           const urlGviz = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${Date.now()}`;
           
@@ -1055,7 +1043,7 @@
 
     /**
      * ============================================================================
-     * 5. CONTROLADOR DE NEGÓCIOS (MULTI-CORTE, IMPRESSÃO, QR CODE E HISTÓRICO)
+     * 5. CONTROLADOR DE NEGÓCIOS (MULTI-CORTE, IMPRESSÃO USB, QR CODE E HISTÓRICO)
      * ============================================================================
      */
     const Controlador = {
@@ -1292,17 +1280,8 @@
         });
       },
 
-      async imprimirOrdemEEtiquetas() {
+      imprimirOrdemEEtiquetas() {
         if (!state.planoDeCorteAtual.length || !state.resumoCorteAtual) return;
-
-        // Se a impressora térmica Bluetooth estiver conectada, imprime direto via ESC/POS
-        if (state.printerConnected) {
-          const ok = await ThermalPrinter.printPlanoCorte();
-          if (ok) {
-            UI.mostrarNotificacao("🖨️ Ordem enviada direto para a impressora térmica!");
-            return;
-          }
-        }
 
         const { bitola, pesoLiquidoTotal } = state.resumoCorteAtual;
         const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "Balcão / Interno";
@@ -1352,26 +1331,18 @@
               new QRious({
                 element: document.getElementById(`qrCanvas_${b.idSobraPrevisto}`),
                 value: String(b.idSobraPrevisto),
-                size: 78
+                size: ThermalPrinter.paperSize === "60x40" ? 60 : 78
               });
             }
           });
         }
 
-        setTimeout(() => window.print(), 350);
+        setTimeout(() => window.print(), 300);
       },
 
-      async imprimirEtiquetaUnica(idBarra) {
+      imprimirEtiquetaUnica(idBarra) {
         const barra = state.estoque.find(b => b.id === idBarra);
         if (!barra) return;
-
-        if (state.printerConnected) {
-          const ok = await ThermalPrinter.printBarraLabel(barra, UI.el.printerTemplate.value);
-          if (ok) {
-            UI.mostrarNotificacao(`🖨️ Etiqueta #${barra.id} impressa na térmica!`);
-            return;
-          }
-        }
 
         UI.el.printArea.innerHTML = `
           <div class="print-labels-grid">
@@ -1392,11 +1363,11 @@
           new QRious({
             element: document.getElementById(`qrCanvas_single_${barra.id}`),
             value: String(barra.id),
-            size: 78
+            size: ThermalPrinter.paperSize === "60x40" ? 60 : 78
           });
         }
 
-        setTimeout(() => window.print(), 350);
+        setTimeout(() => window.print(), 300);
       },
 
       renderizarVisaoGeralEstoque() {
@@ -1479,7 +1450,7 @@
             <td class="mono">${b.peso.toFixed(2)} kg</td>
             <td style="color: var(--text-muted); font-size: 0.8rem;">${b.obs}</td>
             <td style="display:flex; gap:6px;">
-              <button class="icon-btn btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta">🏷️</button>
+              <button class="icon-btn btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta USB">🏷️</button>
               <button class="btn btn-danger btn-sm btn-baixa-rapida" data-id="${b.id}">Baixar</button>
             </td>
           </tr>
@@ -1619,6 +1590,11 @@
           sobra: item.sobra,
           bitola: item.bitola
         }));
+
+        if (ThermalPrinter.autoPrint === "auto" && state.planoDeCorteAtual.some(b => b.idSobraPrevisto)) {
+          this.imprimirOrdemEEtiquetas();
+        }
+
         API.enviarRequisicao({ action: "baixar", instrucoes, cliente }, botao, "Processando Baixa...", "✔️ Confirmar Baixa Automática");
       },
 
@@ -1716,154 +1692,131 @@
 
     /**
      * ============================================================================
-     * 5.8 IMPRESSORA TÉRMICA ESC/POS (WEB BLUETOOTH)
+     * 5.8 IMPRESSORA TÉRMICA VIA CABO USB (DRIVER DO SISTEMA / ALTA RESOLUÇÃO)
      * ============================================================================
      */
     const ThermalPrinter = {
-      SERVICE_UUID: "00001101-0000-1000-8000-00805f9b34fb",
-      CHARACTERISTIC_UUID: "00001101-0000-1000-8000-00805f9b34fb",
+      paperSize: "100x50",
+      autoPrint: "manual",
 
       init() {
+        this.paperSize = localStorage.getItem("pontas_paperSize") || "100x50";
+        this.autoPrint = localStorage.getItem("pontas_autoPrint") || "manual";
+
+        const selectSize = document.getElementById("printerPaperSize");
+        const selectAuto = document.getElementById("printerAutoPrint");
+
+        if (selectSize) {
+          selectSize.value = this.paperSize;
+          selectSize.addEventListener("change", (e) => {
+            this.paperSize = e.target.value;
+            localStorage.setItem("pontas_paperSize", this.paperSize);
+            this.aplicarEstiloPagina();
+            UI.mostrarNotificacao("Tamanho da etiqueta ajustado para " + this.paperSize);
+          });
+        }
+
+        if (selectAuto) {
+          selectAuto.value = this.autoPrint;
+          selectAuto.addEventListener("change", (e) => {
+            this.autoPrint = e.target.value;
+            localStorage.setItem("pontas_autoPrint", this.autoPrint);
+          });
+        }
+
         UI.el.btnPrinter.addEventListener("click", () => this.openModal());
         UI.el.btnClosePrinter.addEventListener("click", () => this.closeModal());
-        UI.el.btnScanPrinters.addEventListener("click", () => this.scanDevices());
-        UI.el.btnConnectPrinter.addEventListener("click", () => this.connectToSelected());
         UI.el.btnTestPrint.addEventListener("click", () => this.printTest());
+
+        this.aplicarEstiloPagina();
       },
 
       openModal() {
         UI.el.printerOverlay.style.display = "flex";
-        this.updateStatusUI();
       },
 
       closeModal() {
         UI.el.printerOverlay.style.display = "none";
       },
 
-      updateStatusUI() {
-        const status = UI.el.printerStatus;
-        const text = UI.el.printerStatusText;
-        UI.el.btnPrinter.classList.toggle("connected", state.printerConnected);
-        
-        if (state.printerConnected) {
-          status.classList.add("connected");
-          text.textContent = `Conectado: ${state.printerDevice?.name || "Impressora"}`;
+      aplicarEstiloPagina() {
+        let styleEl = document.getElementById("dynamicPrintStyle");
+        if (!styleEl) {
+          styleEl = document.createElement("style");
+          styleEl.id = "dynamicPrintStyle";
+          document.head.appendChild(styleEl);
+        }
+
+        if (this.paperSize === "100x50") {
+          styleEl.innerHTML = `
+            @media print {
+              @page { size: 100mm 50mm; margin: 0mm; }
+              .print-labels-grid { display: block !important; margin: 0 !important; }
+              .thermal-label { width: 98mm !important; height: 48mm !important; margin: 1mm auto !important; padding: 3mm 4mm !important; page-break-after: always !important; box-sizing: border-box !important; }
+              .thermal-label-info h2 { font-size: 24pt !important; margin: 2px 0 !important; }
+              .thermal-label-info p { font-size: 11pt !important; margin: 2px 0 !important; }
+            }`;
+        } else if (this.paperSize === "80x40") {
+          styleEl.innerHTML = `
+            @media print {
+              @page { size: 80mm 40mm; margin: 0mm; }
+              .print-labels-grid { display: block !important; margin: 0 !important; }
+              .thermal-label { width: 78mm !important; height: 38mm !important; margin: 1mm auto !important; padding: 2mm 3mm !important; page-break-after: always !important; box-sizing: border-box !important; }
+              .thermal-label-info h2 { font-size: 18pt !important; margin: 1px 0 !important; }
+              .thermal-label-info p { font-size: 9.5pt !important; margin: 1px 0 !important; }
+            }`;
+        } else if (this.paperSize === "60x40") {
+          styleEl.innerHTML = `
+            @media print {
+              @page { size: 60mm 40mm; margin: 0mm; }
+              .print-labels-grid { display: block !important; margin: 0 !important; }
+              .thermal-label { width: 58mm !important; height: 38mm !important; margin: 1mm auto !important; padding: 2mm !important; page-break-after: always !important; box-sizing: border-box !important; }
+              .thermal-label-info h2 { font-size: 15pt !important; margin: 1px 0 !important; }
+              .thermal-label-info p { font-size: 8.5pt !important; margin: 1px 0 !important; }
+              .thermal-canvas-container { width: 62px !important; height: 62px !important; }
+            }`;
         } else {
-          status.classList.remove("connected");
-          text.textContent = state.selectedPrinterDevice 
-            ? `Selecionada: ${state.selectedPrinterDevice.name}` 
-            : "Desconectado — Clique em Buscar Impressoras";
+          styleEl.innerHTML = `
+            @media print {
+              @page { size: A4; margin: 10mm; }
+            }`;
         }
-        UI.el.btnTestPrint.disabled = !state.printerConnected;
       },
 
-      async scanDevices() {
-        if (!navigator.bluetooth) {
-          UI.mostrarNotificacao("Navegador sem suporte a Web Bluetooth (Use Chrome no Android/PC).", true);
-          return;
-        }
+      printTest() {
+        this.closeModal();
+        const barraTeste = state.estoque[0] || {
+          id: 999,
+          bitola: 12.5,
+          medida: 3.45,
+          peso: 3.32,
+          data: new Date().toLocaleDateString("pt-BR")
+        };
 
-        try {
-          const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [this.SERVICE_UUID, "000018f0-0000-1000-8000-00805f9b34fb"]
+        UI.el.printArea.innerHTML = `
+          <div class="print-labels-grid">
+            <div class="thermal-label">
+              <div class="thermal-label-info">
+                <div style="font-size:9px; font-weight:bold;">GRANDE AÇO • PONTA DE ESTOQUE</div>
+                <h2>ID #${barraTeste.id}</h2>
+                <p>Ø ${barraTeste.bitola.toFixed(2)} mm | ${barraTeste.medida.toFixed(2)} m</p>
+                <p>Peso: ${barraTeste.peso.toFixed(2)} kg</p>
+                <div style="font-size:9px;">Data: ${barraTeste.data}</div>
+              </div>
+              <div class="thermal-canvas-container"><canvas id="qrCanvas_test"></canvas></div>
+            </div>
+          </div>
+        `;
+
+        if (window.QRious) {
+          new QRious({
+            element: document.getElementById("qrCanvas_test"),
+            value: String(barraTeste.id),
+            size: this.paperSize === "60x40" ? 60 : 80
           });
-
-          state.selectedPrinterDevice = { id: device.id, name: device.name || "Impressora Bluetooth", device };
-          UI.el.printerDeviceList.innerHTML = `
-            <div class="printer-device-item selected">
-              <div><strong>${state.selectedPrinterDevice.name}</strong><br><small class="mono">${device.id}</small></div>
-              <span>✅</span>
-            </div>`;
-          UI.el.btnConnectPrinter.disabled = false;
-          this.updateStatusUI();
-        } catch (err) {
-          if (err.name !== "NotFoundError") UI.mostrarNotificacao("Busca cancelada ou erro: " + err.message, true);
         }
-      },
 
-      async connectToSelected() {
-        if (!state.selectedPrinterDevice) return;
-        UI.el.btnConnectPrinter.disabled = true;
-        UI.el.btnConnectPrinter.textContent = "Conectando...";
-
-        try {
-          const device = state.selectedPrinterDevice.device;
-          const server = await device.gatt.connect();
-          const services = await server.getPrimaryServices();
-          const characteristics = await services[0].getCharacteristics();
-          state.printerCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse) || characteristics[0];
-          state.printerDevice = device;
-          state.printerConnected = true;
-
-          device.addEventListener("gattserverdisconnected", () => {
-            state.printerConnected = false;
-            this.updateStatusUI();
-          });
-
-          this.updateStatusUI();
-          UI.mostrarNotificacao("🖨️ Impressora conectada!");
-        } catch (err) {
-          UI.mostrarNotificacao("Falha ao conectar GATT: " + err.message, true);
-        } finally {
-          UI.el.btnConnectPrinter.disabled = false;
-          UI.el.btnConnectPrinter.textContent = state.printerConnected ? "✅ Conectada" : "🔗 Conectar";
-        }
-      },
-
-      async sendData(data) {
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(data);
-        const chunkSize = 180;
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          await state.printerCharacteristic.writeValue(bytes.slice(i, i + chunkSize));
-          await new Promise(r => setTimeout(r, 15));
-        }
-      },
-
-      cmds: {
-        init: () => "\x1B\x40",
-        cut: () => "\x1D\x56\x00",
-        feed: (n = 3) => "\n".repeat(n),
-        bold: (on) => on ? "\x1B\x45\x01" : "\x1B\x45\x00",
-        align: (m) => ["\x1B\x61\x00", "\x1B\x61\x01", "\x1B\x61\x02"][m] || "\x1B\x61\x00"
-      },
-
-      generateLabelCompleta(barra) {
-        const c = this.cmds;
-        return c.init() + c.align(1) + c.bold(true) + "GRANDE ACO - PONTA DE ESTOQUE\n" + c.bold(false) +
-               "------------------------------\n" + c.align(0) +
-               `ID: #${barra.id}\nBitola: ${barra.bitola.toFixed(2)} mm\nMedida: ${barra.medida.toFixed(2)} m\nPeso: ${barra.peso.toFixed(2)} kg\n` +
-               "------------------------------\n" + c.feed(3) + c.cut();
-      },
-
-      generatePlanoCorte(plano, resumo) {
-        const c = this.cmds;
-        let txt = c.init() + c.align(1) + c.bold(true) + "ORDEM DE CORTE - GRANDE ACO\n" + c.bold(false) +
-                  `Bitola: ${resumo.bitola.toFixed(2)}mm | Liquido: ${resumo.pesoLiquidoTotal.toFixed(2)}kg\n` +
-                  "------------------------------\n" + c.align(0);
-        plano.forEach(b => {
-          txt += `ID #${b.id} (${b.medidaOriginal.toFixed(2)}m) -> ${b.descricaoCortes} | Sobra: ${b.sobra.toFixed(2)}m\n`;
-        });
-        return txt + c.feed(3) + c.cut();
-      },
-
-      async printTest() {
-        const b = state.estoque[0] || { id: 100, bitola: 10.0, medida: 3.5, peso: 2.16 };
-        await this.sendData(this.generateLabelCompleta(b));
-        UI.mostrarNotificacao("✅ Etiqueta de teste enviada!");
-      },
-
-      async printBarraLabel(barra) {
-        if (!state.printerConnected) return false;
-        await this.sendData(this.generateLabelCompleta(barra));
-        return true;
-      },
-
-      async printPlanoCorte() {
-        if (!state.printerConnected) return false;
-        await this.sendData(this.generatePlanoCorte(state.planoDeCorteAtual, state.resumoCorteAtual));
-        return true;
+        setTimeout(() => window.print(), 250);
       }
     };
 
@@ -1890,7 +1843,7 @@
 
         const filtrarPorData = (lista) => lista.filter(b => {
           const d = Utils.parseDataBR(b.data);
-          if (!d) return true; // Mantém caso a linha não tenha data formatada
+          if (!d) return true;
           if (from && d < from) return false;
           if (to && d > to) return false;
           return true;
@@ -1978,7 +1931,6 @@
       ThermalPrinter.init();
       ExportManager.init();
 
-      // Carrega o estoque imediatamente ao abrir a página!
       API.carregarEstoque();
 
       // Eventos de Perfil / Login
