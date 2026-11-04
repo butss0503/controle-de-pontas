@@ -1600,6 +1600,10 @@
     // ============================================================================
     // 5.7 AUTENTICAÇÃO E CONTROLE DE ACESSO (ROLE-BASED)
     // ============================================================================
+    
+    // ⚠️ DEFINA true PARA PULAR LOGIN E TESTAR O SISTEMA SEM AUTENTICAÇÃO
+    const SKIP_AUTH = true; // <--- MUDE PARA false QUANDO QUISER ATIVAR O LOGIN
+    
     const Auth = {
       SENHAS: {
         vendedor: "vendedor123",
@@ -1607,6 +1611,12 @@
       },
 
       init() {
+        // PULA AUTENTICAÇÃO SE SKIP_AUTH = true
+        if (SKIP_AUTH) {
+          this.login("operador", true); // Entra direto como Operador
+          return;
+        }
+        
         // DEBUG: Limpa localStorage se quiser resetar (descomente a linha abaixo se travar)
         // localStorage.clear();
         
