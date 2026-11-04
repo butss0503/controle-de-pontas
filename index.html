@@ -484,12 +484,19 @@
       <section id="areaResultados"></section>
     </main>
 
-    <!-- ABA 2: VISÃO GERAL DO ESTOQUE (INVENTÁRIO) -->
+    <!-- ABA 2: VISÃO GERAL DO ESTOQUE (INVENTÁRIO COM IMPRESSÃO EM LOTE) -->
     <section id="estoque" class="tab-content">
       <div class="box">
         <h2>
           <span>Inventário de Pátio em Tempo Real</span>
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; text-transform: none;">Clique numa bitola para filtrar ou imprima etiquetas</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" id="btnImprimirSelecionadas" style="display: none;" onclick="Controlador.imprimirEtiquetasEmLote('selecionadas')">
+              🏷️ Imprimir Selecionadas (<span id="countSelecionadas">0</span>)
+            </button>
+            <button class="btn btn-sm" onclick="Controlador.imprimirEtiquetasEmLote('visiveis')">
+              🖨️ Imprimir Todas Visíveis
+            </button>
+          </div>
         </h2>
         <div class="summary-grid" id="kpisEstoque"></div>
         <div class="bitola-grid" id="cardsBitolaEstoque"></div>
@@ -509,6 +516,9 @@
           <table>
             <thead>
               <tr>
+                <th style="width: 36px; text-align: center;">
+                  <input type="checkbox" id="checkTodasEstoque" title="Selecionar todas visíveis" onchange="Controlador.alternarSelecaoTodas(this.checked)">
+                </th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Bitola</th>
@@ -519,7 +529,7 @@
               </tr>
             </thead>
             <tbody id="tabelaEstoqueBody">
-              <tr><td colspan="7" style="text-align:center;">Sincronizando banco de dados...</td></tr>
+              <tr><td colspan="8" style="text-align:center;">Sincronizando banco de dados...</td></tr>
             </tbody>
           </table>
         </div>
@@ -946,7 +956,7 @@
 
     /**
      * ============================================================================
-     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS (ALTA VELOCIDADE E À PROVA DE FALHAS)
+     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS
      * ============================================================================
      */
     const API = {
@@ -1043,10 +1053,13 @@
 
     /**
      * ============================================================================
-     * 5. CONTROLADOR DE NEGÓCIOS (MULTI-CORTE, IMPRESSÃO USB, QR CODE E HISTÓRICO)
+     * 5. CONTROLADOR DE NEGÓCIOS (MULTI-CORTE, IMPRESSÃO USB, LOTE E HISTÓRICO)
      * ============================================================================
      */
     const Controlador = {
+      listaFiltradaAtual: [],
+      idsSelecionados: new Set(),
+
       adicionarAoCarrinho() {
         const bitola = parseFloat(UI.el.selectBitola.value);
         const medida = parseFloat(UI.el.inputBuscaMedida.value);
@@ -1337,7 +1350,7 @@
           });
         }
 
-        setTimeout(() => window.print(), 300);
+        setTimeout(() => window.print(), 350);
       },
 
       imprimirEtiquetaUnica(idBarra) {
@@ -1367,7 +1380,84 @@
           });
         }
 
-        setTimeout(() => window.print(), 300);
+        setTimeout(() => window.print(), 350);
+      },
+
+      // --- 5.4 FUNÇÕES DE IMPRESSÃO EM LOTE (NOVO) ---
+      alternarSelecaoItem(id, marcado) {
+        if (marcado) this.idsSelecionados.add(id);
+        else this.idsSelecionados.delete(id);
+        this.atualizarBotaoSelecionadas();
+      },
+
+      alternarSelecaoTodas(marcado) {
+        this.listaFiltradaAtual.forEach(b => {
+          if (marcado) this.idsSelecionados.add(b.id);
+          else this.idsSelecionados.delete(b.id);
+        });
+        document.querySelectorAll(".check-item-estoque").forEach(chk => {
+          chk.checked = marcado;
+        });
+        this.atualizarBotaoSelecionadas();
+      },
+
+      atualizarBotaoSelecionadas() {
+        const btn = document.getElementById("btnImprimirSelecionadas");
+        const countSpan = document.getElementById("countSelecionadas");
+        if (!btn || !countSpan) return;
+
+        const total = this.idsSelecionados.size;
+        countSpan.textContent = total;
+        btn.style.display = total > 0 ? "inline-flex" : "none";
+      },
+
+      imprimirEtiquetasEmLote(modo = "visiveis") {
+        let listaParaImprimir = [];
+
+        if (modo === "selecionadas") {
+          listaParaImprimir = state.estoque.filter(b => this.idsSelecionados.has(b.id));
+        } else {
+          listaParaImprimir = this.listaFiltradaAtual.length > 0 ? this.listaFiltradaAtual : state.estoque;
+        }
+
+        if (listaParaImprimir.length === 0) {
+          UI.mostrarNotificacao("Nenhuma ponta selecionada ou disponível para imprimir.", true);
+          return;
+        }
+
+        if (listaParaImprimir.length > 30) {
+          const confirmar = confirm(`Você está prestes a imprimir ${listaParaImprimir.length} etiquetas de uma vez. Deseja continuar?`);
+          if (!confirmar) return;
+        }
+
+        UI.el.printArea.innerHTML = `<div class="print-labels-grid" id="loteCanvasContainer"></div>`;
+        const container = document.getElementById("loteCanvasContainer");
+
+        listaParaImprimir.forEach(barra => {
+          const cardDiv = document.createElement("div");
+          cardDiv.className = "thermal-label";
+          cardDiv.innerHTML = `
+            <div class="thermal-label-info">
+              <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA</div>
+              <h2>ID #${barra.id}</h2>
+              <p>Ø ${barra.bitola.toFixed(2)} mm | ${barra.medida.toFixed(2)} m</p>
+              <p>Peso: ${barra.peso.toFixed(2)} kg</p>
+              <div style="font-size:10px;">Data: ${barra.data}</div>
+            </div>
+            <div class="thermal-canvas-container"><canvas id="qrCanvas_lote_${barra.id}"></canvas></div>
+          `;
+          container.appendChild(cardDiv);
+
+          if (window.QRious) {
+            new QRious({
+              element: document.getElementById(`qrCanvas_lote_${barra.id}`),
+              value: String(barra.id),
+              size: ThermalPrinter.paperSize === "60x40" ? 60 : 78
+            });
+          }
+        });
+
+        setTimeout(() => window.print(), 350);
       },
 
       renderizarVisaoGeralEstoque() {
@@ -1435,26 +1525,37 @@
         });
 
         listaFiltrada.sort((a, b) => a.bitola - b.bitola || b.medida - a.medida);
+        this.listaFiltradaAtual = listaFiltrada;
+
+        const checkMaster = document.getElementById("checkTodasEstoque");
+        if (checkMaster) checkMaster.checked = false;
 
         if (listaFiltrada.length === 0) {
-          UI.el.tabelaEstoqueBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhuma barra encontrada para este filtro.</td></tr>`;
+          UI.el.tabelaEstoqueBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhuma barra encontrada para este filtro.</td></tr>`;
+          this.atualizarBotaoSelecionadas();
           return;
         }
 
-        UI.el.tabelaEstoqueBody.innerHTML = listaFiltrada.map(b => `
-          <tr>
-            <td><span class="badge">#${b.id}</span></td>
-            <td class="mono" style="color: var(--text-muted); font-size: 0.8rem;">${b.data}</td>
-            <td class="mono"><strong>Ø ${b.bitola.toFixed(2)} mm</strong></td>
-            <td class="mono" style="color: var(--brand);"><strong>${b.medida.toFixed(2)} m</strong></td>
-            <td class="mono">${b.peso.toFixed(2)} kg</td>
-            <td style="color: var(--text-muted); font-size: 0.8rem;">${b.obs}</td>
-            <td style="display:flex; gap:6px;">
-              <button class="icon-btn btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta USB">🏷️</button>
-              <button class="btn btn-danger btn-sm btn-baixa-rapida" data-id="${b.id}">Baixar</button>
-            </td>
-          </tr>
-        `).join("");
+        UI.el.tabelaEstoqueBody.innerHTML = listaFiltrada.map(b => {
+          const checked = this.idsSelecionados.has(b.id) ? "checked" : "";
+          return `
+            <tr>
+              <td style="text-align: center;">
+                <input type="checkbox" class="check-item-estoque" data-id="${b.id}" ${checked} onchange="Controlador.alternarSelecaoItem(${b.id}, this.checked)">
+              </td>
+              <td><span class="badge">#${b.id}</span></td>
+              <td class="mono" style="color: var(--text-muted); font-size: 0.8rem;">${b.data}</td>
+              <td class="mono"><strong>Ø ${b.bitola.toFixed(2)} mm</strong></td>
+              <td class="mono" style="color: var(--brand);"><strong>${b.medida.toFixed(2)} m</strong></td>
+              <td class="mono">${b.peso.toFixed(2)} kg</td>
+              <td style="color: var(--text-muted); font-size: 0.8rem;">${b.obs}</td>
+              <td style="display:flex; gap:6px;">
+                <button class="icon-btn btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta USB">🏷️</button>
+                <button class="btn btn-danger btn-sm btn-baixa-rapida" data-id="${b.id}">Baixar</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
 
         document.querySelectorAll(".btn-baixa-rapida").forEach(btn => {
           btn.addEventListener("click", () => {
@@ -1464,6 +1565,8 @@
             UI.el.inputBaixaId.scrollIntoView({ behavior: "smooth" });
           });
         });
+
+        this.atualizarBotaoSelecionadas();
       },
 
       renderizarHistorico() {
@@ -1590,11 +1693,6 @@
           sobra: item.sobra,
           bitola: item.bitola
         }));
-
-        if (ThermalPrinter.autoPrint === "auto" && state.planoDeCorteAtual.some(b => b.idSobraPrevisto)) {
-          this.imprimirOrdemEEtiquetas();
-        }
-
         API.enviarRequisicao({ action: "baixar", instrucoes, cliente }, botao, "Processando Baixa...", "✔️ Confirmar Baixa Automática");
       },
 
@@ -1629,10 +1727,7 @@
      * ============================================================================
      */
     const Auth = {
-      SENHAS: {
-        vendedor: "vendedor123",
-        operador: "operador123"
-      },
+      SENHAS: { vendedor: "vendedor123", operador: "operador123" },
 
       init() {
         const savedRole = localStorage.getItem("pontas_userRole") || "operador";
@@ -1692,20 +1787,16 @@
 
     /**
      * ============================================================================
-     * 5.8 IMPRESSORA TÉRMICA VIA CABO USB (DRIVER DO SISTEMA / ALTA RESOLUÇÃO)
+     * 5.8 IMPRESSORA TÉRMICA VIA CABO USB
      * ============================================================================
      */
     const ThermalPrinter = {
       paperSize: "100x50",
-      autoPrint: "manual",
 
       init() {
         this.paperSize = localStorage.getItem("pontas_paperSize") || "100x50";
-        this.autoPrint = localStorage.getItem("pontas_autoPrint") || "manual";
 
         const selectSize = document.getElementById("printerPaperSize");
-        const selectAuto = document.getElementById("printerAutoPrint");
-
         if (selectSize) {
           selectSize.value = this.paperSize;
           selectSize.addEventListener("change", (e) => {
@@ -1713,14 +1804,6 @@
             localStorage.setItem("pontas_paperSize", this.paperSize);
             this.aplicarEstiloPagina();
             UI.mostrarNotificacao("Tamanho da etiqueta ajustado para " + this.paperSize);
-          });
-        }
-
-        if (selectAuto) {
-          selectAuto.value = this.autoPrint;
-          selectAuto.addEventListener("change", (e) => {
-            this.autoPrint = e.target.value;
-            localStorage.setItem("pontas_autoPrint", this.autoPrint);
           });
         }
 
