@@ -699,6 +699,129 @@
 
   <div id="toast"></div>
 
+  <!-- ========================================================================
+       MODAL DE AUTENTICAÇÃO / LOGIN
+       ======================================================================== -->
+  <div class="auth-overlay" id="authOverlay" style="display: none;">
+    <div class="auth-modal">
+      <h2>🔐 Acesso ao Sistema</h2>
+      <p class="subtitle">Selecione seu perfil e insira a senha para continuar</p>
+      
+      <div class="role-tabs">
+        <button class="role-tab active" data-role="vendedor" id="tabVendedor">👔 Vendedor</button>
+        <button class="role-tab" data-role="operador" id="tabOperador">🏭 Operador de Pátio</button>
+      </div>
+
+      <form id="authForm" onsubmit="return false;">
+        <div class="auth-form-group">
+          <label for="authPassword">Senha de Acesso</label>
+          <input type="password" id="authPassword" class="mono" placeholder="Digite a senha" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn auth-btn" id="btnAuthSubmit">Entrar</button>
+      </form>
+
+      <div class="auth-hint">
+        Senhas padrão: <kbd>vendedor123</kbd> ou <kbd>operador123</kbd><br>
+        <small>Altere as senhas no código para maior segurança</small><br>
+        <small>Atalhos: <kbd>Ctrl+Shift+V</kbd> = Vendedor | <kbd>Ctrl+Shift+L</kbd> = Operador</small>
+      </div>
+      
+      <!-- Botão de emergência para desenvolvimento -->
+      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="width: 100%; margin-top: 12px; font-size: 12px;">
+        ⚠️ Pular login (apenas teste)
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE IMPRESSORA TÉRMICA (ESC/POS)
+       ======================================================================== -->
+  <div class="auth-overlay" id="printerOverlay" style="display: none;">
+    <div class="auth-modal printer-modal">
+      <h2>🖨️ Impressora Térmica ESC/POS</h2>
+      <p class="subtitle">Conecte via Bluetooth ou USB para impressão direta</p>
+      
+      <div class="printer-status" id="printerStatus">
+        <span class="status-dot"></span>
+        <span id="printerStatusText">Desconectado — Selecione uma impressora</span>
+      </div>
+
+      <div class="printer-device-list" id="printerDeviceList">
+        <p style="text-align: center; color: var(--text-muted); padding: 20px;">Clique em "Buscar Impressoras" para encontrar dispositivos Bluetooth/USB</p>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button class="btn btn-secondary" id="btnScanPrinters" style="flex: 1;">🔍 Buscar Impressoras</button>
+        <button class="btn" id="btnConnectPrinter" style="flex: 1;" disabled>🔗 Conectar</button>
+      </div>
+
+      <div class="printer-template-select">
+        <label>Modelo de Etiqueta</label>
+        <select id="printerTemplate">
+          <option value="simples">Simples (ID, Bitola, Medida, Peso)</option>
+          <option value="completa">Completa (com QR Code, Cliente, Data)</option>
+          <option value="corte">Plano de Corte (Barras e Sobras)</option>
+        </select>
+      </div>
+
+      <button class="btn printer-test-btn" id="btnTestPrint" style="width: 100%;" disabled>🖨️ Imprimir Teste</button>
+      
+      <div style="margin-top: 16px; text-align: center;">
+        <button class="btn btn-secondary" id="btnClosePrinter" style="width: 100%;">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE EXPORTAÇÃO (PDF / EXCEL)
+       ======================================================================== -->
+  <div class="auth-overlay" id="exportOverlay" style="display: none;">
+    <div class="auth-modal export-modal">
+      <h2>📊 Exportar Relatório</h2>
+      <p class="subtitle">Gere relatórios de cortes, vendas e sobras do período</p>
+      
+      <div class="export-date-range">
+        <div>
+          <label style="display:block; margin-bottom: 4px; font-size: 13px;">Data Inicial</label>
+          <input type="date" id="exportDateFrom">
+        </div>
+        <div>
+          <label style="display:block; margin-bottom: 4px; font-size: 13px;">Data Final</label>
+          <input type="date" id="exportDateTo">
+        </div>
+      </div>
+
+      <div class="export-options">
+        <label class="export-option">
+          <input type="radio" name="exportFormat" value="excel" checked>
+          <div class="export-option-info">
+            <div class="export-option-title">📈 Excel (.xlsx)</div>
+            <div class="export-option-desc">Planilha com múltiplas abas: Estoque, Cortes, Sobras, Resumo</div>
+          </div>
+        </label>
+        <label class="export-option">
+          <input type="radio" name="exportFormat" value="pdf">
+          <div class="export-option-info">
+            <div class="export-option-title">📄 PDF</div>
+            <div class="export-option-desc">Relatório formatado com tabelas, KPIs e gráficos</div>
+          </div>
+        </label>
+        <label class="export-option">
+          <input type="radio" name="exportFormat" value="both">
+          <div class="export-option-info">
+            <div class="export-option-title">📦 Ambos (ZIP)</div>
+            <div class="export-option-desc">Baixa ambos os formatos compactados</div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="btnCancelExport" style="flex: 1;">Cancelar</button>
+        <button class="btn" id="btnGenerateExport" style="flex: 1;">⬇️ Gerar e Baixar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /**
      * ============================================================================
@@ -2460,129 +2583,6 @@
 
     document.addEventListener("DOMContentLoaded", iniciarAplicacao);
   </script>
-
-  <!-- ========================================================================
-       MODAL DE AUTENTICAÇÃO / LOGIN
-       ======================================================================== -->
-  <div class="auth-overlay" id="authOverlay" style="display: none;">
-    <div class="auth-modal">
-      <h2>🔐 Acesso ao Sistema</h2>
-      <p class="subtitle">Selecione seu perfil e insira a senha para continuar</p>
-      
-      <div class="role-tabs">
-        <button class="role-tab active" data-role="vendedor" id="tabVendedor">👔 Vendedor</button>
-        <button class="role-tab" data-role="operador" id="tabOperador">🏭 Operador de Pátio</button>
-      </div>
-
-      <form id="authForm" onsubmit="return false;">
-        <div class="auth-form-group">
-          <label for="authPassword">Senha de Acesso</label>
-          <input type="password" id="authPassword" class="mono" placeholder="Digite a senha" autocomplete="current-password" required>
-        </div>
-        <button type="submit" class="btn auth-btn" id="btnAuthSubmit">Entrar</button>
-      </form>
-
-      <div class="auth-hint">
-        Senhas padrão: <kbd>vendedor123</kbd> ou <kbd>operador123</kbd><br>
-        <small>Altere as senhas no código para maior segurança</small><br>
-        <small>Atalhos: <kbd>Ctrl+Shift+V</kbd> = Vendedor | <kbd>Ctrl+Shift+L</kbd> = Operador</small>
-      </div>
-      
-      <!-- Botão de emergência para desenvolvimento -->
-      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="width: 100%; margin-top: 12px; font-size: 12px;">
-        ⚠️ Pular login (apenas teste)
-      </button>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       MODAL DE IMPRESSORA TÉRMICA (ESC/POS)
-       ======================================================================== -->
-  <div class="auth-overlay" id="printerOverlay" style="display: none;">
-    <div class="auth-modal printer-modal">
-      <h2>🖨️ Impressora Térmica ESC/POS</h2>
-      <p class="subtitle">Conecte via Bluetooth ou USB para impressão direta</p>
-      
-      <div class="printer-status" id="printerStatus">
-        <span class="status-dot"></span>
-        <span id="printerStatusText">Desconectado — Selecione uma impressora</span>
-      </div>
-
-      <div class="printer-device-list" id="printerDeviceList">
-        <p style="text-align: center; color: var(--text-muted); padding: 20px;">Clique em "Buscar Impressoras" para encontrar dispositivos Bluetooth/USB</p>
-      </div>
-
-      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <button class="btn btn-secondary" id="btnScanPrinters" style="flex: 1;">🔍 Buscar Impressoras</button>
-        <button class="btn" id="btnConnectPrinter" style="flex: 1;" disabled>🔗 Conectar</button>
-      </div>
-
-      <div class="printer-template-select">
-        <label>Modelo de Etiqueta</label>
-        <select id="printerTemplate">
-          <option value="simples">Simples (ID, Bitola, Medida, Peso)</option>
-          <option value="completa">Completa (com QR Code, Cliente, Data)</option>
-          <option value="corte">Plano de Corte (Barras e Sobras)</option>
-        </select>
-      </div>
-
-      <button class="btn printer-test-btn" id="btnTestPrint" style="width: 100%;" disabled>🖨️ Imprimir Teste</button>
-      
-      <div style="margin-top: 16px; text-align: center;">
-        <button class="btn btn-secondary" id="btnClosePrinter" style="width: 100%;">Fechar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       MODAL DE EXPORTAÇÃO (PDF / EXCEL)
-       ======================================================================== -->
-  <div class="auth-overlay" id="exportOverlay" style="display: none;">
-    <div class="auth-modal export-modal">
-      <h2>📊 Exportar Relatório</h2>
-      <p class="subtitle">Gere relatórios de cortes, vendas e sobras do período</p>
-      
-      <div class="export-date-range">
-        <div>
-          <label style="display:block; margin-bottom: 4px; font-size: 13px;">Data Inicial</label>
-          <input type="date" id="exportDateFrom">
-        </div>
-        <div>
-          <label style="display:block; margin-bottom: 4px; font-size: 13px;">Data Final</label>
-          <input type="date" id="exportDateTo">
-        </div>
-      </div>
-
-      <div class="export-options">
-        <label class="export-option">
-          <input type="radio" name="exportFormat" value="excel" checked>
-          <div class="export-option-info">
-            <div class="export-option-title">📈 Excel (.xlsx)</div>
-            <div class="export-option-desc">Planilha com múltiplas abas: Estoque, Cortes, Sobras, Resumo</div>
-          </div>
-        </label>
-        <label class="export-option">
-          <input type="radio" name="exportFormat" value="pdf">
-          <div class="export-option-info">
-            <div class="export-option-title">📄 PDF</div>
-            <div class="export-option-desc">Relatório formatado com tabelas, KPIs e gráficos</div>
-          </div>
-        </label>
-        <label class="export-option">
-          <input type="radio" name="exportFormat" value="both">
-          <div class="export-option-info">
-            <div class="export-option-title">📦 Ambos (ZIP)</div>
-            <div class="export-option-desc">Baixa ambos os formatos compactados</div>
-          </div>
-        </label>
-      </div>
-
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary" id="btnCancelExport" style="flex: 1;">Cancelar</button>
-        <button class="btn" id="btnGenerateExport" style="flex: 1;">⬇️ Gerar e Baixar</button>
-      </div>
-    </div>
-  </div>
 
 </body>
 </html>
