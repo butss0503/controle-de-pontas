@@ -13,8 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Biblioteca Leitor de QR Code (HTML5-QRCode) -->
+  <!-- Biblioteca Leitor de QR Code (HTML5-QRCode) e Gerador Local de QR Code (QRious) -->
   <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
   <!-- Bibliotecas para Exportação: SheetJS (Excel) e jsPDF (PDF) -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
@@ -85,10 +86,7 @@
     * { box-sizing: border-box; font-family: var(--font-sans); }
 
     body { 
-      background: var(--bg); 
-      color: var(--text); 
-      margin: 0; 
-      padding: 20px 14px; 
+      background: var(--bg); color: var(--text); margin: 0; padding: 20px 14px; 
       transition: background var(--transition), color var(--transition);
       -webkit-font-smoothing: antialiased;
     }
@@ -100,14 +98,9 @@
        2. CABEÇALHO E NAVEGAÇÃO
        ========================================================================== */
     .header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 20px; 
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 12px;
+      display: flex; justify-content: space-between; align-items: center; 
+      margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; gap: 12px;
     }
 
     .logo-container { display: flex; align-items: center; gap: 14px; }
@@ -128,7 +121,7 @@
     }
 
     .header-titles p { margin: 3px 0 0 0; color: var(--text-muted); font-size: 0.8rem; }
-    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
     .icon-btn { 
       background: var(--surface-200); border: 1px solid var(--border); color: var(--text); 
@@ -137,6 +130,23 @@
       display: inline-flex; align-items: center; gap: 6px;
     }
     .icon-btn:hover { background: var(--surface-300); border-color: var(--border-strong); }
+
+    .profile-badge { 
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; 
+      border-radius: 20px; font-size: 0.78rem; font-weight: 600; 
+      background: var(--brand-bg); color: var(--brand); border: 1px solid var(--brand-border); 
+      cursor: pointer;
+    }
+    .profile-badge.operador { background: var(--warning-bg); color: var(--warning); border-color: rgba(245, 158, 11, 0.35); }
+
+    .btn-printer, .btn-export { 
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; 
+      background: var(--surface-200); border: 1px solid var(--border); 
+      border-radius: var(--radius-md); color: var(--text); font-size: 0.82rem; font-weight: 500; 
+      cursor: pointer; transition: var(--transition); 
+    }
+    .btn-printer:hover, .btn-printer.connected { background: var(--brand-bg); border-color: var(--brand-border); color: var(--brand); }
+    .btn-export:hover { background: var(--info); border-color: var(--info); color: white; }
 
     .tabs { 
       display: flex; gap: 4px; border-bottom: 1px solid var(--border); 
@@ -205,14 +215,10 @@
     .btn:hover:not(:disabled) { background: var(--brand-hover); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     
-    .btn-secondary {
-      background: var(--surface-200); color: var(--text); border: 1px solid var(--border-strong);
-    }
+    .btn-secondary { background: var(--surface-200); color: var(--text); border: 1px solid var(--border-strong); }
     .btn-secondary:hover:not(:disabled) { background: var(--surface-300); border-color: var(--brand); color: var(--brand); }
 
-    .btn-whatsapp { 
-      background: var(--surface-200); color: var(--text); border: 1px solid var(--border-strong); 
-    }
+    .btn-whatsapp { background: var(--surface-200); color: var(--text); border: 1px solid var(--border-strong); }
     .btn-whatsapp:hover:not(:disabled) { border-color: var(--whatsapp); color: var(--whatsapp); background: rgba(37, 211, 102, 0.08); }
 
     .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger-hover); }
@@ -225,7 +231,6 @@
       gap: 10px; margin-top: 14px;
     }
 
-    /* Lista do Carrinho de Cortes Multi-Medidas */
     .cart-list {
       display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0;
       padding: 10px; background: var(--surface-200); border-radius: var(--radius-md);
@@ -282,7 +287,6 @@
     .sobra-label { margin: 0; font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; }
     .sobra-val { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; color: var(--brand); }
 
-    /* Barra Visual Proporcional (Mapa de Corte) */
     .cut-bar-visual {
       display: flex; width: 100%; height: 26px; background: var(--surface-300);
       border-radius: var(--radius-sm); overflow: hidden; margin-top: 12px;
@@ -292,7 +296,6 @@
       background: var(--brand); color: var(--brand-contrast); font-family: var(--font-mono);
       font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
       border-right: 1px solid rgba(0, 0, 0, 0.35); overflow: hidden; white-space: nowrap;
-      transition: var(--transition);
     }
     .cut-segment:nth-child(even) { filter: brightness(0.92); }
     .cut-leftover {
@@ -302,7 +305,7 @@
     }
 
     /* ==========================================================================
-       5. VISÃO GERAL, TABELAS E MODAL LEITOR DE QR CODE
+       5. VISÃO GERAL, TABELAS E MODAIS
        ========================================================================== */
     .bitola-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -331,19 +334,43 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface-200); }
 
-    /* Modal QR Scanner */
-    .modal-overlay {
+    /* Modais (QR, Auth, Impressora, Exportação) */
+    .modal-overlay, .auth-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
       z-index: 2000; align-items: center; justify-content: center; padding: 16px;
     }
     .modal-overlay.active { display: flex; }
-    .modal-box {
+    .modal-box, .auth-modal {
       background: var(--surface-100); border: 1px solid var(--border-strong);
-      border-radius: var(--radius-lg); max-width: 420px; width: 100%; padding: 18px;
+      border-radius: var(--radius-lg); max-width: 440px; width: 100%; padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     }
+    .printer-modal, .export-modal { max-width: 500px; }
     #qrReader { width: 100%; border-radius: var(--radius-md); overflow: hidden; }
 
-    /* Notificação Toast */
+    .auth-modal h2 { margin: 0 0 6px; font-size: 1.25rem; text-align: center; }
+    .auth-modal .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
+    .role-tabs { display: flex; gap: 8px; margin-bottom: 18px; background: var(--surface-200); padding: 4px; border-radius: var(--radius-md); }
+    .role-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+    .role-tab.active { background: var(--brand); color: var(--brand-contrast); }
+    .auth-form-group { margin-bottom: 16px; }
+    .auth-hint { text-align: center; margin-top: 14px; font-size: 0.76rem; color: var(--text-muted); }
+    .auth-hint kbd { background: var(--surface-200); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); }
+
+    .printer-status { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-md); margin-bottom: 16px; background: var(--surface-200); font-size: 0.85rem; }
+    .printer-status.connected { background: var(--brand-bg); border: 1px solid var(--brand-border); }
+    .printer-status .status-dot { background: var(--danger); box-shadow: none; }
+    .printer-status.connected .status-dot { background: var(--brand); }
+    .printer-device-list { max-height: 180px; overflow-y: auto; margin-bottom: 16px; }
+    .printer-device-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; }
+    .printer-device-item.selected, .printer-device-item:hover { border-color: var(--brand); background: var(--brand-bg); }
+
+    .export-options { display: grid; gap: 10px; margin-bottom: 16px; }
+    .export-option { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; }
+    .export-option:hover { border-color: var(--brand); background: var(--brand-bg); }
+    .export-option input { width: 18px; height: 18px; accent-color: var(--brand); }
+    .export-date-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
     #toast { 
       visibility: hidden; min-width: 280px; background-color: var(--surface-200); 
       color: var(--text); border: 1px solid var(--brand); border-left: 4px solid var(--brand);
@@ -358,22 +385,22 @@
     @keyframes fadeout { from { bottom: 26px; opacity: 1; } to { bottom: 10px; opacity: 0; } }
 
     /* ==========================================================================
-       6. ESTILOS DE IMPRESSÃO (ETIQUETAS TÉRMICAS E ROMANEIO DE CORTE)
+       6. ESTILOS DE IMPRESSÃO (ETIQUETAS TÉRMICAS COM QR CODE LOCAL)
        ========================================================================== */
     #printArea { display: none; }
 
     @media print {
       body { background: #fff !important; color: #000 !important; padding: 0 !important; }
-      .container, #toast, .modal-overlay { display: none !important; }
+      .container, #toast, .modal-overlay, .auth-overlay { display: none !important; }
       #printArea { display: block !important; width: 100%; font-family: Arial, sans-serif; color: #000; }
       
       .print-section-title {
-        font-size: 16px; font-weight: bold; border-bottom: 2px solid #000;
+        font-size: 15px; font-weight: bold; border-bottom: 2px solid #000;
         padding-bottom: 4px; margin: 12px 0; text-transform: uppercase;
       }
       .print-order-item {
         border: 1px solid #000; padding: 8px; margin-bottom: 8px; border-radius: 4px;
-        page-break-inside: avoid;
+        page-break-inside: avoid; font-size: 13px;
       }
       .print-labels-grid {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -384,96 +411,10 @@
         display: flex; justify-content: space-between; align-items: center;
         page-break-inside: avoid; background: #fff;
       }
-      .thermal-label-info h2 { margin: 0; font-size: 22px; font-family: monospace; }
-      .thermal-label-info p { margin: 3px 0; font-size: 13px; font-weight: bold; }
-      .thermal-label img { width: 78px; height: 78px; }
+      .thermal-label-info h2 { margin: 0; font-size: 20px; font-family: monospace; }
+      .thermal-label-info p { margin: 3px 0; font-size: 12px; font-weight: bold; }
+      .thermal-canvas-container { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
     }
-
-    /* ==========================================================================
-       NOVOS ESTILOS: AUTENTICAÇÃO, IMPRESSÃO TÉRMICA, EXPORTAÇÃO
-       ========================================================================== */
-
-    /* Modal de Login / Autenticação */
-    .auth-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
-      z-index: 10000; animation: fadeIn 0.2s ease;
-    }
-    .auth-modal {
-      background: var(--surface-100); border-radius: var(--radius-lg); padding: 32px;
-      width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-      border: 1px solid var(--border);
-    }
-    .auth-modal h2 { margin: 0 0 8px; font-size: 24px; text-align: center; }
-    .auth-modal .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 24px; }
-    .auth-modal .role-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: var(--surface-200); padding: 4px; border-radius: var(--radius-md); }
-    .auth-modal .role-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
-    .auth-modal .role-tab.active { background: var(--brand); color: var(--brand-contrast); }
-    .auth-modal .role-tab:not(.active):hover { background: var(--surface-300); color: var(--text); }
-    .auth-form-group { margin-bottom: 16px; }
-    .auth-form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 14px; }
-    .auth-form-group input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); font-size: 16px; font-family: var(--font-mono); transition: var(--transition); }
-    .auth-form-group input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-bg); }
-    .auth-btn { width: 100%; padding: 14px; font-size: 16px; font-weight: 600; margin-top: 8px; }
-    .auth-hint { text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-muted); }
-    .auth-hint kbd { background: var(--surface-200); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); }
-
-    /* Header - Indicador de Perfil e Botão Impressora */
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .profile-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--brand-bg); color: var(--brand); border: 1px solid var(--brand-border); }
-    .profile-badge.operador { background: var(--warning-bg); color: var(--warning); border-color: rgba(245, 158, 11, 0.35); }
-    .btn-printer { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface-200); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text); font-weight: 500; cursor: pointer; transition: var(--transition); }
-    .btn-printer:hover { background: var(--brand-bg); border-color: var(--brand-border); color: var(--brand); }
-    .btn-printer:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-printer.connected { background: var(--brand-bg); border-color: var(--brand-border); color: var(--brand); }
-    .btn-export { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface-200); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text); font-weight: 500; cursor: pointer; transition: var(--transition); }
-    .btn-export:hover { background: var(--info); border-color: var(--info); color: white; }
-
-    /* Modal de Impressora Térmica */
-    .printer-modal { max-width: 500px; }
-    .printer-status { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-md); margin-bottom: 16px; background: var(--surface-200); }
-    .printer-status.connected { background: var(--brand-bg); border: 1px solid var(--brand-border); }
-    .printer-status .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
-    .printer-status.connected .status-dot { background: var(--brand); }
-    .printer-device-list { max-height: 200px; overflow-y: auto; margin-bottom: 16px; }
-    .printer-device-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; transition: var(--transition); }
-    .printer-device-item:hover { border-color: var(--brand); background: var(--brand-bg); }
-    .printer-device-item.selected { border-color: var(--brand); background: var(--brand-bg); }
-    .printer-device-info { display: flex; flex-direction: column; gap: 2px; }
-    .printer-device-name { font-weight: 600; font-size: 14px; }
-    .printer-device-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
-    .printer-test-btn { margin-top: 12px; }
-    .printer-template-select { margin-bottom: 16px; }
-    .printer-template-select label { display: block; margin-bottom: 6px; font-weight: 500; }
-    .printer-template-select select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); }
-
-    /* Modal de Exportação */
-    .export-modal { max-width: 500px; }
-    .export-options { display: grid; gap: 12px; margin-bottom: 16px; }
-    .export-option { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); }
-    .export-option:hover { border-color: var(--brand); background: var(--brand-bg); }
-    .export-option input { accent-color: var(--brand); width: 18px; height: 18px; }
-    .export-option-info { flex: 1; }
-    .export-option-title { font-weight: 600; font-size: 14px; }
-    .export-option-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .export-date-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .export-date-range input { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); }
-
-    /* Ocultar elementos baseado no perfil */
-    .hidden-for-vendedor { display: none !important; }
-    [data-role="vendedor"] .hidden-for-vendedor { display: none !important; }
-    [data-role="operador"] .hidden-for-operador { display: none !important; }
-
-    /* Animações */
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .auth-modal { animation: slideUp 0.3s ease; }
-
-    /* Toast de impressão */
-    .print-toast { position: fixed; bottom: 20px; right: 20px; padding: 14px 20px; border-radius: var(--radius-md); font-weight: 500; z-index: 9999; animation: slideUp 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .print-toast.success { background: var(--brand); color: var(--brand-contrast); }
-    .print-toast.error { background: var(--danger); color: white; }
-    .print-toast.info { background: var(--info); color: white; }
   </style>
 </head>
 <body>
@@ -489,10 +430,10 @@
         </div>
       </div>
       <div class="header-right">
-        <span class="profile-badge" id="profileBadge" style="display: none;">👤 <span id="profileRole">—</span></span>
-        <button class="btn-printer" id="btnPrinter" title="Impressora Térmica" style="display: none;" disabled>🖨️ Impressora</button>
-        <button class="btn-export" id="btnExport" title="Exportar Relatório">📊 Exportar</button>
-        <button class="icon-btn" id="btnLogout" title="Trocar Usuário / Sair" style="display: none;">🚪</button>
+        <span class="profile-badge" id="profileBadge" title="Clique para alternar perfil">👤 <span id="profileRole">Operador</span></span>
+        <button class="btn-printer" id="btnPrinter" title="Configurar Impressora Térmica Bluetooth">🖨️ Impressora</button>
+        <button class="btn-export" id="btnExport" title="Exportar Relatório Excel / PDF">📊 Exportar</button>
+        <button class="icon-btn" id="btnLogout" title="Trocar Usuário / Senha">🔐 Perfil</button>
         <button class="icon-btn" id="btnRecarregar" title="Sincronizar Planilha">🔄 Sincronizar</button>
         <button class="icon-btn" id="btnTheme" title="Alternar Tema">☀️</button>
       </div>
@@ -532,7 +473,6 @@
           </div>
         </div>
 
-        <!-- Lista do Carrinho Multi-Medidas -->
         <div id="areaCarrinhoCortes" style="display: none;">
           <label>Itens adicionados ao Pedido Combinado:</label>
           <div class="cart-list" id="listaCarrinhoCortes"></div>
@@ -694,52 +634,40 @@
     </div>
   </div>
 
-  <!-- ÁREA EXCLUSIVA DE IMPRESSÃO (ORDEM DE CORTE & ETIQUETAS TÉRMICAS) -->
-  <div id="printArea"></div>
-
-  <div id="toast"></div>
-
-  <!-- ========================================================================
-       MODAL DE AUTENTICAÇÃO / LOGIN
-       ======================================================================== -->
-  <div class="auth-overlay" id="authOverlay" style="display: none;">
+  <!-- MODAL DE AUTENTICAÇÃO / TROCA DE PERFIL -->
+  <div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
-      <h2>🔐 Acesso ao Sistema</h2>
-      <p class="subtitle">Selecione seu perfil e insira a senha para continuar</p>
+      <h2>🔐 Perfil de Acesso</h2>
+      <p class="subtitle">Escolha o modo de operação do sistema</p>
       
       <div class="role-tabs">
         <button class="role-tab active" data-role="vendedor" id="tabVendedor">👔 Vendedor</button>
         <button class="role-tab" data-role="operador" id="tabOperador">🏭 Operador de Pátio</button>
       </div>
 
-      <form id="authForm" onsubmit="return false;">
+      <form id="authForm">
         <div class="auth-form-group">
-          <label for="authPassword">Senha de Acesso</label>
-          <input type="password" id="authPassword" class="mono" placeholder="Digite a senha" autocomplete="current-password" required>
+          <label for="authPassword">Senha do Perfil</label>
+          <input type="password" id="authPassword" class="mono" placeholder="Digite a senha" autocomplete="current-password">
         </div>
-        <button type="submit" class="btn auth-btn" id="btnAuthSubmit">Entrar</button>
+        <button type="submit" class="btn" id="btnAuthSubmit">Confirmar Perfil</button>
       </form>
 
       <div class="auth-hint">
-        Senhas padrão: <kbd>vendedor123</kbd> ou <kbd>operador123</kbd><br>
-        <small>Altere as senhas no código para maior segurança</small><br>
-        <small>Atalhos: <kbd>Ctrl+Shift+V</kbd> = Vendedor | <kbd>Ctrl+Shift+L</kbd> = Operador</small>
+        Senhas padrão: <kbd>vendedor123</kbd> ou <kbd>operador123</kbd>
       </div>
       
-      <!-- Botão de emergência para desenvolvimento -->
-      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="width: 100%; margin-top: 12px; font-size: 12px;">
-        ⚠️ Pular login (apenas teste)
+      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="margin-top: 12px;">
+        Fechar / Continuar como Operador
       </button>
     </div>
   </div>
 
-  <!-- ========================================================================
-       MODAL DE IMPRESSORA TÉRMICA (ESC/POS)
-       ======================================================================== -->
-  <div class="auth-overlay" id="printerOverlay" style="display: none;">
+  <!-- MODAL DE IMPRESSORA TÉRMICA (ESC/POS) -->
+  <div class="auth-overlay" id="printerOverlay">
     <div class="auth-modal printer-modal">
       <h2>🖨️ Impressora Térmica ESC/POS</h2>
-      <p class="subtitle">Conecte via Bluetooth ou USB para impressão direta</p>
+      <p class="subtitle">Conecte via Bluetooth para impressão direta em 1 clique</p>
       
       <div class="printer-status" id="printerStatus">
         <span class="status-dot"></span>
@@ -747,7 +675,7 @@
       </div>
 
       <div class="printer-device-list" id="printerDeviceList">
-        <p style="text-align: center; color: var(--text-muted); padding: 20px;">Clique em "Buscar Impressoras" para encontrar dispositivos Bluetooth/USB</p>
+        <p style="text-align: center; color: var(--text-muted); padding: 14px;">Clique em "Buscar Impressoras" para parear via Bluetooth</p>
       </div>
 
       <div style="display: flex; gap: 8px; margin-bottom: 16px;">
@@ -755,38 +683,33 @@
         <button class="btn" id="btnConnectPrinter" style="flex: 1;" disabled>🔗 Conectar</button>
       </div>
 
-      <div class="printer-template-select">
-        <label>Modelo de Etiqueta</label>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Modelo de Etiqueta Direta</label>
         <select id="printerTemplate">
-          <option value="simples">Simples (ID, Bitola, Medida, Peso)</option>
-          <option value="completa">Completa (com QR Code, Cliente, Data)</option>
-          <option value="corte">Plano de Corte (Barras e Sobras)</option>
+          <option value="completa">Completa (com QR Code, ID, Medida e Peso)</option>
+          <option value="simples">Simples (Texto Rápido)</option>
+          <option value="corte">Romaneio de Plano de Corte</option>
         </select>
       </div>
 
-      <button class="btn printer-test-btn" id="btnTestPrint" style="width: 100%;" disabled>🖨️ Imprimir Teste</button>
-      
-      <div style="margin-top: 16px; text-align: center;">
-        <button class="btn btn-secondary" id="btnClosePrinter" style="width: 100%;">Fechar</button>
-      </div>
+      <button class="btn" id="btnTestPrint" disabled>🖨️ Imprimir Etiqueta de Teste</button>
+      <button class="btn btn-secondary" id="btnClosePrinter" style="margin-top: 10px;">Fechar</button>
     </div>
   </div>
 
-  <!-- ========================================================================
-       MODAL DE EXPORTAÇÃO (PDF / EXCEL)
-       ======================================================================== -->
-  <div class="auth-overlay" id="exportOverlay" style="display: none;">
+  <!-- MODAL DE EXPORTAÇÃO (PDF / EXCEL) -->
+  <div class="auth-overlay" id="exportOverlay">
     <div class="auth-modal export-modal">
-      <h2>📊 Exportar Relatório</h2>
-      <p class="subtitle">Gere relatórios de cortes, vendas e sobras do período</p>
+      <h2>📊 Exportar Relatório Gerencial</h2>
+      <p class="subtitle">Baixe o inventário atual e o histórico de saídas</p>
       
       <div class="export-date-range">
         <div>
-          <label style="display:block; margin-bottom: 4px; font-size: 13px;">Data Inicial</label>
+          <label>Data Inicial</label>
           <input type="date" id="exportDateFrom">
         </div>
         <div>
-          <label style="display:block; margin-bottom: 4px; font-size: 13px;">Data Final</label>
+          <label>Data Final</label>
           <input type="date" id="exportDateTo">
         </div>
       </div>
@@ -794,23 +717,23 @@
       <div class="export-options">
         <label class="export-option">
           <input type="radio" name="exportFormat" value="excel" checked>
-          <div class="export-option-info">
-            <div class="export-option-title">📈 Excel (.xlsx)</div>
-            <div class="export-option-desc">Planilha com múltiplas abas: Estoque, Cortes, Sobras, Resumo</div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">📈 Planilha Excel (.xlsx)</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Abas separadas: Resumo, Estoque Ativo, Vendidos e Sobras</div>
           </div>
         </label>
         <label class="export-option">
           <input type="radio" name="exportFormat" value="pdf">
-          <div class="export-option-info">
-            <div class="export-option-title">📄 PDF</div>
-            <div class="export-option-desc">Relatório formatado com tabelas, KPIs e gráficos</div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">📄 Relatório em PDF (.pdf)</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Documento pronto para impressão com KPIs e tabelas por bitola</div>
           </div>
         </label>
         <label class="export-option">
           <input type="radio" name="exportFormat" value="both">
-          <div class="export-option-info">
-            <div class="export-option-title">📦 Ambos (ZIP)</div>
-            <div class="export-option-desc">Baixa ambos os formatos compactados</div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">📦 Ambos (Excel + PDF)</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Faz o download dos dois arquivos simultaneamente</div>
           </div>
         </label>
       </div>
@@ -822,6 +745,11 @@
     </div>
   </div>
 
+  <!-- ÁREA EXCLUSIVA DE IMPRESSÃO -->
+  <div id="printArea"></div>
+
+  <div id="toast"></div>
+
   <script>
     /**
      * ============================================================================
@@ -829,7 +757,8 @@
      * ============================================================================
      */
     const CONFIG = {
-      SCRIPT_URL: "https://script.google.com/macros/s/AKfycbynp6oZY1KhlMWv9WugDFcd6P98CgVIL4YBuj_vazYDM3b-y5VeZHgEW3uvYt83lj6F/exec",
+      // Caso gere uma nova implantação no Apps Script, cole a URL abaixo:
+      SCRIPT_URL: "https://script.google.com/macros/s/AKfycby3X2Ho0H7BM1iwm204huX_e-ONEeApfL3JNFEDPilEo25QdwnVW2PlPPw2tpHENH5M/exec",
       SPREADSHEET_ID: "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI",
       SHEET_NAME: "Pontas",
       FATOR_PESO_ACO: 162,
@@ -839,27 +768,19 @@
     const state = {
       estoque: [],
       vendidos: [],
-      carrinhoCortes: [], // [{ medida: 1.5, qtde: 10 }]
+      carrinhoCortes: [],
       planoDeCorteAtual: [],
       resumoCorteAtual: null,
       maxIdPlanilha: 0,
       qrScanner: null,
-
-      // Novos estados: Autenticação, Impressora, Exportação
-      userRole: null, // 'vendedor' | 'operador' | null
-      userAuthenticated: false,
+      userRole: "operador",
+      userAuthenticated: true,
       authAttempts: 0,
-      
-      // Impressora Térmica (ESC/POS via Web Bluetooth)
       printerDevice: null,
       printerCharacteristic: null,
       printerConnected: false,
       printerDevices: [],
-      selectedPrinterDevice: null,
-      
-      // Exportação
-      exportDateFrom: null,
-      exportDateTo: null
+      selectedPrinterDevice: null
     };
 
     /**
@@ -868,30 +789,38 @@
      * ============================================================================
      */
     const Utils = {
+      parseNumero(val) {
+        if (typeof val === "number") return val;
+        if (val === null || val === undefined || val === "") return 0;
+        return parseFloat(String(val).replace(",", ".")) || 0;
+      },
       parseNumeroPlanilha(celula) {
         if (!celula) return 0;
         const raw = celula.v !== undefined ? celula.v : celula.f;
-        if (raw === null || raw === undefined || raw === "") return 0;
-        if (typeof raw === "number") return raw;
-        return parseFloat(String(raw).replace(",", ".")) || 0;
+        return this.parseNumero(raw);
       },
-
       parseTextoPlanilha(celula) {
         if (!celula) return "-";
         return String(celula.f || celula.v || "-");
       },
-
       calcularPesoAco(bitola, medida) {
         if (!bitola || !medida) return 0;
         return (Math.pow(bitola, 2) / CONFIG.FATOR_PESO_ACO) * medida;
       },
-
       arredondarMedida(valor) {
         return Math.round(valor * 1000) / 1000;
       },
-
       formatarMoeda(valor) {
         return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      },
+      parseDataBR(str) {
+        if (!str || str === "-") return null;
+        const partes = String(str).split(" ")[0].split("/");
+        if (partes.length === 3) {
+          return new Date(partes[2], partes[1] - 1, partes[0]);
+        }
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
       }
     };
 
@@ -942,7 +871,6 @@
         printArea: document.getElementById("printArea"),
         toast: document.getElementById("toast"),
 
-        // Novos elementos: Autenticação, Impressora, Exportação
         profileBadge: document.getElementById("profileBadge"),
         profileRole: document.getElementById("profileRole"),
         btnPrinter: document.getElementById("btnPrinter"),
@@ -973,7 +901,7 @@
 
       mostrarNotificacao(mensagem, isErro = false) {
         const { toast } = this.el;
-        toast.textContent = mensagem;
+        toast.textContent = mensagem || "Operação concluída!";
         toast.className = isErro ? "show error" : "show";
         setTimeout(() => { toast.className = ""; }, 4000);
       },
@@ -1029,7 +957,7 @@
 
     /**
      * ============================================================================
-     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS (API)
+     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS (LEITURA DUPLA COM FALLBACK AUTOMÁTICO)
      * ============================================================================
      */
     const API = {
@@ -1037,48 +965,48 @@
         try {
           if (!silencioso) UI.el.btnRecarregar.textContent = "⏳...";
           
-          // Usa o Apps Script (doGet) - sem action carrega TUDO (estoque + vendidos + sobras)
-          const url = `${CONFIG.SCRIPT_URL}?_cb=${Date.now()}`;
+          // Leitura direta de alta velocidade via Google Visualization JSON (nunca falha por CORS)
+          const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H");
+          const urlGviz = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${Date.now()}`;
           
-          const response = await fetch(url);
-          const result = await response.json();
-          
-          if (!result.success) {
-            throw new Error(result.error || "Erro ao carregar estoque");
-          }
-          
-          const rows = result.data || [];
-          
+          const response = await fetch(urlGviz);
+          const text = await response.text();
+          const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+          const data = JSON.parse(jsonString);
+
           state.estoque = [];
           state.vendidos = [];
           state.maxIdPlanilha = 0;
 
-          rows.forEach((row) => {
-            const idNum = parseInt(row.ID, 10);
+          data.table.rows.forEach((row, idx) => {
+            const idNum = parseInt(row.c[0]?.v, 10);
             if (!isNaN(idNum) && idNum > state.maxIdPlanilha) {
               state.maxIdPlanilha = idNum;
             }
 
-            const bitola = parseFloat(row.Bitola) || 0;
-            const medida = parseFloat(row.Medida) || 0;
-            if (!idNum || !bitola) return;
+            const bitola = Utils.parseNumeroPlanilha(row.c[3]);
+            const medida = Utils.parseNumeroPlanilha(row.c[4]);
+            if (!idNum || bitola <= 0 || medida <= 0) return;
+
+            const situacaoRaw = Utils.parseTextoPlanilha(row.c[6]).trim();
+            const situacaoLower = situacaoRaw.toLowerCase();
+            const obsRaw = Utils.parseTextoPlanilha(row.c[7]);
 
             const itemObj = {
-              ordemPlanilha: 0,
+              ordemPlanilha: idx,
               id: idNum,
-              data: row["Data Cadastro"] || row.Data || "",
+              data: Utils.parseTextoPlanilha(row.c[1]),
               bitola: bitola,
               medida: medida,
-              peso: parseFloat(row.Peso) || Utils.calcularPesoAco(bitola, medida),
-              situacao: row.Status || "estoque",
-              obs: row["Origem/Obs"] || row.Obs || ""
+              peso: Utils.parseNumeroPlanilha(row.c[5]) || Utils.calcularPesoAco(bitola, medida),
+              situacao: situacaoRaw,
+              obs: obsRaw
             };
 
-            const status = (row.Status || "estoque").toLowerCase();
-            if (status === "estoque") {
-              state.estoque.push(itemObj);
-            } else if (status === "vendido") {
+            if (situacaoLower.includes("vendido")) {
               state.vendidos.push(itemObj);
+            } else {
+              state.estoque.push(itemObj);
             }
           });
 
@@ -1107,7 +1035,9 @@
             body: JSON.stringify(payload)
           });
           const resultado = await response.json();
-          UI.mostrarNotificacao(resultado.mensagem, !resultado.sucesso);
+          const ok = resultado.sucesso !== undefined ? resultado.sucesso : resultado.success;
+          const msg = resultado.mensagem || resultado.message || resultado.error || "Operação realizada!";
+          UI.mostrarNotificacao(msg, !ok);
         } catch (error) {
           UI.mostrarNotificacao("Comando enviado! Sincronizando banco de dados...", false);
         } finally {
@@ -1129,7 +1059,6 @@
      * ============================================================================
      */
     const Controlador = {
-      // --- 5.1 CARRINHO MULTI-MEDIDAS ---
       adicionarAoCarrinho() {
         const bitola = parseFloat(UI.el.selectBitola.value);
         const medida = parseFloat(UI.el.inputBuscaMedida.value);
@@ -1141,11 +1070,8 @@
         }
 
         const existente = state.carrinhoCortes.find(i => i.medida === medida);
-        if (existente) {
-          existente.qtde += qtde;
-        } else {
-          state.carrinhoCortes.push({ medida, qtde });
-        }
+        if (existente) existente.qtde += qtde;
+        else state.carrinhoCortes.push({ medida, qtde });
 
         UI.el.inputBuscaMedida.value = "";
         UI.el.inputBuscaQtde.value = "1";
@@ -1172,7 +1098,6 @@
         `).join("");
       },
 
-      // --- 5.2 ALGORITMO DE CORTE COMBINADO (FIRST-FIT DECREASING) ---
       gerarPlanoDeCorte() {
         const bitola = parseFloat(UI.el.selectBitola.value);
         const medidaDigitada = parseFloat(UI.el.inputBuscaMedida.value);
@@ -1185,7 +1110,6 @@
           return;
         }
 
-        // Monta lista de pedidos (do carrinho + o que estiver digitado no campo)
         let listaPedidos = [...state.carrinhoCortes];
         if (!isNaN(medidaDigitada) && medidaDigitada > 0) {
           listaPedidos.push({ medida: medidaDigitada, qtde: qtdeDigitada });
@@ -1196,7 +1120,6 @@
           return;
         }
 
-        // Expande todos os cortes individuais e ordena do maior para o menor (melhor encaixe)
         let pecasIndividuais = [];
         listaPedidos.forEach(ped => {
           for (let i = 0; i < ped.qtde; i++) pecasIndividuais.push(ped.medida);
@@ -1218,7 +1141,6 @@
           let espacoLivre = barra.medida;
           let cortesNaBarra = [];
 
-          // Tenta encaixar o máximo de peças dentro desta barra física
           for (let i = 0; i < pecasRestantes.length; i++) {
             if (pecasRestantes[i] <= espacoLivre + 0.0001) {
               cortesNaBarra.push(pecasRestantes[i]);
@@ -1233,7 +1155,6 @@
             const pesoTotal = Utils.calcularPesoAco(barra.bitola, barra.medida);
             const pesoLiquido = Utils.calcularPesoAco(barra.bitola, compConsumido);
 
-            // Agrupa os cortes para exibição limpa (ex: "2x 1.50m + 1x 1.00m")
             const contagemCortes = {};
             cortesNaBarra.forEach(c => { contagemCortes[c] = (contagemCortes[c] || 0) + 1; });
             const descricaoCortes = Object.entries(contagemCortes)
@@ -1276,7 +1197,6 @@
           bitola, totalSolicitado, totalBarrasFisicas, pesoBrutoTotal, pesoLiquidoTotal, pesoSobraTotal, precoKg
         };
 
-        // Bloco Financeiro Opcional
         const kpiFinanceiroHtml = precoKg > 0 ? `
           <div class="kpi-card" style="border-color: var(--brand-border); background: var(--brand-bg);">
             <div class="kpi-label">Valor dos Cortes (Líquido)</div>
@@ -1286,7 +1206,6 @@
         ` : "";
 
         const cartoesHtml = state.planoDeCorteAtual.map(item => {
-          // Desenha os segmentos proporcionais da barra (Mapa Visual)
           const segmentosHtml = item.cortesDetalhados.map(corte => {
             const pct = (corte / item.medidaOriginal) * 100;
             return `<div class="cut-segment" style="width: ${pct}%;" title="Corte: ${corte.toFixed(2)}m">${corte.toFixed(2)}m</div>`;
@@ -1313,7 +1232,6 @@
                   <div class="sobra-val">${item.sobra.toFixed(2)}m</div>
                 </div>
               </div>
-              <!-- Régua Visual do Corte -->
               <div class="cut-bar-visual">
                 ${segmentosHtml}
                 ${sobraSegmentoHtml}
@@ -1325,38 +1243,18 @@
         container.innerHTML = `
           <div class="box">
             <h2>Plano de Corte & Mapa Visual</h2>
-            
             <div class="summary-grid">
-              <div class="kpi-card">
-                <div class="kpi-label">Barras Físicas</div>
-                <div class="kpi-value">${totalBarrasFisicas} un</div>
-                <div class="kpi-sub">P/ extrair ${totalSolicitado} peça(s)</div>
-              </div>
-              <div class="kpi-card">
-                <div class="kpi-label">Peso Bruto (Barras)</div>
-                <div class="kpi-value">${pesoBrutoTotal.toFixed(2)} kg</div>
-                <div class="kpi-sub">Total movimentado</div>
-              </div>
-              <div class="kpi-card">
-                <div class="kpi-label">Peso Líquido (Cliente)</div>
-                <div class="kpi-value" style="color: var(--brand)">${pesoLiquidoTotal.toFixed(2)} kg</div>
-                <div class="kpi-sub">Entregue no pedido</div>
-              </div>
-              <div class="kpi-card">
-                <div class="kpi-label">Peso Retorno (Sobras)</div>
-                <div class="kpi-value" style="color: var(--warning)">${pesoSobraTotal.toFixed(2)} kg</div>
-                <div class="kpi-sub">Volta p/ estoque</div>
-              </div>
+              <div class="kpi-card"><div class="kpi-label">Barras Físicas</div><div class="kpi-value">${totalBarrasFisicas} un</div><div class="kpi-sub">P/ extrair ${totalSolicitado} peça(s)</div></div>
+              <div class="kpi-card"><div class="kpi-label">Peso Bruto (Barras)</div><div class="kpi-value">${pesoBrutoTotal.toFixed(2)} kg</div><div class="kpi-sub">Total movimentado</div></div>
+              <div class="kpi-card"><div class="kpi-label">Peso Líquido (Cliente)</div><div class="kpi-value" style="color: var(--brand)">${pesoLiquidoTotal.toFixed(2)} kg</div><div class="kpi-sub">Entregue no pedido</div></div>
+              <div class="kpi-card"><div class="kpi-label">Peso Retorno (Sobras)</div><div class="kpi-value" style="color: var(--warning)">${pesoSobraTotal.toFixed(2)} kg</div><div class="kpi-sub">Volta p/ estoque</div></div>
               ${kpiFinanceiroHtml}
             </div>
-
             ${cartoesHtml}
-
             <div class="form-group" style="margin-top: 16px;">
               <label for="inputClienteCorte">Cliente / Nº do Pedido (Para registrar na planilha e na etiqueta)</label>
               <input type="text" id="inputClienteCorte" placeholder="Ex: João / Pedido 4510 (Opcional)">
             </div>
-
             <div class="actions-row">
               <button class="btn btn-whatsapp" id="btnCopiarWhatsApp">📲 Copiar Ordem p/ WhatsApp</button>
               <button class="btn btn-secondary" id="btnImprimirOrdem">🖨️ Imprimir Ordem / Etiquetas</button>
@@ -1369,7 +1267,6 @@
         document.getElementById("btnConfirmarCorte").addEventListener("click", (e) => this.executarBaixaAutomatica(e.target));
       },
 
-      // --- 5.3 WHATSAPP E IMPRESSÃO DE ETIQUETAS TÉRMICAS ---
       copiarOrdemWhatsApp() {
         if (!state.planoDeCorteAtual.length || !state.resumoCorteAtual) return;
         const { bitola, pesoLiquidoTotal, precoKg } = state.resumoCorteAtual;
@@ -1395,8 +1292,18 @@
         });
       },
 
-      imprimirOrdemEEtiquetas() {
+      async imprimirOrdemEEtiquetas() {
         if (!state.planoDeCorteAtual.length || !state.resumoCorteAtual) return;
+
+        // Se a impressora térmica Bluetooth estiver conectada, imprime direto via ESC/POS
+        if (state.printerConnected) {
+          const ok = await ThermalPrinter.printPlanoCorte();
+          if (ok) {
+            UI.mostrarNotificacao("🖨️ Ordem enviada direto para a impressora térmica!");
+            return;
+          }
+        }
+
         const { bitola, pesoLiquidoTotal } = state.resumoCorteAtual;
         const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "Balcão / Interno";
         const dataHoje = new Date().toLocaleDateString("pt-BR");
@@ -1410,23 +1317,7 @@
         `).join("");
 
         const sobrasComEtiqueta = state.planoDeCorteAtual.filter(b => b.idSobraPrevisto);
-        const etiquetasHtml = sobrasComEtiqueta.map(b => {
-          const pesoSobra = Utils.calcularPesoAco(b.bitola, b.sobra);
-          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(b.idSobraPrevisto)}`;
-          return `
-            <div class="thermal-label">
-              <div class="thermal-label-info">
-                <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA DE ESTOQUE</div>
-                <h2>ID #${b.idSobraPrevisto}</h2>
-                <p>Ø ${b.bitola.toFixed(2)} mm | ${b.sobra.toFixed(2)} m</p>
-                <p>Peso: ${pesoSobra.toFixed(2)} kg</p>
-                <div style="font-size:10px;">Orig: #${b.id} • ${dataHoje}</div>
-              </div>
-              <img src="${qrUrl}" alt="QR #${b.idSobraPrevisto}">
-            </div>
-          `;
-        }).join("");
-
+        
         UI.el.printArea.innerHTML = `
           <div class="print-section-title">✂️ ORDEM DE CORTE DE PÁTIO - GRANDE AÇO (${dataHoje})</div>
           <p style="margin: 4px 0 10px 0; font-size: 13px;">
@@ -1434,37 +1325,80 @@
           </p>
           ${ordensHtml}
           ${sobrasComEtiqueta.length > 0 ? `
-            <div class="print-section-title" style="margin-top:20px;">🏷️ ETIQUETAS DAS SOBRAS GERADAS (COLAR NA BARRA)</div>
-            <div class="print-labels-grid">${etiquetasHtml}</div>
+            <div class="print-section-title" style="margin-top:20px;">🏷️ ETIQUETAS DAS SOBRAS GERADAS (COM QR CODE)</div>
+            <div class="print-labels-grid" id="containerCanvasEtiquetas"></div>
           ` : ''}
         `;
 
-        setTimeout(() => window.print(), 300);
+        if (sobrasComEtiqueta.length > 0) {
+          const gridCanvas = document.getElementById("containerCanvasEtiquetas");
+          sobrasComEtiqueta.forEach(b => {
+            const pesoSobra = Utils.calcularPesoAco(b.bitola, b.sobra);
+            const cardDiv = document.createElement("div");
+            cardDiv.className = "thermal-label";
+            cardDiv.innerHTML = `
+              <div class="thermal-label-info">
+                <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA</div>
+                <h2>ID #${b.idSobraPrevisto}</h2>
+                <p>Ø ${b.bitola.toFixed(2)} mm | ${b.sobra.toFixed(2)} m</p>
+                <p>Peso: ${pesoSobra.toFixed(2)} kg</p>
+                <div style="font-size:10px;">Orig: #${b.id} • ${dataHoje}</div>
+              </div>
+              <div class="thermal-canvas-container"><canvas id="qrCanvas_${b.idSobraPrevisto}"></canvas></div>
+            `;
+            gridCanvas.appendChild(cardDiv);
+
+            if (window.QRious) {
+              new QRious({
+                element: document.getElementById(`qrCanvas_${b.idSobraPrevisto}`),
+                value: String(b.idSobraPrevisto),
+                size: 78
+              });
+            }
+          });
+        }
+
+        setTimeout(() => window.print(), 350);
       },
 
-      imprimirEtiquetaUnica(idBarra) {
+      async imprimirEtiquetaUnica(idBarra) {
         const barra = state.estoque.find(b => b.id === idBarra);
         if (!barra) return;
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(barra.id)}`;
+
+        if (state.printerConnected) {
+          const ok = await ThermalPrinter.printBarraLabel(barra, UI.el.printerTemplate.value);
+          if (ok) {
+            UI.mostrarNotificacao(`🖨️ Etiqueta #${barra.id} impressa na térmica!`);
+            return;
+          }
+        }
 
         UI.el.printArea.innerHTML = `
           <div class="print-labels-grid">
             <div class="thermal-label">
               <div class="thermal-label-info">
-                <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA DE ESTOQUE</div>
+                <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA</div>
                 <h2>ID #${barra.id}</h2>
                 <p>Ø ${barra.bitola.toFixed(2)} mm | ${barra.medida.toFixed(2)} m</p>
                 <p>Peso: ${barra.peso.toFixed(2)} kg</p>
                 <div style="font-size:10px;">Data: ${barra.data}</div>
               </div>
-              <img src="${qrUrl}" alt="QR #${barra.id}">
+              <div class="thermal-canvas-container"><canvas id="qrCanvas_single_${barra.id}"></canvas></div>
             </div>
           </div>
         `;
-        setTimeout(() => window.print(), 300);
+
+        if (window.QRious) {
+          new QRious({
+            element: document.getElementById(`qrCanvas_single_${barra.id}`),
+            value: String(barra.id),
+            size: 78
+          });
+        }
+
+        setTimeout(() => window.print(), 350);
       },
 
-      // --- 5.4 VISÃO GERAL E HISTÓRICO DE SAÍDAS ---
       renderizarVisaoGeralEstoque() {
         const estoque = state.estoque;
         const totalBarras = estoque.length;
@@ -1472,18 +1406,9 @@
         const totalQuilos = estoque.reduce((acc, b) => acc + b.peso, 0);
 
         UI.el.kpisEstoque.innerHTML = `
-          <div class="kpi-card">
-            <div class="kpi-label">Total de Pontas</div>
-            <div class="kpi-value">${totalBarras} un</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Metragem Linear</div>
-            <div class="kpi-value">${totalMetros.toFixed(1)} m</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Peso Total em Estoque</div>
-            <div class="kpi-value" style="color: var(--brand)">${totalQuilos.toFixed(1)} kg</div>
-          </div>
+          <div class="kpi-card"><div class="kpi-label">Total de Pontas</div><div class="kpi-value">${totalBarras} un</div></div>
+          <div class="kpi-card"><div class="kpi-label">Metragem Linear</div><div class="kpi-value">${totalMetros.toFixed(1)} m</div></div>
+          <div class="kpi-card"><div class="kpi-label">Peso Total em Estoque</div><div class="kpi-value" style="color: var(--brand)">${totalQuilos.toFixed(1)} kg</div></div>
         `;
 
         const mapaBitolas = {};
@@ -1602,7 +1527,6 @@
         });
       },
 
-      // --- 5.5 LEITOR DE QR CODE PELA CÂMERA ---
       iniciarScannerQR() {
         UI.el.modalScanner.classList.add("active");
         if (!window.Html5Qrcode) {
@@ -1638,7 +1562,6 @@
         }
       },
 
-      // --- 5.6 CADASTRO E BAIXAS ---
       obterBitolaCadastro() {
         const valorSelect = UI.el.cadBitolaSelect.value;
         return valorSelect === "OUTRA" ? parseFloat(UI.el.cadBitolaCustom.value) : parseFloat(valorSelect);
@@ -1724,13 +1647,11 @@
       }
     };
 
-    // ============================================================================
-    // 5.7 AUTENTICAÇÃO E CONTROLE DE ACESSO (ROLE-BASED)
-    // ============================================================================
-    
-    // ⚠️ DEFINA true PARA PULAR LOGIN E TESTAR O SISTEMA SEM AUTENTICAÇÃO
-    const SKIP_AUTH = true; // <--- MUDE PARA false QUANDO QUISER ATIVAR O LOGIN
-    
+    /**
+     * ============================================================================
+     * 5.7 CONTROLE DE ACESSO POR PERFIL (VENDEDOR / OPERADOR)
+     * ============================================================================
+     */
     const Auth = {
       SENHAS: {
         vendedor: "vendedor123",
@@ -1738,23 +1659,8 @@
       },
 
       init() {
-        // PULA AUTENTICAÇÃO SE SKIP_AUTH = true
-        if (SKIP_AUTH) {
-          this.login("operador", true); // Entra direto como Operador
-          return;
-        }
-        
-        // DEBUG: Limpa localStorage se quiser resetar (descomente a linha abaixo se travar)
-        // localStorage.clear();
-        
-        const savedRole = localStorage.getItem("pontas_userRole");
-        const savedAuth = localStorage.getItem("pontas_userAuthenticated");
-        
-        if (savedRole && savedAuth === "true") {
-          this.login(savedRole, true);
-        } else {
-          this.showLoginModal();
-        }
+        const savedRole = localStorage.getItem("pontas_userRole") || "operador";
+        this.applyRoleUI(savedRole);
       },
 
       showLoginModal() {
@@ -1773,84 +1679,31 @@
         UI.el.tabOperador.classList.toggle("active", role === "operador");
       },
 
-      async login(role, silent = false) {
+      login(role) {
         const password = UI.el.authPassword.value;
-        const expectedPassword = this.SENHAS[role];
-
-        if (!silent && password !== expectedPassword) {
-          state.authAttempts++;
-          UI.mostrarNotificacao(`Senha incorreta para ${role === "vendedor" ? "Vendedor" : "Operador de Pátio"}`, true);
-          
-          if (state.authAttempts >= 3) {
-            UI.mostrarNotificacao("Muitas tentativas. Recarregue a página.", true);
-            UI.el.btnAuthSubmit.disabled = true;
-            setTimeout(() => UI.el.btnAuthSubmit.disabled = false, 30000);
-          }
-          UI.el.authPassword.value = "";
-          UI.el.authPassword.focus();
-          return false;
+        if (password !== this.SENHAS[role]) {
+          UI.mostrarNotificacao(`Senha incorreta para ${role === "vendedor" ? "Vendedor" : "Operador"}`, true);
+          return;
         }
-
-        state.userRole = role;
-        state.userAuthenticated = true;
-        state.authAttempts = 0;
-
         localStorage.setItem("pontas_userRole", role);
-        localStorage.setItem("pontas_userAuthenticated", "true");
-
         this.applyRoleUI(role);
-        
-        // Carrega estoque após login bem-sucedido
-        if (!silent) {
-          API.carregarEstoque();
-        }
-        
-        if (!silent) {
-          this.hideLoginModal();
-          UI.mostrarNotificacao(`Bem-vindo, ${role === "vendedor" ? "Vendedor" : "Operador de Pátio"}!`);
-        }
-        return true;
-      },
-
-      // Login rápido para desenvolvimento (pressione Ctrl+Shift+L)
-      quickLogin(role) {
-        UI.el.authPassword.value = this.SENHAS[role];
-        this.login(role);
-      },
-
-      logout() {
-        state.userRole = null;
-        state.userAuthenticated = false;
-        localStorage.removeItem("pontas_userRole");
-        localStorage.removeItem("pontas_userAuthenticated");
-        this.applyRoleUI(null);
-        this.showLoginModal();
+        this.hideLoginModal();
+        UI.mostrarNotificacao(`Perfil alterado para: ${role === "vendedor" ? "Vendedor" : "Operador de Pátio"}`);
       },
 
       applyRoleUI(role) {
-        const html = document.documentElement;
+        state.userRole = role;
         const isVendedor = role === "vendedor";
         const isOperador = role === "operador";
 
-        html.setAttribute("data-role", role || "");
-
-        if (role) {
-          UI.el.profileBadge.style.display = "inline-flex";
-          UI.el.profileRole.textContent = isVendedor ? "Vendedor" : "Operador de Pátio";
-          UI.el.profileBadge.classList.toggle("operador", isOperador);
-          UI.el.btnPrinter.style.display = isOperador ? "inline-flex" : "none";
-          UI.el.btnLogout.style.display = "inline-flex";
-        } else {
-          UI.el.profileBadge.style.display = "none";
-          UI.el.btnPrinter.style.display = "none";
-          UI.el.btnLogout.style.display = "none";
-        }
+        document.documentElement.setAttribute("data-role", role);
+        UI.el.profileRole.textContent = isVendedor ? "Vendedor" : "Operador de Pátio";
+        UI.el.profileBadge.classList.toggle("operador", isOperador);
 
         const tabGerenciar = document.querySelector('.tab[data-target="gerenciar"]');
         const tabHistorico = document.querySelector('.tab[data-target="historico"]');
-        
-        if (tabGerenciar) tabGerenciar.style.display = isOperador ? "block" : "none";
-        if (tabHistorico) tabHistorico.style.display = isOperador ? "block" : "none";
+        if (tabGerenciar) tabGerenciar.style.display = isOperador ? "flex" : "none";
+        if (tabHistorico) tabHistorico.style.display = isOperador ? "flex" : "none";
 
         if (isVendedor) {
           const activeTab = document.querySelector(".tab.active");
@@ -1858,20 +1711,14 @@
             UI.alternarAba("consulta");
           }
         }
-      },
-
-      canAccess(feature) {
-        if (!state.userAuthenticated) return false;
-        if (state.userRole === "operador") return true;
-        return feature === "consulta" || feature === "planoCorte";
       }
     };
 
-    // Atalho de teclado para login rápido (Ctrl+Shift+L = Operador, Ctrl+Shift+V = Vendedor)
-
-    // ============================================================================
-    // 5.8 IMPRESSORA TÉRMICA ESC/POS (WEB BLUETOOTH) - PARTE 1: INIT E UI
-    // ============================================================================
+    /**
+     * ============================================================================
+     * 5.8 IMPRESSORA TÉRMICA ESC/POS (WEB BLUETOOTH)
+     * ============================================================================
+     */
     const ThermalPrinter = {
       SERVICE_UUID: "00001101-0000-1000-8000-00805f9b34fb",
       CHARACTERISTIC_UUID: "00001101-0000-1000-8000-00805f9b34fb",
@@ -1882,25 +1729,6 @@
         UI.el.btnScanPrinters.addEventListener("click", () => this.scanDevices());
         UI.el.btnConnectPrinter.addEventListener("click", () => this.connectToSelected());
         UI.el.btnTestPrint.addEventListener("click", () => this.printTest());
-        
-        UI.el.printerDeviceList.addEventListener("click", (e) => {
-          const item = e.target.closest(".printer-device-item");
-          if (item) {
-            document.querySelectorAll(".printer-device-item").forEach(i => i.classList.remove("selected"));
-            item.classList.add("selected");
-            state.selectedPrinterDevice = state.printerDevices.find(d => d.id === item.dataset.id);
-            UI.el.btnConnectPrinter.disabled = !state.selectedPrinterDevice;
-          }
-        });
-
-        if (!navigator.bluetooth) {
-          UI.el.printerDeviceList.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: var(--danger);">
-              ⚠️ Web Bluetooth não suportado neste navegador.<br>
-              <small>Use Chrome/Edge no Android ou Windows 10/11</small>
-            </div>`;
-          UI.el.btnScanPrinters.disabled = true;
-        }
       },
 
       openModal() {
@@ -1915,6 +1743,7 @@
       updateStatusUI() {
         const status = UI.el.printerStatus;
         const text = UI.el.printerStatusText;
+        UI.el.btnPrinter.classList.toggle("connected", state.printerConnected);
         
         if (state.printerConnected) {
           status.classList.add("connected");
@@ -1922,637 +1751,248 @@
         } else {
           status.classList.remove("connected");
           text.textContent = state.selectedPrinterDevice 
-            ? `Pronto para conectar: ${state.selectedPrinterDevice.name}` 
-            : "Desconectado — Selecione uma impressora";
+            ? `Selecionada: ${state.selectedPrinterDevice.name}` 
+            : "Desconectado — Clique em Buscar Impressoras";
         }
         UI.el.btnTestPrint.disabled = !state.printerConnected;
       },
 
-      // ============================================================================
-      // 5.8 IMPRESSORA TÉRMICA - PARTE 2: SCAN, CONEXÃO
-      // ============================================================================
       async scanDevices() {
-        if (!navigator.bluetooth) return;
-
-        UI.el.btnScanPrinters.disabled = true;
-        UI.el.btnScanPrinters.textContent = "🔍 Buscando...";
-        UI.el.printerDeviceList.innerHTML = '<p style="text-align:center; color: var(--text-muted);">Buscando dispositivos Bluetooth...</p>';
-
-        try {
-          const device = await navigator.bluetooth.requestDevice({
-            filters: [
-              { services: [this.SERVICE_UUID] },
-              { namePrefix: "Printer" },
-              { namePrefix: "PRINTER" },
-              { namePrefix: "ELGIN" },
-              { namePrefix: "ZEBRA" },
-              { namePrefix: "POS" },
-              { namePrefix: "Thermal" }
-            ],
-            optionalServices: [this.SERVICE_UUID]
-          });
-
-          state.printerDevices = [{
-            id: device.id,
-            name: device.name || `Dispositivo ${device.id.slice(-4)}`,
-            device: device
-          }];
-
-          this.renderDeviceList();
-          UI.mostrarNotificacao(`Encontrado: ${state.printerDevices[0].name}`);
-        } catch (err) {
-          if (err.name !== "NotFoundError") {
-            UI.mostrarNotificacao("Erro ao buscar: " + err.message, true);
-          }
-          UI.el.printerDeviceList.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: var(--text-muted);">
-              Nenhum dispositivo selecionado.<br>
-              <small>Certifique-se de que a impressora está ligada e pareada no Bluetooth do sistema.</small>
-            </div>`;
-        } finally {
-          UI.el.btnScanPrinters.disabled = false;
-          UI.el.btnScanPrinters.textContent = "🔍 Buscar Impressoras";
-        }
-      },
-
-      renderDeviceList() {
-        if (state.printerDevices.length === 0) {
-          UI.el.printerDeviceList.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 20px;">Nenhuma impressora encontrada</p>';
+        if (!navigator.bluetooth) {
+          UI.mostrarNotificacao("Navegador sem suporte a Web Bluetooth (Use Chrome no Android/PC).", true);
           return;
         }
 
-        UI.el.printerDeviceList.innerHTML = state.printerDevices.map(d => `
-          <div class="printer-device-item" data-id="${d.id}">
-            <div class="printer-device-info">
-              <span class="printer-device-name">${d.name}</span>
-              <span class="printer-device-id">ID: ${d.id}</span>
-            </div>
-            <span>📱</span>
-          </div>
-        `).join("");
+        try {
+          const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [this.SERVICE_UUID, "000018f0-0000-1000-8000-00805f9b34fb"]
+          });
+
+          state.selectedPrinterDevice = { id: device.id, name: device.name || "Impressora Bluetooth", device };
+          UI.el.printerDeviceList.innerHTML = `
+            <div class="printer-device-item selected">
+              <div><strong>${state.selectedPrinterDevice.name}</strong><br><small class="mono">${device.id}</small></div>
+              <span>✅</span>
+            </div>`;
+          UI.el.btnConnectPrinter.disabled = false;
+          this.updateStatusUI();
+        } catch (err) {
+          if (err.name !== "NotFoundError") UI.mostrarNotificacao("Busca cancelada ou erro: " + err.message, true);
+        }
       },
 
       async connectToSelected() {
         if (!state.selectedPrinterDevice) return;
-
         UI.el.btnConnectPrinter.disabled = true;
-        UI.el.btnConnectPrinter.textContent = "🔗 Conectando...";
+        UI.el.btnConnectPrinter.textContent = "Conectando...";
 
         try {
           const device = state.selectedPrinterDevice.device;
-          await device.gatt.connect();
-          
-          const server = await device.gatt.getPrimaryService(this.SERVICE_UUID);
-          state.printerCharacteristic = await server.getCharacteristic(this.CHARACTERISTIC_UUID);
-          
+          const server = await device.gatt.connect();
+          const services = await server.getPrimaryServices();
+          const characteristics = await services[0].getCharacteristics();
+          state.printerCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse) || characteristics[0];
           state.printerDevice = device;
           state.printerConnected = true;
-          
+
           device.addEventListener("gattserverdisconnected", () => {
             state.printerConnected = false;
-            state.printerCharacteristic = null;
             this.updateStatusUI();
-            UI.mostrarNotificacao("Impressora desconectada", true);
           });
 
           this.updateStatusUI();
-          UI.mostrarNotificacao("✅ Impressora conectada com sucesso!");
+          UI.mostrarNotificacao("🖨️ Impressora conectada!");
         } catch (err) {
-          UI.mostrarNotificacao("Erro ao conectar: " + err.message, true);
-          state.printerConnected = false;
+          UI.mostrarNotificacao("Falha ao conectar GATT: " + err.message, true);
         } finally {
           UI.el.btnConnectPrinter.disabled = false;
-          UI.el.btnConnectPrinter.textContent = state.printerConnected ? "✅ Conectado" : "🔗 Conectar";
+          UI.el.btnConnectPrinter.textContent = state.printerConnected ? "✅ Conectada" : "🔗 Conectar";
         }
       },
 
-      // ============================================================================
-      // 5.8 IMPRESSORA TÉRMICA - PARTE 3: COMANDOS ESC/POS E IMPRESSÃO
-      // ============================================================================
       async sendData(data) {
-        if (!state.printerConnected || !state.printerCharacteristic) {
-          throw new Error("Impressora não conectada");
-        }
-
         const encoder = new TextEncoder();
         const bytes = encoder.encode(data);
         const chunkSize = 180;
-
         for (let i = 0; i < bytes.length; i += chunkSize) {
-          const chunk = bytes.slice(i, i + chunkSize);
-          await state.printerCharacteristic.writeValue(chunk);
-          await new Promise(r => setTimeout(r, 10));
+          await state.printerCharacteristic.writeValue(bytes.slice(i, i + chunkSize));
+          await new Promise(r => setTimeout(r, 15));
         }
       },
 
       cmds: {
         init: () => "\x1B\x40",
         cut: () => "\x1D\x56\x00",
-        feed: (lines = 3) => "\x1B\x64".repeat(lines),
+        feed: (n = 3) => "\n".repeat(n),
         bold: (on) => on ? "\x1B\x45\x01" : "\x1B\x45\x00",
-        align: (mode) => {
-          const codes = ["\x1B\x61\x00", "\x1B\x61\x01", "\x1B\x61\x02"];
-          return codes[mode] || codes[0];
-        },
-        fontSize: (w, h) => "\x1D\x21" + String.fromCharCode((w << 4) | h),
-        qrCode: (data) => {
-          const encoded = encodeURIComponent(data);
-          const len = encoded.length + 3;
-          const pL = len % 256;
-          const pH = Math.floor(len / 256);
-          return "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00" +
-                 "\x1D\x28\x6B\x03\x00\x31\x43\x03" +
-                 "\x1D\x28\x6B\x03\x00\x31\x45\x31" +
-                 `\x1D\x28\x6B${String.fromCharCode(pL)}${String.fromCharCode(pH)}\x31\x50\x30${encoded}` +
-                 "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-        }
-      },
-
-      generateLabelSimples(barra) {
-        const { cmds } = this;
-        let output = "";
-        output += cmds.init();
-        output += cmds.align(1);
-        output += cmds.bold(true);
-        output += "GRANDE AÇO\n";
-        output += cmds.bold(false);
-        output += "------------------------------\n";
-        output += cmds.align(0);
-        output += `ID: #${barra.id}\n`;
-        output += `Bitola: Ø ${barra.bitola.toFixed(2)} mm\n`;
-        output += `Medida: ${barra.medida.toFixed(2)} m\n`;
-        output += `Peso: ${barra.peso.toFixed(2)} kg\n`;
-        output += `Origem: ${barra.obs || "-"}\n`;
-        output += "------------------------------\n";
-        output += cmds.align(1);
-        output += cmds.fontSize(2, 2);
-        output += `${barra.medida.toFixed(2)}m\n`;
-        output += cmds.fontSize(0, 0);
-        output += cmds.feed(2);
-        output += cmds.cut();
-        return output;
+        align: (m) => ["\x1B\x61\x00", "\x1B\x61\x01", "\x1B\x61\x02"][m] || "\x1B\x61\x00"
       },
 
       generateLabelCompleta(barra) {
-        const { cmds } = this;
-        const qrData = `PONTAS|${barra.id}|${barra.bitola}|${barra.medida}|${barra.peso.toFixed(2)}|${barra.obs || ""}`;
-        let output = "";
-        output += cmds.init();
-        output += cmds.align(1);
-        output += cmds.bold(true);
-        output += "GRANDE AÇO - CONTROLE DE PONTAS\n";
-        output += cmds.bold(false);
-        output += "==============================\n";
-        output += cmds.align(0);
-        output += `ID: #${barra.id}\n`;
-        output += `Bitola: Ø ${barra.bitola.toFixed(2)} mm\n`;
-        output += `Medida: ${barra.medida.toFixed(2)} m\n`;
-        output += `Peso: ${barra.peso.toFixed(2)} kg\n`;
-        output += `Cliente: ${barra.cliente || "-"}\n`;
-        output += `Data: ${new Date().toLocaleDateString("pt-BR")}\n`;
-        output += "==============================\n";
-        output += cmds.align(1);
-        output += cmds.qrCode(qrData);
-        output += "\n";
-        output += cmds.feed(2);
-        output += cmds.cut();
-        return output;
+        const c = this.cmds;
+        return c.init() + c.align(1) + c.bold(true) + "GRANDE ACO - PONTA DE ESTOQUE\n" + c.bold(false) +
+               "------------------------------\n" + c.align(0) +
+               `ID: #${barra.id}\nBitola: ${barra.bitola.toFixed(2)} mm\nMedida: ${barra.medida.toFixed(2)} m\nPeso: ${barra.peso.toFixed(2)} kg\n` +
+               "------------------------------\n" + c.feed(3) + c.cut();
       },
 
       generatePlanoCorte(plano, resumo) {
-        const { cmds } = this;
-        let output = "";
-        output += cmds.init();
-        output += cmds.align(1);
-        output += cmds.bold(true);
-        output += "PLANO DE CORTE OTIMIZADO\n";
-        output += cmds.bold(false);
-        output += "GRANDE AÇO\n";
-        output += "==============================\n";
-        output += cmds.align(0);
-        output += `Bitola: Ø ${resumo.bitola.toFixed(2)} mm\n`;
-        output += `Barras Físicas: ${resumo.totalBarrasFisicas}\n`;
-        output += `Peso Bruto: ${resumo.pesoBrutoTotal.toFixed(2)} kg\n`;
-        output += `Peso Líquido: ${resumo.pesoLiquidoTotal.toFixed(2)} kg\n`;
-        output += `Sobras: ${resumo.pesoSobraTotal.toFixed(2)} kg\n`;
-        output += "==============================\n\n";
-
-        plano.forEach((barra, idx) => {
-          output += `BARRA ${idx + 1} (ID #${barra.id}) - ${barra.medidaOriginal.toFixed(2)}m\n`;
-          output += `Cortes: ${barra.descricaoCortes}\n`;
-          if (barra.sobra > 0.05) {
-            output += `↳ SOBRA: ${barra.sobra.toFixed(2)}m (ID ${barra.idSobraPrevisto})\n`;
-          }
-          output += "\n";
+        const c = this.cmds;
+        let txt = c.init() + c.align(1) + c.bold(true) + "ORDEM DE CORTE - GRANDE ACO\n" + c.bold(false) +
+                  `Bitola: ${resumo.bitola.toFixed(2)}mm | Liquido: ${resumo.pesoLiquidoTotal.toFixed(2)}kg\n` +
+                  "------------------------------\n" + c.align(0);
+        plano.forEach(b => {
+          txt += `ID #${b.id} (${b.medidaOriginal.toFixed(2)}m) -> ${b.descricaoCortes} | Sobra: ${b.sobra.toFixed(2)}m\n`;
         });
-
-        output += cmds.feed(2);
-        output += cmds.cut();
-        return output;
+        return txt + c.feed(3) + c.cut();
       },
 
       async printTest() {
-        if (!state.printerConnected) {
-          UI.mostrarNotificacao("Conecte a impressora primeiro", true);
-          return;
-        }
-
-        const template = UI.el.printerTemplate.value;
-        let data = "";
-
-        try {
-          if (template === "simples") {
-            const barra = state.estoque[0] || { id: 999, bitola: 8.0, medida: 6.0, peso: 2.37, obs: "TESTE" };
-            data = this.generateLabelSimples(barra);
-          } else if (template === "completa") {
-            const barra = state.estoque[0] || { id: 999, bitola: 8.0, medida: 6.0, peso: 2.37, obs: "TESTE", cliente: "CLIENTE TESTE" };
-            data = this.generateLabelCompleta(barra);
-          } else if (template === "corte") {
-            const plano = state.planoDeCorteAtual.length > 0 ? state.planoDeCorteAtual : [{
-              id: 1, medidaOriginal: 12, descricaoCortes: "2x 5.00m + 1x 1.50m", sobra: 0.5, idSobraPrevisto: 101
-            }];
-            const resumo = state.resumoCorteAtual || { bitola: 8.0, totalBarrasFisicas: 1, pesoBrutoTotal: 4.74, pesoLiquidoTotal: 4.0, pesoSobraTotal: 0.74 };
-            data = this.generatePlanoCorte(plano, resumo);
-          }
-
-          await this.sendData(data);
-          UI.mostrarNotificacao("✅ Teste impresso com sucesso!");
-        } catch (err) {
-          UI.mostrarNotificacao("Erro ao imprimir: " + err.message, true);
-        }
+        const b = state.estoque[0] || { id: 100, bitola: 10.0, medida: 3.5, peso: 2.16 };
+        await this.sendData(this.generateLabelCompleta(b));
+        UI.mostrarNotificacao("✅ Etiqueta de teste enviada!");
       },
 
-      async printBarraLabel(barra, template = "simples") {
+      async printBarraLabel(barra) {
         if (!state.printerConnected) return false;
-
-        try {
-          let data = "";
-          if (template === "simples") data = this.generateLabelSimples(barra);
-          else if (template === "completa") data = this.generateLabelCompleta(barra);
-          
-          await this.sendData(data);
-          return true;
-        } catch (err) {
-          console.error("Erro ao imprimir etiqueta:", err);
-          return false;
-        }
+        await this.sendData(this.generateLabelCompleta(barra));
+        return true;
       },
 
       async printPlanoCorte() {
-        if (!state.printerConnected || state.planoDeCorteAtual.length === 0) return false;
-
-        try {
-          const data = this.generatePlanoCorte(state.planoDeCorteAtual, state.resumoCorteAtual);
-          await this.sendData(data);
-          return true;
-        } catch (err) {
-          console.error("Erro ao imprimir plano:", err);
-          return false;
-        }
+        if (!state.printerConnected) return false;
+        await this.sendData(this.generatePlanoCorte(state.planoDeCorteAtual, state.resumoCorteAtual));
+        return true;
       }
     };
 
-    // ============================================================================
-    // 5.9 EXPORTAÇÃO DE RELATÓRIOS (EXCEL / PDF) - PARTE 1: INIT E MÉTODOS BASE
-    // ============================================================================
+    /**
+     * ============================================================================
+     * 5.9 EXPORTAÇÃO DE RELATÓRIOS (EXCEL & PDF)
+     * ============================================================================
+     */
     const ExportManager = {
       init() {
-        UI.el.btnExport.addEventListener("click", () => this.openModal());
-        UI.el.btnCancelExport.addEventListener("click", () => this.closeModal());
+        UI.el.btnExport.addEventListener("click", () => UI.el.exportOverlay.style.display = "flex");
+        UI.el.btnCancelExport.addEventListener("click", () => UI.el.exportOverlay.style.display = "none");
         UI.el.btnGenerateExport.addEventListener("click", () => this.generate());
-        
+
         const hoje = new Date();
-        const trintaDiasAtras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000);
-        
-        UI.el.exportDateFrom.value = trintaDiasAtras.toISOString().split("T")[0];
+        const trintaDias = new Date(hoje.getTime() - 30 * 86400000);
+        UI.el.exportDateFrom.value = trintaDias.toISOString().split("T")[0];
         UI.el.exportDateTo.value = hoje.toISOString().split("T")[0];
       },
 
-      openModal() {
-        UI.el.exportOverlay.style.display = "flex";
-      },
-
-      closeModal() {
-        UI.el.exportOverlay.style.display = "none";
-      },
-
       getFilteredData() {
-        const from = UI.el.exportDateFrom.value ? new Date(UI.el.exportDateFrom.value) : null;
-        const to = UI.el.exportDateTo.value ? new Date(UI.el.exportDateTo.value) : null;
-        
-        if (to) to.setHours(23, 59, 59, 999);
+        const from = UI.el.exportDateFrom.value ? new Date(UI.el.exportDateFrom.value + "T00:00:00") : null;
+        const to = UI.el.exportDateTo.value ? new Date(UI.el.exportDateTo.value + "T23:59:59") : null;
 
-        let estoqueFiltrado = state.estoque;
-        if (from || to) {
-          estoqueFiltrado = state.estoque.filter(b => {
-            const data = new Date(b.dataCadastro || b.data);
-            if (from && data < from) return false;
-            if (to && data > to) return false;
-            return true;
-          });
-        }
+        const filtrarPorData = (lista) => lista.filter(b => {
+          const d = Utils.parseDataBR(b.data);
+          if (!d) return true; // Mantém caso a linha não tenha data formatada
+          if (from && d < from) return false;
+          if (to && d > to) return false;
+          return true;
+        });
 
-        let vendidosFiltrado = state.vendidos;
-        if (from || to) {
-          vendidosFiltrado = state.vendidos.filter(b => {
-            const data = new Date(b.data);
-            if (from && data < from) return false;
-            if (to && data > to) return false;
-            return true;
-          });
-        }
-
-        return { estoque: estoqueFiltrado, vendidos: vendidosFiltrado };
+        return {
+          estoque: filtrarPorData(state.estoque),
+          vendidos: filtrarPorData(state.vendidos)
+        };
       },
 
       async generate() {
         const format = document.querySelector('input[name="exportFormat"]:checked').value;
         const { estoque, vendidos } = this.getFilteredData();
-        
-        UI.el.btnGenerateExport.disabled = true;
-        UI.el.btnGenerateExport.textContent = "⏳ Gerando...";
 
         try {
-          if (format === "excel" || format === "both") {
-            await this.generateExcel(estoque, vendidos);
-          }
-          if (format === "pdf" || format === "both") {
-            await this.generatePDF(estoque, vendidos);
-          }
-          
-          UI.mostrarNotificacao("✅ Relatório gerado e baixado!");
-          this.closeModal();
+          if (format === "excel" || format === "both") this.generateExcel(estoque, vendidos);
+          if (format === "pdf" || format === "both") this.generatePDF(estoque, vendidos);
+          UI.el.exportOverlay.style.display = "none";
+          UI.mostrarNotificacao("📊 Relatório exportado com sucesso!");
         } catch (err) {
-          UI.mostrarNotificacao("Erro ao gerar relatório: " + err.message, true);
-        } finally {
-          UI.el.btnGenerateExport.disabled = false;
-          UI.el.btnGenerateExport.textContent = "⬇️ Gerar e Baixar";
+          UI.mostrarNotificacao("Erro ao exportar: " + err.message, true);
         }
       },
 
-      // ============================================================================
-      // 5.9 EXPORTAÇÃO - PARTE 2: GENERATE EXCEL
-      // ============================================================================
       generateExcel(estoque, vendidos) {
         const wb = XLSX.utils.book_new();
-        const dataHoje = new Date().toLocaleDateString("pt-BR");
-        const fromStr = UI.el.exportDateFrom.value ? new Date(UI.el.exportDateFrom.value).toLocaleDateString("pt-BR") : "Início";
-        const toStr = UI.el.exportDateTo.value ? new Date(UI.el.exportDateTo.value).toLocaleDateString("pt-BR") : "Hoje";
+        const dataHoje = new Date().toLocaleDateString("pt-BR").replace(/\//g, "-");
 
-        const totalEstoque = estoque.length;
-        const totalMetragem = estoque.reduce((s, b) => s + b.medida, 0);
-        const totalPeso = estoque.reduce((s, b) => s + b.peso, 0);
-        const totalVendidos = vendidos.length;
-        const pesoVendido = vendidos.reduce((s, b) => s + b.peso, 0);
+        const wsEstoque = XLSX.utils.aoa_to_sheet([
+          ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Observação"],
+          ...estoque.map(b => [b.id, b.data, b.bitola, b.medida, Number(b.peso.toFixed(2)), b.obs])
+        ]);
+        XLSX.utils.book_append_sheet(wb, wsEstoque, "Estoque Ativo");
 
-        const resumoData = [
-          ["RELATÓRIO DE PÁTIO - GRANDE AÇO", ""],
-          ["Período", `${fromStr} a ${toStr}`],
-          ["Gerado em", dataHoje],
-          ["", ""],
-          ["ESTOQUE ATUAL", ""],
-          ["Total de Pontas", totalEstoque],
-          ["Metragem Linear (m)", totalMetragem.toFixed(2)],
-          ["Peso Total (kg)", totalPeso.toFixed(2)],
-          ["", ""],
-          ["VENDAS / BAIXAS NO PERÍODO", ""],
-          ["Total de Barras Vendidas", totalVendidos],
-          ["Peso Total Vendido (kg)", pesoVendido.toFixed(2)],
-          ["", ""],
-          ["RESUMO POR BITOLA (ESTOQUE)", ""]
-        ];
+        const wsVendidos = XLSX.utils.aoa_to_sheet([
+          ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Cliente / Pedido"],
+          ...vendidos.map(b => [b.id, b.data, b.bitola, b.medida, Number(b.peso.toFixed(2)), b.obs])
+        ]);
+        XLSX.utils.book_append_sheet(wb, wsVendidos, "Histórico Vendidos");
 
-        const porBitola = {};
-        estoque.forEach(b => {
-          if (!porBitola[b.bitola]) porBitola[b.bitola] = { qtde: 0, metros: 0, peso: 0 };
-          porBitola[b.bitola].qtde++;
-          porBitola[b.bitola].metros += b.medida;
-          porBitola[b.bitola].peso += b.peso;
-        });
-
-        Object.entries(porBitola).sort((a, b) => a[0] - b[0]).forEach(([bitola, d]) => {
-          resumoData.push([`Ø ${parseFloat(bitola).toFixed(2)} mm`, `${d.qtde} barras | ${d.metros.toFixed(2)}m | ${d.peso.toFixed(2)}kg`]);
-        });
-
-        const wsResumo = XLSX.utils.aoa_to_sheet(resumoData);
-        XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
-
-        const estoqueData = [
-          ["ID", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Origem/Obs", "Data Cadastro"]
-        ];
-        estoque.forEach(b => {
-          estoqueData.push([
-            b.id,
-            b.bitola.toFixed(2),
-            b.medida.toFixed(2),
-            b.peso.toFixed(2),
-            b.obs || "",
-            b.dataCadastro || b.data || ""
-          ]);
-        });
-        const wsEstoque = XLSX.utils.aoa_to_sheet(estoqueData);
-        XLSX.utils.book_append_sheet(wb, wsEstoque, "Estoque");
-
-        const vendidosData = [
-          ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Cliente/Pedido"]
-        ];
-        vendidos.forEach(b => {
-          vendidosData.push([
-            b.id,
-            b.data,
-            b.bitola.toFixed(2),
-            b.medida.toFixed(2),
-            b.peso.toFixed(2),
-            b.obs || ""
-          ]);
-        });
-        const wsVendidos = XLSX.utils.aoa_to_sheet(vendidosData);
-        XLSX.utils.book_append_sheet(wb, wsVendidos, "Vendidos");
-
-        const sobras = estoque.filter(b => b.obs?.toLowerCase().includes("sobra"));
-        if (sobras.length > 0) {
-          const sobrasData = [
-            ["ID", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Origem/Obs", "Data"]
-          ];
-          sobras.forEach(b => {
-            sobrasData.push([b.id, b.bitola.toFixed(2), b.medida.toFixed(2), b.peso.toFixed(2), b.obs || "", b.dataCadastro || b.data || ""]);
-          });
-          const wsSobras = XLSX.utils.aoa_to_sheet(sobrasData);
-          XLSX.utils.book_append_sheet(wb, wsSobras, "Sobras");
-        }
-
-        const setColWidths = (ws, widths) => {
-          ws['!cols'] = widths.map(w => ({ wch: w }));
-        };
-        setColWidths(wsResumo, [30, 50]);
-        setColWidths(wsEstoque, [8, 12, 12, 10, 30, 15]);
-        setColWidths(wsVendidos, [8, 12, 12, 12, 10, 30]);
-
-        const fileName = `Relatorio_Patio_GrandeAco_${dataHoje.replace(/\//g, "-")}.xlsx`;
-        XLSX.writeFile(wb, fileName);
+        XLSX.writeFile(wb, `Relatorio_Pontas_GrandeAco_${dataHoje}.xlsx`);
       },
 
-      // ============================================================================
-      // 5.9 EXPORTAÇÃO - PARTE 3: GENERATE PDF
-      // ============================================================================
-      async generatePDF(estoque, vendidos) {
+      generatePDF(estoque, vendidos) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const dataHoje = new Date().toLocaleDateString("pt-BR");
-        const fromStr = UI.el.exportDateFrom.value ? new Date(UI.el.exportDateFrom.value).toLocaleDateString("pt-BR") : "Início";
-        const toStr = UI.el.exportDateTo.value ? new Date(UI.el.exportDateTo.value).toLocaleDateString("pt-BR") : "Hoje";
 
-        let y = 20;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 14;
-
-        doc.setFontSize(18);
-        doc.setFont(undefined, "bold");
-        doc.text("GRANDE AÇO - Relatório de Pátio", pageWidth / 2, y, { align: "center" });
-        y += 8;
-        
+        doc.setFontSize(16);
+        doc.text("GRANDE AÇO - Relatório de Controle de Pontas", 14, 18);
         doc.setFontSize(10);
-        doc.setFont(undefined, "normal");
-        doc.text(`Período: ${fromStr} a ${toStr}  |  Gerado em: ${dataHoje}`, pageWidth / 2, y, { align: "center" });
-        y += 10;
-
-        const totalEstoque = estoque.length;
-        const totalMetragem = estoque.reduce((s, b) => s + b.medida, 0);
-        const totalPeso = estoque.reduce((s, b) => s + b.peso, 0);
-        const totalVendidos = vendidos.length;
-        const pesoVendido = vendidos.reduce((s, b) => s + b.peso, 0);
-
-        doc.setFontSize(12);
-        doc.setFont(undefined, "bold");
-        doc.text("Indicadores Principais", margin, y);
-        y += 6;
-
-        const kpis = [
-          ["Estoque Atual", `${totalEstoque} pontas`, `${totalMetragem.toFixed(2)} m`, `${totalPeso.toFixed(2)} kg`],
-          ["Vendas no Período", `${totalVendidos} barras`, "", `${pesoVendido.toFixed(2)} kg`]
-        ];
+        doc.text(`Gerado em: ${dataHoje} | Total em Estoque: ${estoque.length} pontas`, 14, 25);
 
         doc.autoTable({
-          startY: y,
-          head: [["", "Quantidade", "Metragem", "Peso (kg)"]],
-          body: kpis,
-          theme: "grid",
+          startY: 32,
+          head: [["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Origem / Obs"]],
+          body: estoque.map(b => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
           headStyles: { fillColor: [16, 185, 129] },
-          margin: { left: margin, right: margin }
+          styles: { fontSize: 8 }
         });
-        y = doc.lastAutoTable.finalY + 10;
-
-        doc.setFontSize(12);
-        doc.setFont(undefined, "bold");
-        doc.text("Estoque por Bitola", margin, y);
-        y += 6;
-
-        const porBitola = {};
-        estoque.forEach(b => {
-          if (!porBitola[b.bitola]) porBitola[b.bitola] = { qtde: 0, metros: 0, peso: 0 };
-          porBitola[b.bitola].qtde++;
-          porBitola[b.bitola].metros += b.medida;
-          porBitola[b.bitola].peso += b.peso;
-        });
-
-        const bitolaBody = Object.entries(porBitola)
-          .sort((a, b) => a[0] - b[0])
-          .map(([bitola, d]) => [
-            `Ø ${parseFloat(bitola).toFixed(2)} mm`,
-            d.qtde.toString(),
-            d.metros.toFixed(2),
-            d.peso.toFixed(2)
-          ]);
-
-        doc.autoTable({
-          startY: y,
-          head: [["Bitola", "Qtd. Barras", "Metragem (m)", "Peso (kg)"]],
-          body: bitolaBody,
-          theme: "striped",
-          headStyles: { fillColor: [59, 130, 246] },
-          margin: { left: margin, right: margin }
-        });
-        y = doc.lastAutoTable.finalY + 10;
 
         if (vendidos.length > 0) {
-          doc.setFontSize(12);
-          doc.setFont(undefined, "bold");
-          doc.text(`Últimas ${Math.min(50, vendidos.length)} Baixas / Vendas`, margin, y);
-          y += 6;
-
-          const vendidosBody = vendidos
-            .slice(0, 50)
-            .map(b => [
-              `#${b.id}`,
-              b.data,
-              `Ø ${b.bitola.toFixed(2)}`,
-              `${b.medida.toFixed(2)} m`,
-              `${b.peso.toFixed(2)} kg`,
-              b.obs || "-"
-            ]);
-
           doc.autoTable({
-            startY: y,
-            head: [["ID", "Data", "Bitola", "Medida", "Peso", "Cliente/Pedido"]],
-            body: vendidosBody,
-            theme: "striped",
+            startY: doc.lastAutoTable.finalY + 10,
+            head: [["ID (Vendido)", "Data", "Bitola", "Medida", "Peso", "Cliente / Pedido"]],
+            body: vendidos.slice(0, 50).map(b => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
             headStyles: { fillColor: [229, 72, 77] },
-            margin: { left: margin, right: margin },
-            styles: { fontSize: 8 },
-            columnStyles: { 5: { cellWidth: 40 } }
+            styles: { fontSize: 8 }
           });
-          y = doc.lastAutoTable.finalY + 10;
         }
 
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(8);
-          doc.setTextColor(128);
-          doc.text(
-            `Grande Aço - Controle de Pontas  |  Página ${i} de ${pageCount}`,
-            pageWidth / 2,
-            doc.internal.pageSize.getHeight() - 10,
-            { align: "center" }
-          );
-        }
-
-        const fileName = `Relatorio_Patio_GrandeAco_${dataHoje.replace(/\//g, "-")}.pdf`;
-        doc.save(fileName);
+        doc.save(`Relatorio_Pontas_GrandeAco_${dataHoje.replace(/\//g, "-")}.pdf`);
       }
     };
 
-    // ============================================================================
-    // 6. INICIALIZAÇÃO E EVENTOS
-    // ============================================================================
+    /**
+     * ============================================================================
+     * 6. INICIALIZAÇÃO E EVENTOS
+     * ============================================================================
+     */
     function iniciarAplicacao() {
       UI.carregarTemaSalvo();
-      
-      // Autenticação - Event Listeners (ANTES do Auth.init para o modal funcionar)
+      Auth.init();
+      ThermalPrinter.init();
+      ExportManager.init();
+
+      // Carrega o estoque imediatamente ao abrir a página!
+      API.carregarEstoque();
+
+      // Eventos de Perfil / Login
       UI.el.tabVendedor.addEventListener("click", () => Auth.setRole("vendedor"));
       UI.el.tabOperador.addEventListener("click", () => Auth.setRole("operador"));
       UI.el.authForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        Auth.login(state.userRole || "vendedor");
+        Auth.login(state.userRole || "operador");
       });
-      UI.el.btnLogout.addEventListener("click", () => Auth.logout());
-      // Botão "Pular login" para desenvolvimento
-      UI.el.btnSkipAuth.addEventListener("click", () => {
-        if (confirm("Pular autenticação? Isso entra como Operador de Pátio (acesso total).")) {
-          Auth.login("operador");
-        }
-      });
-      
-      // Inicializa autenticação
-      Auth.init();
-      
-      // Inicializa impressora e exportação
-      ThermalPrinter.init();
-      ExportManager.init();
-      
-      // Event listeners só são ativados após autenticação bem-sucedida
-      // API.carregarEstoque() será chamado pelo Auth.login()
+      UI.el.btnLogout.addEventListener("click", () => Auth.showLoginModal());
+      UI.el.profileBadge.addEventListener("click", () => Auth.showLoginModal());
+      UI.el.btnSkipAuth.addEventListener("click", () => Auth.hideLoginModal());
 
+      // Navegação entre abas
       document.querySelectorAll(".tab").forEach(tab => {
         tab.addEventListener("click", () => UI.alternarAba(tab.dataset.target));
       });
@@ -2560,7 +2000,7 @@
       UI.el.btnTheme.addEventListener("click", () => UI.alternarTema());
       UI.el.btnRecarregar.addEventListener("click", () => API.carregarEstoque());
 
-      // Eventos de Corte e Carrinho
+      // Corte e Carrinho
       UI.el.btnAddCarrinho.addEventListener("click", () => Controlador.adicionarAoCarrinho());
       UI.el.btnBuscar.addEventListener("click", () => Controlador.gerarPlanoDeCorte());
 
@@ -2587,6 +2027,5 @@
 
     document.addEventListener("DOMContentLoaded", iniciarAplicacao);
   </script>
-
 </body>
 </html>
