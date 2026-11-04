@@ -1036,45 +1036,48 @@
       async carregarEstoque(silencioso = false) {
         try {
           if (!silencioso) UI.el.btnRecarregar.textContent = "⏳...";
-          // Carrega todas as linhas para alimentar tanto o Estoque Ativo quanto o Histórico de Saídas
-          const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H");
-          const cacheBuster = Date.now();
-          const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${cacheBuster}`;
+          
+          // Usa o Apps Script (doGet) - sem action carrega TUDO (estoque + vendidos + sobras)
+          const url = `${CONFIG.SCRIPT_URL}?_cb=${Date.now()}`;
           
           const response = await fetch(url);
-          const text = await response.text();
-          const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
-          const data = JSON.parse(jsonString);
-
+          const result = await response.json();
+          
+          if (!result.success) {
+            throw new Error(result.error || "Erro ao carregar estoque");
+          }
+          
+          const rows = result.data || [];
+          
           state.estoque = [];
           state.vendidos = [];
           state.maxIdPlanilha = 0;
 
-          data.table.rows.forEach((row, idx) => {
-            const idNum = parseInt(row.c[0]?.v, 10);
+          rows.forEach((row) => {
+            const idNum = parseInt(row.ID, 10);
             if (!isNaN(idNum) && idNum > state.maxIdPlanilha) {
               state.maxIdPlanilha = idNum;
             }
 
-            const situacao = Utils.parseTextoPlanilha(row.c[6]).trim().toLowerCase();
-            const bitola = Utils.parseNumeroPlanilha(row.c[3]);
-            const medida = Utils.parseNumeroPlanilha(row.c[4]);
+            const bitola = parseFloat(row.Bitola) || 0;
+            const medida = parseFloat(row.Medida) || 0;
             if (!idNum || !bitola) return;
 
             const itemObj = {
-              ordemPlanilha: idx,
+              ordemPlanilha: 0,
               id: idNum,
-              data: Utils.parseTextoPlanilha(row.c[1]),
+              data: row["Data Cadastro"] || row.Data || "",
               bitola: bitola,
               medida: medida,
-              peso: Utils.calcularPesoAco(bitola, medida),
-              situacao: Utils.parseTextoPlanilha(row.c[6]),
-              obs: Utils.parseTextoPlanilha(row.c[7])
+              peso: parseFloat(row.Peso) || Utils.calcularPesoAco(bitola, medida),
+              situacao: row.Status || "estoque",
+              obs: row["Origem/Obs"] || row.Obs || ""
             };
 
-            if (situacao === "em estoque") {
+            const status = (row.Status || "estoque").toLowerCase();
+            if (status === "estoque") {
               state.estoque.push(itemObj);
-            } else if (situacao === "vendido") {
+            } else if (status === "vendido") {
               state.vendidos.push(itemObj);
             }
           });
@@ -1084,6 +1087,7 @@
           Controlador.renderizarVisaoGeralEstoque();
           Controlador.renderizarHistorico();
         } catch (error) {
+          console.error("Erro ao sincronizar:", error);
           UI.mostrarNotificacao("Erro ao sincronizar planilha. Verifique a internet.", true);
         } finally {
           UI.el.btnRecarregar.textContent = "🔄 Sincronizar";
