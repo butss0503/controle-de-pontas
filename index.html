@@ -11,343 +11,117 @@
   <!-- Fontes Supabase: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Biblioteca Leitor de QR Code (HTML5-QRCode) e Gerador Local de QR Code (QRious) -->
+  <!-- Bibliotecas QR Code e Exportação -->
   <script src="https://unpkg.com/html5-qrcode" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-
-  <!-- Bibliotecas para Exportação: SheetJS (Excel) e jsPDF (PDF) -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js" defer></script>
 
   <style>
-    /* ==========================================================================
-       1. SUPABASE DESIGN SYSTEM - TOKENS & VARIÁVEIS
-       ========================================================================== */
     :root {
-      --bg: #f8f9fa;
-      --surface-100: #ffffff;
-      --surface-200: #f1f3f5;
-      --surface-300: #e9ecef;
-      --text: #11181c;
-      --text-muted: #687076;
-      --border: #dfe3e6;
-      --border-strong: #c1c8cd;
-      
-      --brand: #10b981;
-      --brand-hover: #059669;
-      --brand-bg: rgba(16, 185, 129, 0.1);
-      --brand-border: rgba(16, 185, 129, 0.35);
-      --brand-contrast: #ffffff;
-
-      --whatsapp: #25d366;
-      --danger: #e5484d;
-      --danger-hover: #dc2626;
-      --danger-bg: rgba(229, 72, 77, 0.1);
-      --warning: #f59e0b;
-      --warning-bg: rgba(245, 158, 11, 0.12);
-      --info: #3b82f6;
-      
-      --radius-sm: 4px;
-      --radius-md: 6px;
-      --radius-lg: 8px;
-      --transition: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --bg: #f8f9fa; --surface-100: #ffffff; --surface-200: #f1f3f5; --surface-300: #e9ecef;
+      --text: #11181c; --text-muted: #687076; --border: #dfe3e6; --border-strong: #c1c8cd;
+      --brand: #10b981; --brand-hover: #059669; --brand-bg: rgba(16, 185, 129, 0.1);
+      --brand-border: rgba(16, 185, 129, 0.35); --brand-contrast: #ffffff;
+      --whatsapp: #25d366; --danger: #e5484d; --danger-hover: #dc2626;
+      --danger-bg: rgba(229, 72, 77, 0.1); --warning: #f59e0b; --warning-bg: rgba(245, 158, 11, 0.12); --info: #3b82f6;
+      --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --transition: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05); --font-sans: 'Inter', sans-serif; --font-mono: 'JetBrains Mono', monospace;
     }
-
     [data-theme="dark"] {
-      --bg: #121212;
-      --surface-100: #1c1c1c;
-      --surface-200: #232323;
-      --surface-300: #2a2a2a;
-      --text: #ededed;
-      --text-muted: #8b9092;
-      --border: #2e2e2e;
-      --border-strong: #3e3e3e;
-
-      --brand: #3ecf8e;
-      --brand-hover: #34b27b;
-      --brand-bg: rgba(62, 207, 142, 0.12);
-      --brand-border: rgba(62, 207, 142, 0.35);
-      --brand-contrast: #09130e;
-
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --warning: #f5a623;
-      --warning-bg: rgba(245, 166, 35, 0.12);
-      --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+      --bg: #121212; --surface-100: #1c1c1c; --surface-200: #232323; --surface-300: #2a2a2a;
+      --text: #ededed; --text-muted: #8b9092; --border: #2e2e2e; --border-strong: #3e3e3e;
+      --brand: #3ecf8e; --brand-hover: #34b27b; --brand-bg: rgba(62, 207, 142, 0.12);
+      --brand-border: rgba(62, 207, 142, 0.35); --brand-contrast: #09130e;
+      --danger: #ef4444; --danger-hover: #dc2626; --danger-bg: rgba(239, 68, 68, 0.12);
+      --warning: #f5a623; --warning-bg: rgba(245, 166, 35, 0.12); --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
     }
-
     * { box-sizing: border-box; font-family: var(--font-sans); }
-
-    body { 
-      background: var(--bg); color: var(--text); margin: 0; padding: 20px 14px; 
-      transition: background var(--transition), color var(--transition);
-      -webkit-font-smoothing: antialiased;
-    }
-
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 20px 14px; transition: background var(--transition), color var(--transition); }
     .container { max-width: 960px; margin: 0 auto; }
     .mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
-
-    /* ==========================================================================
-       2. CABEÇALHO E NAVEGAÇÃO
-       ========================================================================== */
-    .header { 
-      display: flex; justify-content: space-between; align-items: center; 
-      margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
-      flex-wrap: wrap; gap: 12px;
-    }
-
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
     .logo-container { display: flex; align-items: center; gap: 14px; }
-    .logo-img { 
-      width: 52px; height: 52px; object-fit: contain; 
-      border-radius: var(--radius-lg); background: #fff; padding: 4px; 
-      border: 1px solid var(--border);
-    }
-
-    .header-titles h1 { 
-      margin: 0; font-size: 1.2rem; font-weight: 600; 
-      display: flex; align-items: center; gap: 8px;
-    }
-
-    .status-dot {
-      width: 8px; height: 8px; background-color: var(--brand);
-      border-radius: 50%; box-shadow: 0 0 8px var(--brand); display: inline-block;
-    }
-
+    .logo-img { width: 52px; height: 52px; object-fit: contain; border-radius: var(--radius-lg); background: #fff; padding: 4px; border: 1px solid var(--border); }
+    .header-titles h1 { margin: 0; font-size: 1.2rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .status-dot { width: 8px; height: 8px; background-color: var(--brand); border-radius: 50%; box-shadow: 0 0 8px var(--brand); display: inline-block; }
     .header-titles p { margin: 3px 0 0 0; color: var(--text-muted); font-size: 0.8rem; }
     .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-    .icon-btn { 
-      background: var(--surface-200); border: 1px solid var(--border); color: var(--text); 
-      padding: 8px 12px; border-radius: var(--radius-md); cursor: pointer; 
-      font-size: 0.82rem; font-weight: 500; transition: var(--transition);
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .icon-btn:hover { background: var(--surface-300); border-color: var(--border-strong); }
-
-    .profile-badge { 
-      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; 
-      border-radius: 20px; font-size: 0.78rem; font-weight: 600; 
-      background: var(--brand-bg); color: var(--brand); border: 1px solid var(--brand-border); 
-      cursor: pointer;
-    }
+    .icon-btn, .btn-printer, .btn-export { background: var(--surface-200); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--radius-md); cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px; }
+    .icon-btn:hover, .btn-printer:hover, .btn-export:hover { background: var(--surface-300); border-color: var(--border-strong); }
+    .profile-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; background: var(--brand-bg); color: var(--brand); border: 1px solid var(--brand-border); cursor: pointer; }
     .profile-badge.operador { background: var(--warning-bg); color: var(--warning); border-color: rgba(245, 158, 11, 0.35); }
-
-    .btn-printer, .btn-export { 
-      display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; 
-      background: var(--surface-200); border: 1px solid var(--border); 
-      border-radius: var(--radius-md); color: var(--text); font-size: 0.82rem; font-weight: 500; 
-      cursor: pointer; transition: var(--transition); 
-    }
-    .btn-printer:hover, .btn-printer.connected { background: var(--brand-bg); border-color: var(--brand-border); color: var(--brand); }
-    .btn-export:hover { background: var(--info); border-color: var(--info); color: white; }
-
-    .tabs { 
-      display: flex; gap: 4px; border-bottom: 1px solid var(--border); 
-      margin-bottom: 20px; overflow-x: auto;
-    }
-
-    .tab { 
-      padding: 10px 14px; cursor: pointer; color: var(--text-muted); 
-      font-size: 0.85rem; font-weight: 500; border-bottom: 2px solid transparent; 
-      margin-bottom: -1px; transition: var(--transition); user-select: none;
-      white-space: nowrap; display: flex; align-items: center; gap: 7px;
-    }
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+    .tab { padding: 10px 14px; cursor: pointer; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: var(--transition); user-select: none; white-space: nowrap; display: flex; align-items: center; gap: 7px; }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
-
-    .tab-badge {
-      background: var(--surface-300); color: var(--text); font-family: var(--font-mono);
-      font-size: 0.72rem; padding: 2px 6px; border-radius: 10px; border: 1px solid var(--border);
-    }
-    .tab.active .tab-badge {
-      background: var(--brand-bg); color: var(--brand); border-color: var(--brand-border);
-    }
-
+    .tab-badge { background: var(--surface-300); color: var(--text); font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 6px; border-radius: 10px; border: 1px solid var(--border); }
+    .tab.active .tab-badge { background: var(--brand-bg); color: var(--brand); border-color: var(--brand-border); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    /* ==========================================================================
-       3. PAINÉIS, FORMULÁRIOS, BOTÕES E CARRINHO DE CORTES
-       ========================================================================== */
-    .box { 
-      background: var(--surface-100); padding: 18px; border-radius: var(--radius-lg); 
-      border: 1px solid var(--border); margin-bottom: 18px; box-shadow: var(--shadow-sm);
-    }
-
-    .box h2 { 
-      margin-top: 0; font-size: 0.9rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.04em; color: var(--text); border-bottom: 1px solid var(--border); 
-      padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 8px;
-    }
-
-    .form-grid { 
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
-      gap: 12px; margin-bottom: 14px; 
-    }
-
+    .box { background: var(--surface-100); padding: 18px; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+    .box h2 { margin-top: 0; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 5px; }
     label { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
-
-    select, input { 
-      padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-md); 
-      background: var(--surface-200); color: var(--text); font-size: 0.9rem; 
-      outline: none; transition: var(--transition); width: 100%;
-    }
+    select, input { padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-200); color: var(--text); font-size: 0.9rem; outline: none; transition: var(--transition); width: 100%; }
     select:focus, input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-bg); }
-
     .input-with-btn { display: flex; gap: 8px; }
     .input-with-btn input { flex: 1; }
-
-    .btn { 
-      background: var(--brand); color: var(--brand-contrast); border: 1px solid var(--brand-hover); 
-      padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.88rem;
-      cursor: pointer; transition: var(--transition); width: 100%; 
-      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
-    }
+    .btn { background: var(--brand); color: var(--brand-contrast); border: 1px solid var(--brand-hover); padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: var(--transition); width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
     .btn:hover:not(:disabled) { background: var(--brand-hover); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    
     .btn-secondary { background: var(--surface-200); color: var(--text); border: 1px solid var(--border-strong); }
     .btn-secondary:hover:not(:disabled) { background: var(--surface-300); border-color: var(--brand); color: var(--brand); }
-
     .btn-whatsapp { background: var(--surface-200); color: var(--text); border: 1px solid var(--border-strong); }
     .btn-whatsapp:hover:not(:disabled) { border-color: var(--whatsapp); color: var(--whatsapp); background: rgba(37, 211, 102, 0.08); }
-
     .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger-hover); }
     .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
-
     .btn-sm { padding: 5px 10px; font-size: 0.76rem; width: auto; }
-
-    .actions-row {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px; margin-top: 14px;
-    }
-
-    .cart-list {
-      display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0;
-      padding: 10px; background: var(--surface-200); border-radius: var(--radius-md);
-      border: 1px dashed var(--border-strong);
-    }
-    .cart-chip {
-      background: var(--surface-100); border: 1px solid var(--brand-border);
-      padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.82rem;
-      display: inline-flex; align-items: center; gap: 8px;
-    }
-    .cart-chip button {
-      background: none; border: none; color: var(--danger); cursor: pointer;
-      font-weight: bold; padding: 0 2px; font-size: 0.9rem;
-    }
-
-    /* ==========================================================================
-       4. MAPA GRÁFICO DE CORTE E KPIs
-       ========================================================================== */
-    .summary-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-      gap: 10px; margin-bottom: 16px;
-    }
-
-    .kpi-card {
-      background: var(--surface-200); border: 1px solid var(--border);
-      border-radius: var(--radius-md); padding: 12px; text-align: left;
-    }
+    .actions-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 14px; }
+    .cart-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; padding: 10px; background: var(--surface-200); border-radius: var(--radius-md); border: 1px dashed var(--border-strong); }
+    .cart-chip { background: var(--surface-100); border: 1px solid var(--brand-border); padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.82rem; display: inline-flex; align-items: center; gap: 8px; }
+    .cart-chip button { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: bold; padding: 0 2px; font-size: 0.9rem; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .kpi-card { background: var(--surface-200); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; text-align: left; }
     .kpi-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
     .kpi-value { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--text); margin-top: 4px; }
     .kpi-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; }
-
-    .result-card { 
-      background: var(--surface-200); border: 1px solid var(--border); 
-      border-left: 3px solid var(--brand); border-radius: var(--radius-md); 
-      padding: 14px; margin-bottom: 10px; 
-    }
+    .result-card { background: var(--surface-200); border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: var(--radius-md); padding: 14px; margin-bottom: 10px; }
     .result-card.danger-border { border-left-color: var(--danger); background: var(--danger-bg); }
-
-    .result-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      flex-wrap: wrap; gap: 10px;
-    }
+    .result-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
     .result-info h3 { margin: 0 0 5px 0; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .result-info p { margin: 3px 0 0 0; color: var(--text-muted); font-size: 0.82rem; }
-    
-    .badge { 
-      background: var(--brand-bg); color: var(--brand); border: 1px solid var(--brand-border);
-      font-family: var(--font-mono); padding: 2px 8px; border-radius: var(--radius-sm); 
-      font-size: 0.76rem; font-weight: 600; 
-    }
+    .badge { background: var(--brand-bg); color: var(--brand); border: 1px solid var(--brand-border); font-family: var(--font-mono); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.76rem; font-weight: 600; }
     .badge.danger-bg { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
-
     .sobra-box { text-align: right; }
     .sobra-label { margin: 0; font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; }
     .sobra-val { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; color: var(--brand); }
-
-    .cut-bar-visual {
-      display: flex; width: 100%; height: 26px; background: var(--surface-300);
-      border-radius: var(--radius-sm); overflow: hidden; margin-top: 12px;
-      border: 1px solid var(--border-strong);
-    }
-    .cut-segment {
-      background: var(--brand); color: var(--brand-contrast); font-family: var(--font-mono);
-      font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
-      border-right: 1px solid rgba(0, 0, 0, 0.35); overflow: hidden; white-space: nowrap;
-    }
+    .cut-bar-visual { display: flex; width: 100%; height: 26px; background: var(--surface-300); border-radius: var(--radius-sm); overflow: hidden; margin-top: 12px; border: 1px solid var(--border-strong); }
+    .cut-segment { background: var(--brand); color: var(--brand-contrast); font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(0, 0, 0, 0.35); overflow: hidden; white-space: nowrap; }
     .cut-segment:nth-child(even) { filter: brightness(0.92); }
-    .cut-leftover {
-      background: repeating-linear-gradient(45deg, var(--surface-200), var(--surface-200) 6px, var(--surface-300) 6px, var(--surface-300) 12px);
-      color: var(--warning); font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600;
-      display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap;
-    }
-
-    /* ==========================================================================
-       5. VISÃO GERAL, TABELAS E MODAIS
-       ========================================================================== */
-    .bitola-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px; margin-bottom: 18px;
-    }
-    .bitola-card {
-      background: var(--surface-200); border: 1px solid var(--border);
-      border-radius: var(--radius-md); padding: 11px; cursor: pointer; transition: var(--transition);
-    }
+    .cut-leftover { background: repeating-linear-gradient(45deg, var(--surface-200), var(--surface-200) 6px, var(--surface-300) 6px, var(--surface-300) 12px); color: var(--warning); font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; }
+    .bitola-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .bitola-card { background: var(--surface-200); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 11px; cursor: pointer; transition: var(--transition); }
     .bitola-card:hover { border-color: var(--border-strong); background: var(--surface-300); }
     .bitola-card.active { border-color: var(--brand); background: var(--brand-bg); }
     .bitola-card h4 { margin: 0 0 6px 0; color: var(--brand); font-family: var(--font-mono); font-size: 0.92rem; }
     .bitola-card p { margin: 2px 0; font-size: 0.76rem; color: var(--text-muted); display: flex; justify-content: space-between; }
     .bitola-card strong { color: var(--text); font-family: var(--font-mono); }
-
-    .table-container {
-      overflow-x: auto; border: 1px solid var(--border);
-      border-radius: var(--radius-md); background: var(--surface-100);
-    }
+    .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-100); }
     table { width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: left; }
     th, td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
-    th {
-      background: var(--surface-200); color: var(--text-muted); font-weight: 600;
-      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
-    }
+    th { background: var(--surface-200); color: var(--text-muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface-200); }
-
-    /* Modais (QR, Auth, Impressora, Exportação) */
-    .modal-overlay, .auth-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
-      z-index: 2000; align-items: center; justify-content: center; padding: 16px;
-    }
+    .modal-overlay, .auth-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 2000; align-items: center; justify-content: center; padding: 16px; }
     .modal-overlay.active { display: flex; }
-    .modal-box, .auth-modal {
-      background: var(--surface-100); border: 1px solid var(--border-strong);
-      border-radius: var(--radius-lg); max-width: 440px; width: 100%; padding: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    }
+    .modal-box, .auth-modal { background: var(--surface-100); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); max-width: 440px; width: 100%; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
     .printer-modal, .export-modal { max-width: 500px; }
     #qrReader { width: 100%; border-radius: var(--radius-md); overflow: hidden; }
-
     .auth-modal h2 { margin: 0 0 6px; font-size: 1.25rem; text-align: center; }
     .auth-modal .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
     .role-tabs { display: flex; gap: 8px; margin-bottom: 18px; background: var(--surface-200); padding: 4px; border-radius: var(--radius-md); }
@@ -356,68 +130,132 @@
     .auth-form-group { margin-bottom: 16px; }
     .auth-hint { text-align: center; margin-top: 14px; font-size: 0.76rem; color: var(--text-muted); }
     .auth-hint kbd { background: var(--surface-200); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); }
-
     .printer-status { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-md); margin-bottom: 16px; background: var(--surface-200); font-size: 0.85rem; }
     .printer-status.connected { background: var(--brand-bg); border: 1px solid var(--brand-border); }
-    .printer-status .status-dot { background: var(--danger); box-shadow: none; }
-    .printer-status.connected .status-dot { background: var(--brand); }
-
+    .printer-status .status-dot { background: var(--brand); box-shadow: none; }
     .export-options { display: grid; gap: 10px; margin-bottom: 16px; }
     .export-option { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; }
     .export-option:hover { border-color: var(--brand); background: var(--brand-bg); }
     .export-option input { width: 18px; height: 18px; accent-color: var(--brand); }
     .export-date-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-
-    #toast { 
-      visibility: hidden; min-width: 280px; background-color: var(--surface-200); 
-      color: var(--text); border: 1px solid var(--brand); border-left: 4px solid var(--brand);
-      text-align: center; border-radius: var(--radius-md); padding: 12px 18px; 
-      position: fixed; z-index: 3000; bottom: 26px; left: 50%; transform: translateX(-50%); 
-      font-size: 0.86rem; font-weight: 500; box-shadow: var(--shadow-sm); 
-    }
+    #toast { visibility: hidden; min-width: 280px; background-color: var(--surface-200); color: var(--text); border: 1px solid var(--brand); border-left: 4px solid var(--brand); text-align: center; border-radius: var(--radius-md); padding: 12px 18px; position: fixed; z-index: 3000; bottom: 26px; left: 50%; transform: translateX(-50%); font-size: 0.86rem; font-weight: 500; box-shadow: var(--shadow-sm); }
     #toast.show { visibility: visible; animation: fadein 0.2s, fadeout 0.2s 3.8s; }
     #toast.error { border-color: var(--danger); border-left-color: var(--danger); }
-
     @keyframes fadein { from { bottom: 10px; opacity: 0; } to { bottom: 26px; opacity: 1; } }
     @keyframes fadeout { from { bottom: 26px; opacity: 1; } to { bottom: 10px; opacity: 0; } }
 
     /* ==========================================================================
-       6. ESTILOS DE IMPRESSÃO (ETIQUETAS TÉRMICAS USB COM QR CODE LOCAL)
+       6. NOVO LAYOUT DE ETIQUETA INDUSTRIAL (ID EM CAIXA + ÍCONES SVG + QR GRANDE)
        ========================================================================== */
     #printArea { display: none; }
 
+    .thermal-label {
+      border: 2.5px solid #000;
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      color: #000;
+      box-sizing: border-box;
+      page-break-inside: avoid;
+      page-break-after: always;
+    }
+
+    .thermal-label-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tl-header {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #000;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
+    .tl-id-box {
+      border: 2.5px solid #000;
+      border-radius: 7px;
+      padding: 2px 10px;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.1;
+      text-align: center;
+      color: #000;
+      margin-bottom: 8px;
+      display: inline-block;
+      width: fit-content;
+      white-space: nowrap;
+    }
+
+    .tl-specs {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tl-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #000;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .tl-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      stroke: #000;
+      fill: none;
+    }
+
+    .tl-divider {
+      font-weight: 400;
+      margin: 0 2px;
+      color: #000;
+    }
+
+    .thermal-qr-box {
+      border: 2.5px solid #000;
+      border-radius: 10px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .thermal-qr-box canvas {
+      display: block;
+    }
+
     @media print {
-      body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+      body { background: #fff !important; color: #000 !important; padding: 0 !important; margin: 0 !important; }
       .container, #toast, .modal-overlay, .auth-overlay { display: none !important; }
-      #printArea { display: block !important; width: 100%; font-family: Arial, sans-serif; color: #000; }
-      
-      .print-section-title {
-        font-size: 15px; font-weight: bold; border-bottom: 2px solid #000;
-        padding-bottom: 4px; margin: 12px 0; text-transform: uppercase;
-      }
-      .print-order-item {
-        border: 1px solid #000; padding: 8px; margin-bottom: 8px; border-radius: 4px;
-        page-break-inside: avoid; font-size: 13px;
-      }
-      .print-labels-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 10px; margin-top: 10px;
-      }
-      .thermal-label {
-        border: 2px solid #000; border-radius: 6px; padding: 10px;
-        display: flex; justify-content: space-between; align-items: center;
-        page-break-inside: avoid; background: #fff;
-      }
-      .thermal-label-info h2 { margin: 0; font-size: 20px; font-family: monospace; }
-      .thermal-label-info p { margin: 3px 0; font-size: 12px; font-weight: bold; }
-      .thermal-canvas-container { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+      #printArea { display: block !important; width: 100%; font-family: 'Inter', Arial, sans-serif; color: #000; }
+      .print-section-title { font-size: 15px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin: 12px 0; text-transform: uppercase; }
+      .print-order-item { border: 1px solid #000; padding: 8px; margin-bottom: 8px; border-radius: 4px; page-break-inside: avoid; font-size: 13px; }
+      .print-labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-top: 10px; }
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- CABEÇALHO -->
     <header class="header">
       <div class="logo-container">
         <img src="image_1d6ea0.png" alt="Logo Grande Aço" class="logo-img">
@@ -427,16 +265,15 @@
         </div>
       </div>
       <div class="header-right">
-        <span class="profile-badge" id="profileBadge" title="Clique para alternar perfil">👤 <span id="profileRole">Operador</span></span>
-        <button class="btn-printer connected" id="btnPrinter" title="Configurar Tamanho da Etiqueta USB">🖨️ Etiqueta USB</button>
-        <button class="btn-export" id="btnExport" title="Exportar Relatório Excel / PDF">📊 Exportar</button>
-        <button class="icon-btn" id="btnLogout" title="Trocar Usuário / Senha">🔐 Perfil</button>
-        <button class="icon-btn" id="btnRecarregar" title="Sincronizar Planilha">🔄 Sincronizar</button>
-        <button class="icon-btn" id="btnTheme" title="Alternar Tema">☀️</button>
+        <span class="profile-badge" id="profileBadge" title="Perfil ativo">👤 <span id="profileRole">Operador</span></span>
+        <button class="btn-printer connected" id="btnPrinter">🖨️ Etiqueta USB</button>
+        <button class="btn-export" id="btnExport">📊 Exportar</button>
+        <button class="icon-btn" id="btnLogout" title="Trocar Perfil">🔐 Perfil</button>
+        <button class="icon-btn" id="btnRecarregar" title="Sincronizar">🔄 Sincronizar</button>
+        <button class="icon-btn" id="btnTheme" title="Tema">☀️</button>
       </div>
     </header>
 
-    <!-- NAVEGAÇÃO -->
     <nav class="tabs">
       <div class="tab active" data-target="consulta">⚡ Plano de Corte</div>
       <div class="tab" data-target="estoque">📦 Estoque <span class="tab-badge" id="contadorEstoque">0</span></div>
@@ -444,7 +281,7 @@
       <div class="tab" data-target="historico">🕒 Histórico Recente</div>
     </nav>
 
-    <!-- ABA 1: CONSULTA, CARRINHO MULTI-MEDIDAS E SIMULADOR -->
+    <!-- ABA 1 -->
     <main id="consulta" class="tab-content active">
       <section class="box">
         <h2>
@@ -452,39 +289,21 @@
           <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: normal; text-transform: none;">Adicione várias medidas ou calcule direto</span>
         </h2>
         <div class="form-grid">
-          <div class="form-group">
-            <label for="buscaBitola">1. Bitola (mm)</label>
-            <select id="buscaBitola" class="mono"><option value="">Carregando...</option></select>
-          </div>
-          <div class="form-group">
-            <label for="buscaMedida">2. Medida do Corte (m)</label>
-            <input type="number" id="buscaMedida" class="mono" step="0.05" min="0.05" placeholder="Ex: 1.50">
-          </div>
-          <div class="form-group">
-            <label for="buscaQtde">3. Quantidade de Peças</label>
-            <input type="number" id="buscaQtde" class="mono" min="1" value="1">
-          </div>
-          <div class="form-group">
-            <label for="buscaPrecoKg">4. Preço R$/kg (Opcional)</label>
-            <input type="number" id="buscaPrecoKg" class="mono" step="0.10" min="0" placeholder="Ex: 7.50">
-          </div>
+          <div class="form-group"><label>1. Bitola (mm)</label><select id="buscaBitola" class="mono"><option value="">Carregando...</option></select></div>
+          <div class="form-group"><label>2. Medida do Corte (m)</label><input type="number" id="buscaMedida" class="mono" step="0.05" min="0.05" placeholder="Ex: 1.50"></div>
+          <div class="form-group"><label>3. Quantidade de Peças</label><input type="number" id="buscaQtde" class="mono" min="1" value="1"></div>
+          <div class="form-group"><label>4. Preço R$/kg (Opcional)</label><input type="number" id="buscaPrecoKg" class="mono" step="0.10" min="0" placeholder="Ex: 7.50"></div>
         </div>
-
-        <div id="areaCarrinhoCortes" style="display: none;">
-          <label>Itens adicionados ao Pedido Combinado:</label>
-          <div class="cart-list" id="listaCarrinhoCortes"></div>
-        </div>
-
+        <div id="areaCarrinhoCortes" style="display: none;"><label>Itens no Pedido:</label><div class="cart-list" id="listaCarrinhoCortes"></div></div>
         <div class="actions-row">
-          <button class="btn btn-secondary" id="btnAddCarrinho">➕ Adicionar Medida ao Pedido</button>
-          <button class="btn" id="btnBuscar">⚡ Calcular Plano de Corte Otimizado</button>
+          <button class="btn btn-secondary" id="btnAddCarrinho">➕ Adicionar Medida</button>
+          <button class="btn" id="btnBuscar">⚡ Calcular Plano de Corte</button>
         </div>
       </section>
-      
       <section id="areaResultados"></section>
     </main>
 
-    <!-- ABA 2: VISÃO GERAL DO ESTOQUE (INVENTÁRIO COM IMPRESSÃO EM LOTE) -->
+    <!-- ABA 2: ESTOQUE COM IMPRESSÃO EM LOTE -->
     <section id="estoque" class="tab-content">
       <div class="box">
         <h2>
@@ -500,431 +319,277 @@
         </h2>
         <div class="summary-grid" id="kpisEstoque"></div>
         <div class="bitola-grid" id="cardsBitolaEstoque"></div>
-
         <div class="form-grid" style="margin-top: 10px;">
-          <div class="form-group">
-            <label for="filtroTabelaBitola">Filtrar por Bitola</label>
-            <select id="filtroTabelaBitola" class="mono"><option value="TODAS">Todas as Bitolas</option></select>
-          </div>
-          <div class="form-group">
-            <label for="filtroTabelaBusca">Buscar por ID ou Medida Mínima (m)</label>
-            <input type="text" id="filtroTabelaBusca" class="mono" placeholder="Ex: #314 ou 3.50">
-          </div>
+          <div class="form-group"><label>Filtrar por Bitola</label><select id="filtroTabelaBitola" class="mono"><option value="TODAS">Todas</option></select></div>
+          <div class="form-group"><label>Buscar ID ou Medida</label><input type="text" id="filtroTabelaBusca" class="mono" placeholder="Ex: #314 ou 3.50"></div>
         </div>
-
         <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th style="width: 36px; text-align: center;">
-                  <input type="checkbox" id="checkTodasEstoque" title="Selecionar todas visíveis" onchange="Controlador.alternarSelecaoTodas(this.checked)">
-                </th>
-                <th>ID</th>
-                <th>Data</th>
-                <th>Bitola</th>
-                <th>Medida</th>
-                <th>Peso Est.</th>
-                <th>Origem / Obs</th>
-                <th>Ações</th>
+                <th style="width: 36px; text-align: center;"><input type="checkbox" id="checkTodasEstoque" onchange="Controlador.alternarSelecaoTodas(this.checked)"></th>
+                <th>ID</th><th>Data</th><th>Bitola</th><th>Medida</th><th>Peso Est.</th><th>Origem / Obs</th><th>Ações</th>
               </tr>
             </thead>
-            <tbody id="tabelaEstoqueBody">
-              <tr><td colspan="8" style="text-align:center;">Sincronizando banco de dados...</td></tr>
-            </tbody>
+            <tbody id="tabelaEstoqueBody"><tr><td colspan="8" style="text-align:center;">Sincronizando...</td></tr></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ABA 3: GERENCIAMENTO (CADASTRO PADRONIZADO, QR CODE E BAIXA MANUAL) -->
+    <!-- ABA 3 -->
     <section id="gerenciar" class="tab-content">
       <div class="box">
         <h2>➕ Cadastrar Nova Ponta</h2>
         <div class="form-grid">
-          <div class="form-group">
-            <label for="cadBitolaSelect">Bitola Comercial (mm)</label>
+          <div class="form-group"><label>Bitola Comercial</label>
             <select id="cadBitolaSelect" class="mono">
-              <option value="4.20">4.20 mm</option>
-              <option value="5.00">5.00 mm</option>
-              <option value="6.30">6.30 mm (1/4")</option>
-              <option value="8.00" selected>8.00 mm (5/16")</option>
-              <option value="10.00">10.00 mm (3/8")</option>
-              <option value="12.50">12.50 mm (1/2")</option>
-              <option value="16.00">16.00 mm (5/8")</option>
-              <option value="20.00">20.00 mm (3/4")</option>
-              <option value="25.00">25.00 mm (1")</option>
-              <option value="32.00">32.00 mm (1.1/4")</option>
-              <option value="OUTRA">Outra medida...</option>
+              <option value="4.20">4.20 mm</option><option value="5.00">5.00 mm</option><option value="6.30">6.30 mm</option>
+              <option value="8.00" selected>8.00 mm</option><option value="10.00">10.00 mm</option><option value="12.50">12.50 mm</option>
+              <option value="16.00">16.00 mm</option><option value="20.00">20.00 mm</option><option value="25.00">25.00 mm</option><option value="32.00">32.00 mm</option><option value="OUTRA">Outra...</option>
             </select>
           </div>
-          <div class="form-group" id="grupoBitolaCustom" style="display:none;">
-            <label for="cadBitolaCustom">Digite a Bitola (mm)</label>
-            <input type="number" id="cadBitolaCustom" class="mono" step="0.01" min="1" placeholder="Ex: 9.50">
-          </div>
-          <div class="form-group">
-            <label for="cadMedida">Medida da Barra (m)</label>
-            <input type="number" id="cadMedida" class="mono" step="0.01" min="0.05" placeholder="Ex: 5.50">
-          </div>
-          <div class="form-group">
-            <label for="cadQtde">Quantidade de Barras</label>
-            <input type="number" id="cadQtde" class="mono" min="1" value="1">
-          </div>
-          <div class="form-group">
-            <label for="cadObs">Origem / Observação (Opcional)</label>
-            <input type="text" id="cadObs" placeholder="Ex: Sobra de obra / Lote 4">
-          </div>
+          <div class="form-group" id="grupoBitolaCustom" style="display:none;"><label>Digite Bitola</label><input type="number" id="cadBitolaCustom" class="mono" step="0.01" min="1" placeholder="Ex: 9.50"></div>
+          <div class="form-group"><label>Medida (m)</label><input type="number" id="cadMedida" class="mono" step="0.01" min="0.05" placeholder="Ex: 5.50"></div>
+          <div class="form-group"><label>Quantidade</label><input type="number" id="cadQtde" class="mono" min="1" value="1"></div>
+          <div class="form-group"><label>Observação</label><input type="text" id="cadObs" placeholder="Ex: Sobra de obra"></div>
         </div>
         <div id="previewPesoCadastro" style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 12px;"></div>
         <button class="btn" id="btnCadastrar">Confirmar Cadastro</button>
       </div>
 
       <div class="box">
-        <h2>➖ Dar Baixa Manual por ID ou Leitor de QR Code</h2>
+        <h2>➖ Dar Baixa Manual</h2>
         <div class="form-grid">
-          <div class="form-group">
-            <label for="baixaId">ID da Planilha (Digite ou Escaneie a Etiqueta)</label>
+          <div class="form-group"><label>ID da Ponta</label>
             <div class="input-with-btn">
               <input type="number" id="baixaId" class="mono" placeholder="Ex: 342">
-              <button class="icon-btn" id="btnAbrirScanner" type="button" title="Ler QR Code pela Câmera">📷 Ler QR</button>
+              <button class="icon-btn" id="btnAbrirScanner" type="button">📷 Ler QR</button>
             </div>
           </div>
-          <div class="form-group">
-            <label for="baixaClienteManual">Cliente / Nº do Pedido (Opcional)</label>
-            <input type="text" id="baixaClienteManual" placeholder="Ex: Construtora Silva - Ped 1045">
-          </div>
+          <div class="form-group"><label>Cliente / Pedido</label><input type="text" id="baixaClienteManual" placeholder="Ex: Ped 1045"></div>
         </div>
         <div id="previewBaixa" style="margin-bottom: 15px;"></div>
-        <button class="btn btn-danger" id="btnBaixar" style="display:none;">Confirmar Baixa (Vendido)</button>
+        <button class="btn btn-danger" id="btnBaixar" style="display:none;">Confirmar Baixa</button>
       </div>
     </section>
 
-    <!-- ABA 4: HISTÓRICO RECENTE E ESTORNO -->
+    <!-- ABA 4 -->
     <section id="historico" class="tab-content">
       <div class="box">
-        <h2>
-          <span>Últimas Barras Baixadas (Vendidas)</span>
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; text-transform: none;">Caso tenha baixado por engano, clique em Estornar</span>
-        </h2>
+        <h2>🕒 Histórico Recente de Baixas</h2>
         <div class="table-container">
           <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Data</th>
-                <th>Bitola</th>
-                <th>Medida</th>
-                <th>Peso</th>
-                <th>Cliente / Pedido</th>
-                <th>Ação</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaHistoricoBody">
-              <tr><td colspan="7" style="text-align:center;">Carregando histórico...</td></tr>
-            </tbody>
+            <thead><tr><th>ID</th><th>Data</th><th>Bitola</th><th>Medida</th><th>Peso</th><th>Cliente / Pedido</th><th>Ação</th></tr></thead>
+            <tbody id="tabelaHistoricoBody"><tr><td colspan="7" style="text-align:center;">Carregando...</td></tr></tbody>
           </table>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- MODAL CÂMERA QR CODE -->
+  <!-- MODAIS -->
   <div class="modal-overlay" id="modalScanner">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0; font-size:1rem;">📷 Escanear Etiqueta da Ponta</h3>
+        <h3 style="margin:0; font-size:1rem;">📷 Escanear QR Code</h3>
         <button class="icon-btn" id="btnFecharScanner">✖ Fechar</button>
       </div>
       <div id="qrReader"></div>
-      <p style="font-size:0.78rem; color:var(--text-muted); text-align:center; margin-top:10px;">
-        Aponte a câmera para o QR Code da etiqueta colada na barra.
-      </p>
     </div>
   </div>
 
-  <!-- MODAL DE AUTENTICAÇÃO / TROCA DE PERFIL -->
   <div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
       <h2>🔐 Perfil de Acesso</h2>
-      <p class="subtitle">Escolha o modo de operação do sistema</p>
-      
+      <p class="subtitle">Escolha o modo de operação</p>
       <div class="role-tabs">
         <button class="role-tab active" data-role="vendedor" id="tabVendedor">👔 Vendedor</button>
-        <button class="role-tab" data-role="operador" id="tabOperador">🏭 Operador de Pátio</button>
+        <button class="role-tab" data-role="operador" id="tabOperador">🏭 Operador</button>
       </div>
-
       <form id="authForm">
-        <div class="auth-form-group">
-          <label for="authPassword">Senha do Perfil</label>
-          <input type="password" id="authPassword" class="mono" placeholder="Digite a senha" autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn" id="btnAuthSubmit">Confirmar Perfil</button>
+        <div class="auth-form-group"><label>Senha</label><input type="password" id="authPassword" class="mono" placeholder="Senha"></div>
+        <button type="submit" class="btn">Confirmar</button>
       </form>
-
-      <div class="auth-hint">
-        Senhas padrão: <kbd>vendedor123</kbd> ou <kbd>operador123</kbd>
-      </div>
-      
-      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="margin-top: 12px;">
-        Fechar / Continuar como Operador
-      </button>
+      <button type="button" class="btn btn-secondary" id="btnSkipAuth" style="margin-top: 12px;">Fechar</button>
     </div>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÃO DE IMPRESSORA VIA CABO (USB) -->
   <div class="auth-overlay" id="printerOverlay">
     <div class="auth-modal printer-modal">
-      <h2>🖨️ Configuração de Impressora (Cabo USB)</h2>
-      <p class="subtitle">Ajuste o formato para a sua impressora de etiquetas do Windows</p>
-      
-      <div class="printer-status connected" id="printerStatus">
-        <span class="status-dot"></span>
-        <span id="printerStatusText">Pronta — Impressão direta via Driver USB do Sistema</span>
-      </div>
-
+      <h2>🖨️ Configuração de Impressora USB</h2>
+      <p class="subtitle">Ajuste o tamanho do rolo na impressora</p>
+      <div class="printer-status connected"><span class="status-dot"></span><span>Pronta para uso via Cabo USB</span></div>
       <div class="form-group" style="margin-bottom: 14px;">
-        <label for="printerPaperSize">Tamanho da Etiqueta / Papel na Impressora</label>
+        <label>Tamanho da Etiqueta</label>
         <select id="printerPaperSize" class="mono">
-          <option value="100x50">Etiqueta Térmica 100mm x 50mm (10x5 cm - Padrão Pátio)</option>
-          <option value="80x40">Etiqueta Térmica 80mm x 40mm (8x4 cm)</option>
-          <option value="60x40">Etiqueta Térmica 60mm x 40mm (6x4 cm)</option>
-          <option value="a4">Folha Comum A4 (Várias etiquetas por folha)</option>
+          <option value="100x50">Etiqueta 100mm x 50mm (Padrão)</option>
+          <option value="80x40">Etiqueta 80mm x 40mm</option>
+          <option value="60x40">Etiqueta 60mm x 40mm</option>
+          <option value="a4">Folha A4</option>
         </select>
       </div>
-
-      <div class="form-group" style="margin-bottom: 16px;">
-        <label for="printerAutoPrint">Comportamento ao Gerar Sobras</label>
-        <select id="printerAutoPrint">
-          <option value="manual">Imprimir somente quando eu clicar no botão 🏷️</option>
-          <option value="auto">Abrir impressão automaticamente ao gerar sobras</option>
-        </select>
-      </div>
-
-      <div style="background: var(--surface-200); padding: 12px; border-radius: var(--radius-md); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; border: 1px solid var(--border);">
-        💡 <strong>Dica para Impressão em 1 Clique:</strong><br>
-        1. Na janela de impressão do Chrome, selecione sua impressora USB e desmarque <em>"Cabeçalhos e rodapés"</em>.<br>
-        2. Em <em>Margens</em>, escolha <strong>"Nenhuma"</strong>. O navegador salvará essa preferência!
-      </div>
-
-      <button class="btn" id="btnTestPrint">🖨️ Imprimir Etiqueta de Teste Agora</button>
-      <button class="btn btn-secondary" id="btnClosePrinter" style="margin-top: 10px;">Salvar e Fechar</button>
+      <button class="btn" id="btnTestPrint">🖨️ Imprimir Etiqueta de Teste</button>
+      <button class="btn btn-secondary" id="btnClosePrinter" style="margin-top: 10px;">Fechar</button>
     </div>
   </div>
 
-  <!-- MODAL DE EXPORTAÇÃO (PDF / EXCEL) -->
   <div class="auth-overlay" id="exportOverlay">
     <div class="auth-modal export-modal">
-      <h2>📊 Exportar Relatório Gerencial</h2>
-      <p class="subtitle">Baixe o inventário atual e o histórico de saídas</p>
-      
+      <h2>📊 Exportar Relatório</h2>
       <div class="export-date-range">
-        <div>
-          <label>Data Inicial</label>
-          <input type="date" id="exportDateFrom">
-        </div>
-        <div>
-          <label>Data Final</label>
-          <input type="date" id="exportDateTo">
-        </div>
+        <div><label>Início</label><input type="date" id="exportDateFrom"></div>
+        <div><label>Fim</label><input type="date" id="exportDateTo"></div>
       </div>
-
       <div class="export-options">
-        <label class="export-option">
-          <input type="radio" name="exportFormat" value="excel" checked>
-          <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">📈 Planilha Excel (.xlsx)</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Abas separadas: Estoque Ativo e Histórico de Vendidos</div>
-          </div>
-        </label>
-        <label class="export-option">
-          <input type="radio" name="exportFormat" value="pdf">
-          <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">📄 Relatório em PDF (.pdf)</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Documento pronto para impressão com KPIs e tabelas</div>
-          </div>
-        </label>
-        <label class="export-option">
-          <input type="radio" name="exportFormat" value="both">
-          <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">📦 Ambos (Excel + PDF)</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Faz o download dos dois arquivos simultaneamente</div>
-          </div>
-        </label>
+        <label class="export-option"><input type="radio" name="exportFormat" value="excel" checked><div><strong>Excel (.xlsx)</strong></div></label>
+        <label class="export-option"><input type="radio" name="exportFormat" value="pdf"><div><strong>PDF (.pdf)</strong></div></label>
       </div>
-
       <div style="display: flex; gap: 8px;">
         <button class="btn btn-secondary" id="btnCancelExport" style="flex: 1;">Cancelar</button>
-        <button class="btn" id="btnGenerateExport" style="flex: 1;">⬇️ Gerar e Baixar</button>
+        <button class="btn" id="btnGenerateExport" style="flex: 1;">⬇️ Baixar</button>
       </div>
     </div>
   </div>
 
-  <!-- ÁREA EXCLUSIVA DE IMPRESSÃO -->
   <div id="printArea"></div>
-
   <div id="toast"></div>
 
   <script>
-    /**
-     * ============================================================================
-     * 1. CONFIGURAÇÕES E ESTADO GLOBAL
-     * ============================================================================
-     */
     const CONFIG = {
-      SCRIPT_URL: "https://script.google.com/macros/s/AKfycby3X2Ho0H7BM1iwm204huX_e-ONEeApfL3JNFEDPilEo25QdwnVW2PlPPw2tpHENH5M/exec",
+      SCRIPT_URL: "https://script.google.com/macros/s/AKfycbynp6oZY1KhlMWv9WugDFcd6P98CgVIL4YBuj_vazYDM3b-y5VeZHgEW3uvYt83lj6F/exec",
       SPREADSHEET_ID: "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI",
       SHEET_NAME: "Pontas",
       FATOR_PESO_ACO: 162,
       DELAY_ATUALIZACAO_MS: 1500
     };
 
-    const state = {
-      estoque: [],
-      vendidos: [],
-      carrinhoCortes: [],
-      planoDeCorteAtual: [],
-      resumoCorteAtual: null,
-      maxIdPlanilha: 0,
-      qrScanner: null,
-      userRole: "operador"
-    };
+    const state = { estoque: [], vendidos: [], carrinhoCortes: [], planoDeCorteAtual: [], resumoCorteAtual: null, maxIdPlanilha: 0, qrScanner: null, userRole: "operador" };
 
-    /**
-     * ============================================================================
-     * 2. FUNÇÕES UTILITÁRIAS
-     * ============================================================================
-     */
     const Utils = {
-      parseNumero(val) {
-        if (typeof val === "number") return val;
-        if (val === null || val === undefined || val === "") return 0;
-        return parseFloat(String(val).replace(",", ".")) || 0;
-      },
-      parseNumeroPlanilha(celula) {
-        if (!celula) return 0;
-        const raw = celula.v !== undefined ? celula.v : celula.f;
-        return this.parseNumero(raw);
-      },
-      parseTextoPlanilha(celula) {
-        if (!celula) return "-";
-        return String(celula.f || celula.v || "-");
-      },
-      calcularPesoAco(bitola, medida) {
-        if (!bitola || !medida) return 0;
-        return (Math.pow(bitola, 2) / CONFIG.FATOR_PESO_ACO) * medida;
-      },
-      arredondarMedida(valor) {
-        return Math.round(valor * 1000) / 1000;
-      },
-      formatarMoeda(valor) {
-        return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      },
+      parseNumero(val) { if (typeof val === "number") return val; if (!val) return 0; return parseFloat(String(val).replace(",", ".")) || 0; },
+      parseNumeroPlanilha(cel) { if (!cel) return 0; return this.parseNumero(cel.v !== undefined ? cel.v : cel.f); },
+      parseTextoPlanilha(cel) { if (!cel) return "-"; return String(cel.f || cel.v || "-"); },
+      calcularPesoAco(bitola, medida) { if (!bitola || !medida) return 0; return (Math.pow(bitola, 2) / CONFIG.FATOR_PESO_ACO) * medida; },
+      arredondarMedida(v) { return Math.round(v * 1000) / 1000; },
+      formatarMoeda(v) { return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); },
       parseDataBR(str) {
         if (!str || str === "-") return null;
-        const partes = String(str).split(" ")[0].split("/");
-        if (partes.length === 3) {
-          return new Date(partes[2], partes[1] - 1, partes[0]);
-        }
+        const p = String(str).split(" ")[0].split("/");
+        if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]);
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
+      },
+
+      // GERADOR DO NOVO LAYOUT DE ETIQUETA INDUSTRIAL (IGUAL À IMAGEM ENVIADA)
+      gerarHtmlEtiqueta(barra, canvasId) {
+        const dataFormatada = barra.data && barra.data !== "-" ? barra.data : new Date().toLocaleDateString("pt-BR");
+        return `
+          <div class="thermal-label">
+            <div class="thermal-label-info">
+              <div class="tl-header">GRANDE AÇO • PONTA</div>
+              <div class="tl-id-box">ID #${barra.id}</div>
+              <div class="tl-specs">
+                <div class="tl-row">
+                  <!-- Ícone Diâmetro Ø -->
+                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <line x1="5" y1="19" x2="19" y2="5"></line>
+                  </svg>
+                  <span>${Number(barra.bitola).toFixed(2)} mm</span>
+                  <span class="tl-divider">|</span>
+                  <!-- Ícone Trena / Medida -->
+                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="11" r="6"></circle>
+                    <circle cx="9" cy="11" r="2"></circle>
+                    <path d="M9 17h12v-4H14"></path>
+                    <line x1="16" y1="17" x2="16" y2="15"></line>
+                    <line x1="19" y1="17" x2="19" y2="15"></line>
+                  </svg>
+                  <span>${Number(barra.medida).toFixed(2)} m</span>
+                </div>
+                <div class="tl-row">
+                  <!-- Ícone Peso Industrial -->
+                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5h6"></path>
+                    <path d="M12 5v3"></path>
+                    <path d="M6 8h12l2 12H4L6 8z"></path>
+                  </svg>
+                  <span>Peso: ${Number(barra.peso).toFixed(2)} kg</span>
+                </div>
+                <div class="tl-row">
+                  <!-- Ícone Calendário Data -->
+                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <circle cx="8" cy="13" r="1" fill="#000"></circle>
+                    <circle cx="12" cy="13" r="1" fill="#000"></circle>
+                    <circle cx="16" cy="13" r="1" fill="#000"></circle>
+                    <circle cx="8" cy="17" r="1" fill="#000"></circle>
+                    <circle cx="12" cy="17" r="1" fill="#000"></circle>
+                    <circle cx="16" cy="17" r="1" fill="#000"></circle>
+                  </svg>
+                  <span>Data: ${dataFormatada}</span>
+                </div>
+              </div>
+            </div>
+            <div class="thermal-qr-box">
+              <canvas id="${canvasId}"></canvas>
+            </div>
+          </div>
+        `;
       }
     };
 
-    /**
-     * ============================================================================
-     * 3. INTERFACE DO USUÁRIO (UI)
-     * ============================================================================
-     */
     const UI = {
       el: {
-        selectBitola: document.getElementById("buscaBitola"),
-        inputBuscaMedida: document.getElementById("buscaMedida"),
-        inputBuscaQtde: document.getElementById("buscaQtde"),
-        inputBuscaPrecoKg: document.getElementById("buscaPrecoKg"),
-        areaCarrinhoCortes: document.getElementById("areaCarrinhoCortes"),
-        listaCarrinhoCortes: document.getElementById("listaCarrinhoCortes"),
-        areaResultados: document.getElementById("areaResultados"),
-        
-        cadBitolaSelect: document.getElementById("cadBitolaSelect"),
-        grupoBitolaCustom: document.getElementById("grupoBitolaCustom"),
-        cadBitolaCustom: document.getElementById("cadBitolaCustom"),
-        inputCadMedida: document.getElementById("cadMedida"),
-        inputCadQtde: document.getElementById("cadQtde"),
-        inputCadObs: document.getElementById("cadObs"),
-        previewPesoCadastro: document.getElementById("previewPesoCadastro"),
-
-        inputBaixaId: document.getElementById("baixaId"),
-        inputBaixaClienteManual: document.getElementById("baixaClienteManual"),
-        previewBaixa: document.getElementById("previewBaixa"),
-        
-        contadorEstoque: document.getElementById("contadorEstoque"),
-        kpisEstoque: document.getElementById("kpisEstoque"),
-        cardsBitolaEstoque: document.getElementById("cardsBitolaEstoque"),
-        filtroTabelaBitola: document.getElementById("filtroTabelaBitola"),
-        filtroTabelaBusca: document.getElementById("filtroTabelaBusca"),
-        tabelaEstoqueBody: document.getElementById("tabelaEstoqueBody"),
-        tabelaHistoricoBody: document.getElementById("tabelaHistoricoBody"),
-
-        btnAddCarrinho: document.getElementById("btnAddCarrinho"),
-        btnBuscar: document.getElementById("btnBuscar"),
-        btnCadastrar: document.getElementById("btnCadastrar"),
-        btnBaixar: document.getElementById("btnBaixar"),
-        btnRecarregar: document.getElementById("btnRecarregar"),
-        btnTheme: document.getElementById("btnTheme"),
-        btnAbrirScanner: document.getElementById("btnAbrirScanner"),
-        btnFecharScanner: document.getElementById("btnFecharScanner"),
-        modalScanner: document.getElementById("modalScanner"),
-        printArea: document.getElementById("printArea"),
-        toast: document.getElementById("toast"),
-
-        profileBadge: document.getElementById("profileBadge"),
-        profileRole: document.getElementById("profileRole"),
-        btnPrinter: document.getElementById("btnPrinter"),
-        btnExport: document.getElementById("btnExport"),
-        authOverlay: document.getElementById("authOverlay"),
-        authForm: document.getElementById("authForm"),
-        authPassword: document.getElementById("authPassword"),
-        btnAuthSubmit: document.getElementById("btnAuthSubmit"),
-        tabVendedor: document.getElementById("tabVendedor"),
-        tabOperador: document.getElementById("tabOperador"),
-        printerOverlay: document.getElementById("printerOverlay"),
-        btnTestPrint: document.getElementById("btnTestPrint"),
-        btnClosePrinter: document.getElementById("btnClosePrinter"),
-        exportOverlay: document.getElementById("exportOverlay"),
-        exportDateFrom: document.getElementById("exportDateFrom"),
-        exportDateTo: document.getElementById("exportDateTo"),
-        btnGenerateExport: document.getElementById("btnGenerateExport"),
-        btnCancelExport: document.getElementById("btnCancelExport"),
-        btnLogout: document.getElementById("btnLogout"),
-        btnSkipAuth: document.getElementById("btnSkipAuth")
+        selectBitola: document.getElementById("buscaBitola"), inputBuscaMedida: document.getElementById("buscaMedida"),
+        inputBuscaQtde: document.getElementById("buscaQtde"), inputBuscaPrecoKg: document.getElementById("buscaPrecoKg"),
+        areaCarrinhoCortes: document.getElementById("areaCarrinhoCortes"), listaCarrinhoCortes: document.getElementById("listaCarrinhoCortes"),
+        areaResultados: document.getElementById("areaResultados"), cadBitolaSelect: document.getElementById("cadBitolaSelect"),
+        grupoBitolaCustom: document.getElementById("grupoBitolaCustom"), cadBitolaCustom: document.getElementById("cadBitolaCustom"),
+        inputCadMedida: document.getElementById("cadMedida"), inputCadQtde: document.getElementById("cadQtde"),
+        inputCadObs: document.getElementById("cadObs"), previewPesoCadastro: document.getElementById("previewPesoCadastro"),
+        inputBaixaId: document.getElementById("baixaId"), inputBaixaClienteManual: document.getElementById("baixaClienteManual"),
+        previewBaixa: document.getElementById("previewBaixa"), contadorEstoque: document.getElementById("contadorEstoque"),
+        kpisEstoque: document.getElementById("kpisEstoque"), cardsBitolaEstoque: document.getElementById("cardsBitolaEstoque"),
+        filtroTabelaBitola: document.getElementById("filtroTabelaBitola"), filtroTabelaBusca: document.getElementById("filtroTabelaBusca"),
+        tabelaEstoqueBody: document.getElementById("tabelaEstoqueBody"), tabelaHistoricoBody: document.getElementById("tabelaHistoricoBody"),
+        btnAddCarrinho: document.getElementById("btnAddCarrinho"), btnBuscar: document.getElementById("btnBuscar"),
+        btnCadastrar: document.getElementById("btnCadastrar"), btnBaixar: document.getElementById("btnBaixar"),
+        btnRecarregar: document.getElementById("btnRecarregar"), btnTheme: document.getElementById("btnTheme"),
+        btnAbrirScanner: document.getElementById("btnAbrirScanner"), btnFecharScanner: document.getElementById("btnFecharScanner"),
+        modalScanner: document.getElementById("modalScanner"), printArea: document.getElementById("printArea"), toast: document.getElementById("toast"),
+        profileBadge: document.getElementById("profileBadge"), profileRole: document.getElementById("profileRole"),
+        btnPrinter: document.getElementById("btnPrinter"), btnExport: document.getElementById("btnExport"),
+        authOverlay: document.getElementById("authOverlay"), authForm: document.getElementById("authForm"),
+        authPassword: document.getElementById("authPassword"), tabVendedor: document.getElementById("tabVendedor"),
+        tabOperador: document.getElementById("tabOperador"), printerOverlay: document.getElementById("printerOverlay"),
+        btnTestPrint: document.getElementById("btnTestPrint"), btnClosePrinter: document.getElementById("btnClosePrinter"),
+        exportOverlay: document.getElementById("exportOverlay"), exportDateFrom: document.getElementById("exportDateFrom"),
+        exportDateTo: document.getElementById("exportDateTo"), btnGenerateExport: document.getElementById("btnGenerateExport"),
+        btnCancelExport: document.getElementById("btnCancelExport"), btnLogout: document.getElementById("btnLogout")
       },
-
-      mostrarNotificacao(mensagem, isErro = false) {
-        const { toast } = this.el;
-        toast.textContent = mensagem || "Operação concluída!";
-        toast.className = isErro ? "show error" : "show";
-        setTimeout(() => { toast.className = ""; }, 4000);
+      mostrarNotificacao(msg, isErro = false) {
+        const t = this.el.toast;
+        t.textContent = msg || "Operação concluída!";
+        t.className = isErro ? "show error" : "show";
+        setTimeout(() => { t.className = ""; }, 4000);
       },
-
-      alternarAba(abaId) {
+      alternarAba(id) {
         document.querySelectorAll(".tab, .tab-content").forEach(el => el.classList.remove("active"));
-        document.querySelector(`.tab[data-target="${abaId}"]`).classList.add("active");
-        document.getElementById(abaId).classList.add("active");
+        document.querySelector(`.tab[data-target="${id}"]`).classList.add("active");
+        document.getElementById(id).classList.add("active");
       },
-
       atualizarSelectBitolas(estoque) {
-        const bitolasUnicas = [...new Set(estoque.map(item => item.bitola))]
-          .filter(b => b > 0)
-          .sort((a, b) => a - b);
-
-        const valorAtual = this.el.selectBitola.value;
-        this.el.selectBitola.innerHTML = '<option value="">Selecione a bitola...</option>' + 
-          bitolasUnicas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
-        if (valorAtual) this.el.selectBitola.value = valorAtual;
-
-        this.el.filtroTabelaBitola.innerHTML = '<option value="TODAS">Todas as Bitolas</option>' + 
-          bitolasUnicas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
+        const bitolas = [...new Set(estoque.map(i => i.bitola))].filter(b => b > 0).sort((a, b) => a - b);
+        const atual = this.el.selectBitola.value;
+        this.el.selectBitola.innerHTML = '<option value="">Selecione...</option>' + bitolas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
+        if (atual) this.el.selectBitola.value = atual;
+        this.el.filtroTabelaBitola.innerHTML = '<option value="TODAS">Todas</option>' + bitolas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
       },
-
       limparFormulariosOperacao() {
         this.el.areaResultados.innerHTML = "";
         state.carrinhoCortes = [];
@@ -937,125 +602,74 @@
         this.el.inputCadObs.value = "";
         this.el.previewPesoCadastro.innerHTML = "";
       },
-
       alternarTema() {
-        const html = document.documentElement;
-        const isDark = html.getAttribute("data-theme") === "dark";
-        const novoTema = isDark ? "light" : "dark";
-        html.setAttribute("data-theme", novoTema);
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        document.documentElement.setAttribute("data-theme", isDark ? "light" : "dark");
         this.el.btnTheme.textContent = isDark ? "🌙" : "☀️";
-        localStorage.setItem("theme", novoTema);
+        localStorage.setItem("theme", isDark ? "light" : "dark");
       },
-
       carregarTemaSalvo() {
-        const temaSalvo = localStorage.getItem("theme") || "dark";
-        document.documentElement.setAttribute("data-theme", temaSalvo);
-        this.el.btnTheme.textContent = temaSalvo === "dark" ? "☀️" : "🌙";
+        const tema = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", tema);
+        this.el.btnTheme.textContent = tema === "dark" ? "☀️" : "🌙";
       }
     };
 
-    /**
-     * ============================================================================
-     * 4. COMUNICAÇÃO COM O GOOGLE SHEETS
-     * ============================================================================
-     */
     const API = {
       async carregarEstoque(silencioso = false) {
         try {
           if (!silencioso) UI.el.btnRecarregar.textContent = "⏳...";
-          
           const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H");
-          const urlGviz = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${Date.now()}`;
-          
-          const response = await fetch(urlGviz);
-          const text = await response.text();
-          const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
-          const data = JSON.parse(jsonString);
+          const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${Date.now()}`;
+          const res = await fetch(url);
+          const txt = await res.text();
+          const json = JSON.parse(txt.substring(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
 
-          state.estoque = [];
-          state.vendidos = [];
-          state.maxIdPlanilha = 0;
-
-          data.table.rows.forEach((row, idx) => {
-            const idNum = parseInt(row.c[0]?.v, 10);
-            if (!isNaN(idNum) && idNum > state.maxIdPlanilha) {
-              state.maxIdPlanilha = idNum;
-            }
-
+          state.estoque = []; state.vendidos = []; state.maxIdPlanilha = 0;
+          json.table.rows.forEach((row, idx) => {
+            const id = parseInt(row.c[0]?.v, 10);
+            if (!isNaN(id) && id > state.maxIdPlanilha) state.maxIdPlanilha = id;
             const bitola = Utils.parseNumeroPlanilha(row.c[3]);
             const medida = Utils.parseNumeroPlanilha(row.c[4]);
-            if (!idNum || bitola <= 0 || medida <= 0) return;
+            if (!id || bitola <= 0 || medida <= 0) return;
 
-            const situacaoRaw = Utils.parseTextoPlanilha(row.c[6]).trim();
-            const situacaoLower = situacaoRaw.toLowerCase();
-            const obsRaw = Utils.parseTextoPlanilha(row.c[7]);
-
-            const itemObj = {
-              ordemPlanilha: idx,
-              id: idNum,
-              data: Utils.parseTextoPlanilha(row.c[1]),
-              bitola: bitola,
-              medida: medida,
+            const item = {
+              ordemPlanilha: idx, id, data: Utils.parseTextoPlanilha(row.c[1]), bitola, medida,
               peso: Utils.parseNumeroPlanilha(row.c[5]) || Utils.calcularPesoAco(bitola, medida),
-              situacao: situacaoRaw,
-              obs: obsRaw
+              situacao: Utils.parseTextoPlanilha(row.c[6]).trim(), obs: Utils.parseTextoPlanilha(row.c[7])
             };
-
-            if (situacaoLower.includes("vendido")) {
-              state.vendidos.push(itemObj);
-            } else {
-              state.estoque.push(itemObj);
-            }
+            if (item.situacao.toLowerCase().includes("vendido")) state.vendidos.push(item);
+            else state.estoque.push(item);
           });
 
           UI.el.contadorEstoque.textContent = state.estoque.length;
           UI.atualizarSelectBitolas(state.estoque);
           Controlador.renderizarVisaoGeralEstoque();
           Controlador.renderizarHistorico();
-        } catch (error) {
-          console.error("Erro ao sincronizar:", error);
-          UI.mostrarNotificacao("Erro ao sincronizar planilha. Verifique a internet.", true);
+        } catch (e) {
+          UI.mostrarNotificacao("Erro ao sincronizar com a planilha.", true);
         } finally {
           UI.el.btnRecarregar.textContent = "🔄 Sincronizar";
         }
       },
-
-      async enviarRequisicao(payload, botaoElemento, textoCarregando, textoOriginal) {
-        if (botaoElemento) {
-          botaoElemento.disabled = true;
-          botaoElemento.textContent = textoCarregando;
-        }
-
+      async enviarRequisicao(payload, btn, txtLoad, txtOrig) {
+        if (btn) { btn.disabled = true; btn.textContent = txtLoad; }
         try {
-          const response = await fetch(CONFIG.SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-          const resultado = await response.json();
-          const ok = resultado.sucesso !== undefined ? resultado.sucesso : resultado.success;
-          const msg = resultado.mensagem || resultado.message || resultado.error || "Operação realizada!";
-          UI.mostrarNotificacao(msg, !ok);
-        } catch (error) {
-          UI.mostrarNotificacao("Comando enviado! Sincronizando banco de dados...", false);
+          const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+          const json = await res.json();
+          UI.mostrarNotificacao(json.mensagem || json.message || "Sucesso!", !(json.sucesso ?? json.success));
+        } catch (e) {
+          UI.mostrarNotificacao("Comando enviado com sucesso!", false);
         } finally {
           UI.limparFormulariosOperacao();
           setTimeout(async () => {
             await this.carregarEstoque(true);
-            if (botaoElemento) {
-              botaoElemento.disabled = false;
-              botaoElemento.textContent = textoOriginal;
-            }
+            if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
           }, CONFIG.DELAY_ATUALIZACAO_MS);
         }
       }
     };
 
-    /**
-     * ============================================================================
-     * 5. CONTROLADOR DE NEGÓCIOS (MULTI-CORTE, IMPRESSÃO USB, LOTE E HISTÓRICO)
-     * ============================================================================
-     */
     const Controlador = {
       listaFiltradaAtual: [],
       idsSelecionados: new Set(),
@@ -1064,738 +678,311 @@
         const bitola = parseFloat(UI.el.selectBitola.value);
         const medida = parseFloat(UI.el.inputBuscaMedida.value);
         const qtde = parseInt(UI.el.inputBuscaQtde.value, 10) || 1;
-
-        if (!bitola || isNaN(medida) || medida <= 0) {
-          UI.mostrarNotificacao("Selecione a bitola e digite uma medida válida.", true);
-          return;
-        }
-
-        const existente = state.carrinhoCortes.find(i => i.medida === medida);
-        if (existente) existente.qtde += qtde;
-        else state.carrinhoCortes.push({ medida, qtde });
-
-        UI.el.inputBuscaMedida.value = "";
-        UI.el.inputBuscaQtde.value = "1";
-        UI.el.inputBuscaMedida.focus();
+        if (!bitola || isNaN(medida) || medida <= 0) return UI.mostrarNotificacao("Preencha bitola e medida.", true);
+        const ex = state.carrinhoCortes.find(i => i.medida === medida);
+        if (ex) ex.qtde += qtde; else state.carrinhoCortes.push({ medida, qtde });
+        UI.el.inputBuscaMedida.value = ""; UI.el.inputBuscaQtde.value = "1";
         this.renderizarCarrinhoCortes();
       },
-
-      removerDoCarrinho(index) {
-        state.carrinhoCortes.splice(index, 1);
-        this.renderizarCarrinhoCortes();
-      },
-
+      removerDoCarrinho(i) { state.carrinhoCortes.splice(i, 1); this.renderizarCarrinhoCortes(); },
       renderizarCarrinhoCortes() {
-        if (state.carrinhoCortes.length === 0) {
-          UI.el.areaCarrinhoCortes.style.display = "none";
-          return;
-        }
-        UI.el.areaCarrinhoCortes.style.display = "block";
+        const area = UI.el.areaCarrinhoCortes;
+        if (state.carrinhoCortes.length === 0) return area.style.display = "none";
+        area.style.display = "block";
         UI.el.listaCarrinhoCortes.innerHTML = state.carrinhoCortes.map((item, idx) => `
-          <div class="cart-chip mono">
-            <span><strong>${item.qtde}x</strong> de <strong>${item.medida.toFixed(2)}m</strong></span>
-            <button type="button" onclick="Controlador.removerDoCarrinho(${idx})" title="Remover">✖</button>
-          </div>
+          <div class="cart-chip mono"><span><strong>${item.qtde}x</strong> de <strong>${item.medida.toFixed(2)}m</strong></span><button type="button" onclick="Controlador.removerDoCarrinho(${idx})">✖</button></div>
         `).join("");
       },
-
       gerarPlanoDeCorte() {
         const bitola = parseFloat(UI.el.selectBitola.value);
         const medidaDigitada = parseFloat(UI.el.inputBuscaMedida.value);
         const qtdeDigitada = parseInt(UI.el.inputBuscaQtde.value, 10) || 1;
         const precoKg = parseFloat(UI.el.inputBuscaPrecoKg.value) || 0;
-        const container = UI.el.areaResultados;
+        if (!bitola) return UI.mostrarNotificacao("Selecione a bitola.", true);
 
-        if (!bitola) {
-          UI.mostrarNotificacao("Selecione a bitola primeiro.", true);
-          return;
-        }
+        let lista = [...state.carrinhoCortes];
+        if (!isNaN(medidaDigitada) && medidaDigitada > 0) lista.push({ medida: medidaDigitada, qtde: qtdeDigitada });
+        if (lista.length === 0) return UI.mostrarNotificacao("Adicione itens ao pedido.", true);
 
-        let listaPedidos = [...state.carrinhoCortes];
-        if (!isNaN(medidaDigitada) && medidaDigitada > 0) {
-          listaPedidos.push({ medida: medidaDigitada, qtde: qtdeDigitada });
-        }
+        let pecas = []; lista.forEach(p => { for(let i=0; i<p.qtde; i++) pecas.push(p.medida); });
+        pecas.sort((a,b) => b-a);
 
-        if (listaPedidos.length === 0) {
-          UI.mostrarNotificacao("Informe uma medida de corte ou adicione ao pedido.", true);
-          return;
-        }
+        const candidatas = state.estoque.filter(b => b.bitola === bitola && b.medida >= Math.min(...pecas)).sort((a,b) => a.medida - b.medida);
+        state.planoDeCorteAtual = []; let restantes = [...pecas]; let nextSobraId = state.maxIdPlanilha + 1;
 
-        let pecasIndividuais = [];
-        listaPedidos.forEach(ped => {
-          for (let i = 0; i < ped.qtde; i++) pecasIndividuais.push(ped.medida);
-        });
-        pecasIndividuais.sort((a, b) => b - a);
-
-        const menorPeca = Math.min(...pecasIndividuais);
-        const candidatas = state.estoque
-          .filter(barra => barra.bitola === bitola && barra.medida >= menorPeca)
-          .sort((a, b) => a.medida - b.medida);
-
-        state.planoDeCorteAtual = [];
-        let pecasRestantes = [...pecasIndividuais];
-        let proximoIdSobra = state.maxIdPlanilha + 1;
-
-        for (const barra of candidatas) {
-          if (pecasRestantes.length === 0) break;
-
-          let espacoLivre = barra.medida;
-          let cortesNaBarra = [];
-
-          for (let i = 0; i < pecasRestantes.length; i++) {
-            if (pecasRestantes[i] <= espacoLivre + 0.0001) {
-              cortesNaBarra.push(pecasRestantes[i]);
-              espacoLivre = Utils.arredondarMedida(espacoLivre - pecasRestantes[i]);
-              pecasRestantes.splice(i, 1);
-              i--;
+        candidatas.forEach(barra => {
+          if (restantes.length === 0) return;
+          let livre = barra.medida; let cortes = [];
+          for(let i=0; i<restantes.length; i++) {
+            if (restantes[i] <= livre + 0.0001) {
+              cortes.push(restantes[i]); livre = Utils.arredondarMedida(livre - restantes[i]);
+              restantes.splice(i, 1); i--;
             }
           }
-
-          if (cortesNaBarra.length > 0) {
-            const compConsumido = Utils.arredondarMedida(barra.medida - espacoLivre);
-            const pesoTotal = Utils.calcularPesoAco(barra.bitola, barra.medida);
-            const pesoLiquido = Utils.calcularPesoAco(barra.bitola, compConsumido);
-
-            const contagemCortes = {};
-            cortesNaBarra.forEach(c => { contagemCortes[c] = (contagemCortes[c] || 0) + 1; });
-            const descricaoCortes = Object.entries(contagemCortes)
-              .map(([m, q]) => `${q}x de ${parseFloat(m).toFixed(2)}m`)
-              .join(" + ");
-
+          if (cortes.length > 0) {
+            const consumido = Utils.arredondarMedida(barra.medida - livre);
+            const contagem = {}; cortes.forEach(c => contagem[c] = (contagem[c]||0)+1);
+            const desc = Object.entries(contagem).map(([m, q]) => `${q}x de ${parseFloat(m).toFixed(2)}m`).join(" + ");
             state.planoDeCorteAtual.push({
-              id: barra.id,
-              bitola: barra.bitola,
-              medidaOriginal: barra.medida,
-              cortesDetalhados: cortesNaBarra,
-              descricaoCortes: descricaoCortes,
-              sobra: espacoLivre,
-              idSobraPrevisto: espacoLivre >= 0.05 ? proximoIdSobra++ : null,
-              pesoTotal: pesoTotal,
-              pesoLiquido: pesoLiquido
+              id: barra.id, bitola: barra.bitola, medidaOriginal: barra.medida, cortesDetalhados: cortes,
+              descricaoCortes: desc, sobra: livre, idSobraPrevisto: livre >= 0.05 ? nextSobraId++ : null,
+              pesoTotal: Utils.calcularPesoAco(barra.bitola, barra.medida),
+              pesoLiquido: Utils.calcularPesoAco(barra.bitola, consumido)
             });
           }
-        }
+        });
 
-        this.renderizarResultadoCorte(pecasIndividuais.length, pecasRestantes.length, precoKg, bitola, container);
+        this.renderizarResultadoCorte(pecas.length, restantes.length, precoKg, bitola, UI.el.areaResultados);
       },
-
-      renderizarResultadoCorte(totalSolicitado, totalFaltante, precoKg, bitola, container) {
-        if (totalFaltante > 0) {
-          const atendidas = totalSolicitado - totalFaltante;
-          container.innerHTML = `
-            <div class="box" style="border-color: var(--danger)">
-              ❌ Estoque insuficiente. Só conseguimos atender <strong class="mono">${atendidas} de ${totalSolicitado} peça(s)</strong> nas barras disponíveis.
-            </div>`;
-          return;
-        }
-
-        const totalBarrasFisicas = state.planoDeCorteAtual.length;
-        const pesoBrutoTotal = state.planoDeCorteAtual.reduce((acc, b) => acc + b.pesoTotal, 0);
-        const pesoLiquidoTotal = state.planoDeCorteAtual.reduce((acc, b) => acc + b.pesoLiquido, 0);
-        const pesoSobraTotal = Math.max(0, pesoBrutoTotal - pesoLiquidoTotal);
-
-        state.resumoCorteAtual = {
-          bitola, totalSolicitado, totalBarrasFisicas, pesoBrutoTotal, pesoLiquidoTotal, pesoSobraTotal, precoKg
-        };
-
-        const kpiFinanceiroHtml = precoKg > 0 ? `
-          <div class="kpi-card" style="border-color: var(--brand-border); background: var(--brand-bg);">
-            <div class="kpi-label">Valor dos Cortes (Líquido)</div>
-            <div class="kpi-value" style="color: var(--brand)">${Utils.formatarMoeda(pesoLiquidoTotal * precoKg)}</div>
-            <div class="kpi-sub">Barra inteira: ${Utils.formatarMoeda(pesoBrutoTotal * precoKg)}</div>
-          </div>
-        ` : "";
-
-        const cartoesHtml = state.planoDeCorteAtual.map(item => {
-          const segmentosHtml = item.cortesDetalhados.map(corte => {
-            const pct = (corte / item.medidaOriginal) * 100;
-            return `<div class="cut-segment" style="width: ${pct}%;" title="Corte: ${corte.toFixed(2)}m">${corte.toFixed(2)}m</div>`;
-          }).join("");
-
-          const sobraPct = (item.sobra / item.medidaOriginal) * 100;
-          const sobraSegmentoHtml = item.sobra > 0.01 
-            ? `<div class="cut-leftover" style="width: ${sobraPct}%;" title="Sobra: ${item.sobra.toFixed(2)}m">${item.sobra >= 0.3 ? item.sobra.toFixed(2) + 'm' : ''}</div>`
-            : "";
-
-          return `
-            <div class="result-card">
-              <div class="result-header">
-                <div class="result-info">
-                  <h3>
-                    <span class="badge">ID #${item.id}</span> 
-                    <span>Barra Original de <strong class="mono">${item.medidaOriginal.toFixed(2)}m</strong></span>
-                  </h3>
-                  <p>Extrair: <strong class="mono" style="color: var(--text)">${item.descricaoCortes}</strong></p>
-                  <p>Peso da Barra: <strong class="mono">${item.pesoTotal.toFixed(2)} kg</strong> (Cortes: <span class="mono">${item.pesoLiquido.toFixed(2)} kg</span>)</p>
-                </div>
-                <div class="sobra-box">
-                  <p class="sobra-label">Sobra ${item.idSobraPrevisto ? `(Novo ID #${item.idSobraPrevisto})` : ''}</p>
-                  <div class="sobra-val">${item.sobra.toFixed(2)}m</div>
-                </div>
-              </div>
-              <div class="cut-bar-visual">
-                ${segmentosHtml}
-                ${sobraSegmentoHtml}
-              </div>
-            </div>
-          `;
-        }).join("");
+      renderizarResultadoCorte(total, faltante, precoKg, bitola, container) {
+        if (faltante > 0) return container.innerHTML = `<div class="box" style="border-color:var(--danger)">❌ Estoque insuficiente. Faltaram ${faltante} peça(s).</div>`;
+        const totalBarras = state.planoDeCorteAtual.length;
+        const pBruto = state.planoDeCorteAtual.reduce((s,b) => s + b.pesoTotal, 0);
+        const pLiq = state.planoDeCorteAtual.reduce((s,b) => s + b.pesoLiquido, 0);
+        const pSobra = Math.max(0, pBruto - pLiq);
+        state.resumoCorteAtual = { bitola, totalSolicitado: total, totalBarrasFisicas: totalBarras, pesoBrutoTotal: pBruto, pesoLiquidoTotal: pLiq, pesoSobraTotal: pSobra, precoKg };
 
         container.innerHTML = `
           <div class="box">
-            <h2>Plano de Corte & Mapa Visual</h2>
+            <h2>Plano de Corte Otimizado</h2>
             <div class="summary-grid">
-              <div class="kpi-card"><div class="kpi-label">Barras Físicas</div><div class="kpi-value">${totalBarrasFisicas} un</div><div class="kpi-sub">P/ extrair ${totalSolicitado} peça(s)</div></div>
-              <div class="kpi-card"><div class="kpi-label">Peso Bruto (Barras)</div><div class="kpi-value">${pesoBrutoTotal.toFixed(2)} kg</div><div class="kpi-sub">Total movimentado</div></div>
-              <div class="kpi-card"><div class="kpi-label">Peso Líquido (Cliente)</div><div class="kpi-value" style="color: var(--brand)">${pesoLiquidoTotal.toFixed(2)} kg</div><div class="kpi-sub">Entregue no pedido</div></div>
-              <div class="kpi-card"><div class="kpi-label">Peso Retorno (Sobras)</div><div class="kpi-value" style="color: var(--warning)">${pesoSobraTotal.toFixed(2)} kg</div><div class="kpi-sub">Volta p/ estoque</div></div>
-              ${kpiFinanceiroHtml}
+              <div class="kpi-card"><div class="kpi-label">Barras Físicas</div><div class="kpi-value">${totalBarras} un</div></div>
+              <div class="kpi-card"><div class="kpi-label">Peso Bruto</div><div class="kpi-value">${pBruto.toFixed(2)} kg</div></div>
+              <div class="kpi-card"><div class="kpi-label">Peso Líquido</div><div class="kpi-value" style="color:var(--brand)">${pLiq.toFixed(2)} kg</div></div>
+              <div class="kpi-card"><div class="kpi-label">Retorno Sobras</div><div class="kpi-value" style="color:var(--warning)">${pSobra.toFixed(2)} kg</div></div>
+              ${precoKg > 0 ? `<div class="kpi-card" style="background:var(--brand-bg)"><div class="kpi-label">Valor Líquido</div><div class="kpi-value" style="color:var(--brand)">${Utils.formatarMoeda(pLiq * precoKg)}</div></div>` : ''}
             </div>
-            ${cartoesHtml}
-            <div class="form-group" style="margin-top: 16px;">
-              <label for="inputClienteCorte">Cliente / Nº do Pedido (Para registrar na planilha e na etiqueta)</label>
-              <input type="text" id="inputClienteCorte" placeholder="Ex: João / Pedido 4510 (Opcional)">
-            </div>
+            ${state.planoDeCorteAtual.map(b => `
+              <div class="result-card">
+                <div class="result-header">
+                  <div class="result-info">
+                    <h3><span class="badge">ID #${b.id}</span> Barra de <strong class="mono">${b.medidaOriginal.toFixed(2)}m</strong></h3>
+                    <p>Cortar: <strong class="mono" style="color:var(--text)">${b.descricaoCortes}</strong></p>
+                  </div>
+                  <div class="sobra-box"><p class="sobra-label">Sobra ${b.idSobraPrevisto?`(#${b.idSobraPrevisto})`:''}</p><div class="sobra-val">${b.sobra.toFixed(2)}m</div></div>
+                </div>
+                <div class="cut-bar-visual">${b.cortesDetalhados.map(c => `<div class="cut-segment" style="width:${(c/b.medidaOriginal)*100}%">${c.toFixed(2)}m</div>`).join("")}</div>
+              </div>
+            `).join("")}
+            <div class="form-group" style="margin-top:14px;"><label>Cliente / Pedido</label><input type="text" id="inputClienteCorte" placeholder="Ex: João / Ped 4510"></div>
             <div class="actions-row">
-              <button class="btn btn-whatsapp" id="btnCopiarWhatsApp">📲 Copiar Ordem p/ WhatsApp</button>
-              <button class="btn btn-secondary" id="btnImprimirOrdem">🖨️ Imprimir Ordem / Etiquetas</button>
-              <button class="btn" id="btnConfirmarCorte">✔️ Confirmar Baixa Automática</button>
+              <button class="btn btn-whatsapp" onclick="Controlador.copiarOrdemWhatsApp()">📲 Copiar p/ WhatsApp</button>
+              <button class="btn btn-secondary" onclick="Controlador.imprimirOrdemEEtiquetas()">🖨️ Imprimir Ordem / Etiquetas</button>
+              <button class="btn" onclick="Controlador.executarBaixaAutomatica(this)">✔️ Confirmar Baixa</button>
             </div>
           </div>`;
-
-        document.getElementById("btnCopiarWhatsApp").addEventListener("click", () => this.copiarOrdemWhatsApp());
-        document.getElementById("btnImprimirOrdem").addEventListener("click", () => this.imprimirOrdemEEtiquetas());
-        document.getElementById("btnConfirmarCorte").addEventListener("click", (e) => this.executarBaixaAutomatica(e.target));
       },
-
       copiarOrdemWhatsApp() {
-        if (!state.planoDeCorteAtual.length || !state.resumoCorteAtual) return;
-        const { bitola, pesoLiquidoTotal, precoKg } = state.resumoCorteAtual;
-        const clienteInput = document.getElementById("inputClienteCorte")?.value.trim();
-
-        let linhasTexto = [
-          `✂️ *ORDEM DE CORTE - GRANDE AÇO*`,
-          clienteInput ? `👤 *Cliente/Ped:* ${clienteInput}` : null,
-          `🔩 *Bitola:* Ø ${bitola.toFixed(2)} mm | *Peso Líquido:* ${pesoLiquidoTotal.toFixed(2)} kg`,
-          precoKg > 0 ? `💰 *Valor Estimado:* ${Utils.formatarMoeda(pesoLiquidoTotal * precoKg)}` : null,
-          `----------------------------------`
-        ].filter(Boolean);
-
-        state.planoDeCorteAtual.forEach(b => {
-          linhasTexto.push(
-            `▪ *Pegar ID #${b.id}* (Barra de ${b.medidaOriginal.toFixed(2)}m)\n` +
-            `   ↳ Cortar: *${b.descricaoCortes}* | *Sobra:* ${b.sobra.toFixed(2)}m`
-          );
-        });
-
-        navigator.clipboard.writeText(linhasTexto.join("\n")).then(() => {
-          UI.mostrarNotificacao("Ordem copiada! Pronto para colar no WhatsApp.");
-        });
+        if (!state.planoDeCorteAtual.length) return;
+        const c = document.getElementById("inputClienteCorte")?.value.trim();
+        let txt = [`✂️ *ORDEM DE CORTE*`, c ? `👤 *Cliente:* ${c}` : null, `------------------`].filter(Boolean);
+        state.planoDeCorteAtual.forEach(b => txt.push(`▪ *ID #${b.id}* (${b.medidaOriginal.toFixed(2)}m) ↳ ${b.descricaoCortes} | Sobra: ${b.sobra.toFixed(2)}m`));
+        navigator.clipboard.writeText(txt.join("\n")).then(() => UI.mostrarNotificacao("Copiado para o WhatsApp!"));
       },
-
       imprimirOrdemEEtiquetas() {
-        if (!state.planoDeCorteAtual.length || !state.resumoCorteAtual) return;
-
-        const { bitola, pesoLiquidoTotal } = state.resumoCorteAtual;
-        const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "Balcão / Interno";
+        if (!state.planoDeCorteAtual.length) return;
+        const c = document.getElementById("inputClienteCorte")?.value.trim() || "Balcão";
         const dataHoje = new Date().toLocaleDateString("pt-BR");
+        const sobras = state.planoDeCorteAtual.filter(b => b.idSobraPrevisto);
 
-        const ordensHtml = state.planoDeCorteAtual.map(b => `
-          <div class="print-order-item">
-            <strong>PEGAR BARRA ID #${b.id}</strong> (Medida Original: ${b.medidaOriginal.toFixed(2)}m | Bitola Ø ${b.bitola.toFixed(2)}mm)<br>
-            <span>✂️ CORTAR: <strong>${b.descricaoCortes}</strong></span> — 
-            <span>🔄 SOBRA PREVISTA: <strong>${b.sobra.toFixed(2)}m</strong> ${b.idSobraPrevisto ? `(Etiquetar como ID #${b.idSobraPrevisto})` : '(Sem sobra aproveitável)'}</span>
-          </div>
-        `).join("");
-
-        const sobrasComEtiqueta = state.planoDeCorteAtual.filter(b => b.idSobraPrevisto);
-        
         UI.el.printArea.innerHTML = `
-          <div class="print-section-title">✂️ ORDEM DE CORTE DE PÁTIO - GRANDE AÇO (${dataHoje})</div>
-          <p style="margin: 4px 0 10px 0; font-size: 13px;">
-            <strong>Cliente / Pedido:</strong> ${cliente} | <strong>Bitola:</strong> Ø ${bitola.toFixed(2)}mm | <strong>Peso Líquido:</strong> ${pesoLiquidoTotal.toFixed(2)} kg
-          </p>
-          ${ordensHtml}
-          ${sobrasComEtiqueta.length > 0 ? `
-            <div class="print-section-title" style="margin-top:20px;">🏷️ ETIQUETAS DAS SOBRAS GERADAS (COM QR CODE)</div>
-            <div class="print-labels-grid" id="containerCanvasEtiquetas"></div>
-          ` : ''}
-        `;
+          <div class="print-section-title">ORDEM DE CORTE - ${c} (${dataHoje})</div>
+          ${state.planoDeCorteAtual.map(b => `<div class="print-order-item"><strong>ID #${b.id}</strong> (${b.medidaOriginal.toFixed(2)}m) ➔ Cortar: <strong>${b.descricaoCortes}</strong> | Sobra: <strong>${b.sobra.toFixed(2)}m</strong></div>`).join("")}
+          ${sobras.length > 0 ? `<div class="print-section-title" style="margin-top:20px;">ETIQUETAS DE SOBRAS</div><div class="print-labels-grid" id="loteSobrasPrint"></div>` : ''}`;
 
-        if (sobrasComEtiqueta.length > 0) {
-          const gridCanvas = document.getElementById("containerCanvasEtiquetas");
-          sobrasComEtiqueta.forEach(b => {
+        if (sobras.length > 0) {
+          const cont = document.getElementById("loteSobrasPrint");
+          const qrSize = ThermalPrinter.getQrSize();
+          sobras.forEach(b => {
             const pesoSobra = Utils.calcularPesoAco(b.bitola, b.sobra);
-            const cardDiv = document.createElement("div");
-            cardDiv.className = "thermal-label";
-            cardDiv.innerHTML = `
-              <div class="thermal-label-info">
-                <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA</div>
-                <h2>ID #${b.idSobraPrevisto}</h2>
-                <p>Ø ${b.bitola.toFixed(2)} mm | ${b.sobra.toFixed(2)} m</p>
-                <p>Peso: ${pesoSobra.toFixed(2)} kg</p>
-                <div style="font-size:10px;">Orig: #${b.id} • ${dataHoje}</div>
-              </div>
-              <div class="thermal-canvas-container"><canvas id="qrCanvas_${b.idSobraPrevisto}"></canvas></div>
-            `;
-            gridCanvas.appendChild(cardDiv);
-
-            if (window.QRious) {
-              new QRious({
-                element: document.getElementById(`qrCanvas_${b.idSobraPrevisto}`),
-                value: String(b.idSobraPrevisto),
-                size: ThermalPrinter.paperSize === "60x40" ? 60 : 78
-              });
-            }
+            const canvasId = `qrSobra_${b.idSobraPrevisto}`;
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = Utils.gerarHtmlEtiqueta({
+              id: b.idSobraPrevisto,
+              bitola: b.bitola,
+              medida: b.sobra,
+              peso: pesoSobra,
+              data: dataHoje
+            }, canvasId);
+            cont.appendChild(wrapper.firstElementChild);
+            new QRious({ element: document.getElementById(canvasId), value: String(b.idSobraPrevisto), size: qrSize, level: "M" });
           });
         }
-
-        setTimeout(() => window.print(), 350);
+        setTimeout(() => window.print(), 300);
       },
-
-      imprimirEtiquetaUnica(idBarra) {
-        const barra = state.estoque.find(b => b.id === idBarra);
-        if (!barra) return;
-
-        UI.el.printArea.innerHTML = `
-          <div class="print-labels-grid">
-            <div class="thermal-label">
-              <div class="thermal-label-info">
-                <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA</div>
-                <h2>ID #${barra.id}</h2>
-                <p>Ø ${barra.bitola.toFixed(2)} mm | ${barra.medida.toFixed(2)} m</p>
-                <p>Peso: ${barra.peso.toFixed(2)} kg</p>
-                <div style="font-size:10px;">Data: ${barra.data}</div>
-              </div>
-              <div class="thermal-canvas-container"><canvas id="qrCanvas_single_${barra.id}"></canvas></div>
-            </div>
-          </div>
-        `;
-
-        if (window.QRious) {
-          new QRious({
-            element: document.getElementById(`qrCanvas_single_${barra.id}`),
-            value: String(barra.id),
-            size: ThermalPrinter.paperSize === "60x40" ? 60 : 78
-          });
-        }
-
-        setTimeout(() => window.print(), 350);
+      imprimirEtiquetaUnica(id) {
+        const b = state.estoque.find(i => i.id === id);
+        if (!b) return;
+        const canvasId = `qrSingle_${b.id}`;
+        UI.el.printArea.innerHTML = `<div class="print-labels-grid">${Utils.gerarHtmlEtiqueta(b, canvasId)}</div>`;
+        new QRious({ element: document.getElementById(canvasId), value: String(b.id), size: ThermalPrinter.getQrSize(), level: "M" });
+        setTimeout(() => window.print(), 300);
       },
-
-      // --- 5.4 FUNÇÕES DE IMPRESSÃO EM LOTE (NOVO) ---
-      alternarSelecaoItem(id, marcado) {
-        if (marcado) this.idsSelecionados.add(id);
+      alternarSelecaoItem(id, m) {
+        if (m) this.idsSelecionados.add(id);
         else this.idsSelecionados.delete(id);
         this.atualizarBotaoSelecionadas();
       },
-
-      alternarSelecaoTodas(marcado) {
+      alternarSelecaoTodas(m) {
         this.listaFiltradaAtual.forEach(b => {
-          if (marcado) this.idsSelecionados.add(b.id);
+          if (m) this.idsSelecionados.add(b.id);
           else this.idsSelecionados.delete(b.id);
         });
-        document.querySelectorAll(".check-item-estoque").forEach(chk => {
-          chk.checked = marcado;
-        });
+        document.querySelectorAll(".check-item-estoque").forEach(chk => chk.checked = m);
         this.atualizarBotaoSelecionadas();
       },
-
       atualizarBotaoSelecionadas() {
         const btn = document.getElementById("btnImprimirSelecionadas");
-        const countSpan = document.getElementById("countSelecionadas");
-        if (!btn || !countSpan) return;
-
-        const total = this.idsSelecionados.size;
-        countSpan.textContent = total;
-        btn.style.display = total > 0 ? "inline-flex" : "none";
+        const cnt = document.getElementById("countSelecionadas");
+        if (!btn || !cnt) return;
+        cnt.textContent = this.idsSelecionados.size;
+        btn.style.display = this.idsSelecionados.size > 0 ? "inline-flex" : "none";
       },
+      imprimirEtiquetasEmLote(modo) {
+        const lista = modo === "selecionadas"
+          ? state.estoque.filter(b => this.idsSelecionados.has(b.id))
+          : (this.listaFiltradaAtual.length > 0 ? this.listaFiltradaAtual : state.estoque);
 
-      imprimirEtiquetasEmLote(modo = "visiveis") {
-        let listaParaImprimir = [];
+        if (lista.length === 0) return UI.mostrarNotificacao("Nenhuma ponta selecionada para imprimir.", true);
 
-        if (modo === "selecionadas") {
-          listaParaImprimir = state.estoque.filter(b => this.idsSelecionados.has(b.id));
-        } else {
-          listaParaImprimir = this.listaFiltradaAtual.length > 0 ? this.listaFiltradaAtual : state.estoque;
+        if (lista.length > 30) {
+          if (!confirm(`Deseja imprimir ${lista.length} etiquetas de uma só vez?`)) return;
         }
 
-        if (listaParaImprimir.length === 0) {
-          UI.mostrarNotificacao("Nenhuma ponta selecionada ou disponível para imprimir.", true);
-          return;
-        }
+        UI.el.printArea.innerHTML = `<div class="print-labels-grid" id="loteContainer"></div>`;
+        const cont = document.getElementById("loteContainer");
+        const qrSize = ThermalPrinter.getQrSize();
 
-        if (listaParaImprimir.length > 30) {
-          const confirmar = confirm(`Você está prestes a imprimir ${listaParaImprimir.length} etiquetas de uma vez. Deseja continuar?`);
-          if (!confirmar) return;
-        }
-
-        UI.el.printArea.innerHTML = `<div class="print-labels-grid" id="loteCanvasContainer"></div>`;
-        const container = document.getElementById("loteCanvasContainer");
-
-        listaParaImprimir.forEach(barra => {
-          const cardDiv = document.createElement("div");
-          cardDiv.className = "thermal-label";
-          cardDiv.innerHTML = `
-            <div class="thermal-label-info">
-              <div style="font-size:10px; font-weight:bold;">GRANDE AÇO • PONTA</div>
-              <h2>ID #${barra.id}</h2>
-              <p>Ø ${barra.bitola.toFixed(2)} mm | ${barra.medida.toFixed(2)} m</p>
-              <p>Peso: ${barra.peso.toFixed(2)} kg</p>
-              <div style="font-size:10px;">Data: ${barra.data}</div>
-            </div>
-            <div class="thermal-canvas-container"><canvas id="qrCanvas_lote_${barra.id}"></canvas></div>
-          `;
-          container.appendChild(cardDiv);
-
-          if (window.QRious) {
-            new QRious({
-              element: document.getElementById(`qrCanvas_lote_${barra.id}`),
-              value: String(barra.id),
-              size: ThermalPrinter.paperSize === "60x40" ? 60 : 78
-            });
-          }
+        lista.forEach(b => {
+          const canvasId = `qrLote_${b.id}`;
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = Utils.gerarHtmlEtiqueta(b, canvasId);
+          cont.appendChild(wrapper.firstElementChild);
+          new QRious({ element: document.getElementById(canvasId), value: String(b.id), size: qrSize, level: "M" });
         });
 
         setTimeout(() => window.print(), 350);
       },
-
       renderizarVisaoGeralEstoque() {
-        const estoque = state.estoque;
-        const totalBarras = estoque.length;
-        const totalMetros = estoque.reduce((acc, b) => acc + b.medida, 0);
-        const totalQuilos = estoque.reduce((acc, b) => acc + b.peso, 0);
-
-        UI.el.kpisEstoque.innerHTML = `
-          <div class="kpi-card"><div class="kpi-label">Total de Pontas</div><div class="kpi-value">${totalBarras} un</div></div>
-          <div class="kpi-card"><div class="kpi-label">Metragem Linear</div><div class="kpi-value">${totalMetros.toFixed(1)} m</div></div>
-          <div class="kpi-card"><div class="kpi-label">Peso Total em Estoque</div><div class="kpi-value" style="color: var(--brand)">${totalQuilos.toFixed(1)} kg</div></div>
-        `;
-
-        const mapaBitolas = {};
-        estoque.forEach(b => {
-          if (!b.bitola) return;
-          if (!mapaBitolas[b.bitola]) mapaBitolas[b.bitola] = { qtde: 0, metros: 0, peso: 0 };
-          mapaBitolas[b.bitola].qtde += 1;
-          mapaBitolas[b.bitola].metros += b.medida;
-          mapaBitolas[b.bitola].peso += b.peso;
-        });
-
-        const bitolasOrdenadas = Object.keys(mapaBitolas).map(Number).sort((a, b) => a - b);
-        const filtroAtual = UI.el.filtroTabelaBitola.value;
-
-        UI.el.cardsBitolaEstoque.innerHTML = bitolasOrdenadas.map(bit => {
-          const info = mapaBitolas[bit];
-          const isAtivo = String(filtroAtual) === String(bit) ? "active" : "";
-          return `
-            <div class="bitola-card ${isAtivo}" data-bitola="${bit}">
-              <h4>Ø ${bit.toFixed(2)} mm</h4>
-              <p><span>Barras:</span> <strong>${info.qtde} un</strong></p>
-              <p><span>Total:</span> <strong>${info.metros.toFixed(1)} m</strong></p>
-              <p><span>Peso:</span> <strong>${info.peso.toFixed(1)} kg</strong></p>
-            </div>
-          `;
-        }).join("");
-
-        document.querySelectorAll(".bitola-card").forEach(card => {
-          card.addEventListener("click", () => {
-            const bit = card.dataset.bitola;
-            UI.el.filtroTabelaBitola.value = String(UI.el.filtroTabelaBitola.value) === String(bit) ? "TODAS" : bit;
-            this.renderizarVisaoGeralEstoque();
-          });
-        });
-
+        const est = state.estoque;
+        UI.el.kpisEstoque.innerHTML = `<div class="kpi-card"><div class="kpi-label">Total</div><div class="kpi-value">${est.length} un</div></div><div class="kpi-card"><div class="kpi-label">Metragem</div><div class="kpi-value">${est.reduce((s,i)=>s+i.medida,0).toFixed(1)} m</div></div><div class="kpi-card"><div class="kpi-label">Peso</div><div class="kpi-value" style="color:var(--brand)">${est.reduce((s,i)=>s+i.peso,0).toFixed(1)} kg</div></div>`;
+        const mapa = {}; est.forEach(i => { if(!mapa[i.bitola]) mapa[i.bitola]={q:0, m:0}; mapa[i.bitola].q++; mapa[i.bitola].m+=i.medida; });
+        UI.el.cardsBitolaEstoque.innerHTML = Object.keys(mapa).map(b => `<div class="bitola-card" onclick="UI.el.filtroTabelaBitola.value='${b}'; Controlador.renderizarVisaoGeralEstoque()"><h4>Ø ${Number(b).toFixed(2)}mm</h4><p>Qtd: <strong>${mapa[b].q}</strong></p><p>Metros: <strong>${mapa[b].m.toFixed(1)}m</strong></p></div>`).join("");
         this.renderizarTabelaEstoque();
       },
-
       renderizarTabelaEstoque() {
-        const bitolaFiltro = UI.el.filtroTabelaBitola.value;
-        const termoBusca = UI.el.filtroTabelaBusca.value.trim().toLowerCase();
-
-        let listaFiltrada = state.estoque.filter(item => {
-          if (bitolaFiltro !== "TODAS" && item.bitola !== parseFloat(bitolaFiltro)) return false;
-          if (termoBusca) {
-            const limpo = termoBusca.replace("#", "").replace(",", ".");
-            const matchId = String(item.id).includes(limpo);
-            const numBusca = parseFloat(limpo);
-            const matchMedida = !isNaN(numBusca) && item.medida >= numBusca;
-            return matchId || matchMedida;
-          }
+        const bit = UI.el.filtroTabelaBitola.value; const busca = UI.el.filtroTabelaBusca.value.trim().toLowerCase();
+        let lista = state.estoque.filter(i => {
+          if (bit !== "TODAS" && i.bitola !== parseFloat(bit)) return false;
+          if (busca) { const l = busca.replace("#",""); return String(i.id).includes(l) || i.medida >= parseFloat(l); }
           return true;
         });
+        lista.sort((a,b) => a.bitola - b.bitola || b.medida - a.medida);
+        this.listaFiltradaAtual = lista;
+        const master = document.getElementById("checkTodasEstoque"); if(master) master.checked = false;
 
-        listaFiltrada.sort((a, b) => a.bitola - b.bitola || b.medida - a.medida);
-        this.listaFiltradaAtual = listaFiltrada;
+        if (lista.length === 0) { UI.el.tabelaEstoqueBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted)">Nenhuma ponta encontrada.</td></tr>`; this.atualizarBotaoSelecionadas(); return; }
 
-        const checkMaster = document.getElementById("checkTodasEstoque");
-        if (checkMaster) checkMaster.checked = false;
-
-        if (listaFiltrada.length === 0) {
-          UI.el.tabelaEstoqueBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhuma barra encontrada para este filtro.</td></tr>`;
-          this.atualizarBotaoSelecionadas();
-          return;
-        }
-
-        UI.el.tabelaEstoqueBody.innerHTML = listaFiltrada.map(b => {
-          const checked = this.idsSelecionados.has(b.id) ? "checked" : "";
-          return `
-            <tr>
-              <td style="text-align: center;">
-                <input type="checkbox" class="check-item-estoque" data-id="${b.id}" ${checked} onchange="Controlador.alternarSelecaoItem(${b.id}, this.checked)">
-              </td>
-              <td><span class="badge">#${b.id}</span></td>
-              <td class="mono" style="color: var(--text-muted); font-size: 0.8rem;">${b.data}</td>
-              <td class="mono"><strong>Ø ${b.bitola.toFixed(2)} mm</strong></td>
-              <td class="mono" style="color: var(--brand);"><strong>${b.medida.toFixed(2)} m</strong></td>
-              <td class="mono">${b.peso.toFixed(2)} kg</td>
-              <td style="color: var(--text-muted); font-size: 0.8rem;">${b.obs}</td>
-              <td style="display:flex; gap:6px;">
-                <button class="icon-btn btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta USB">🏷️</button>
-                <button class="btn btn-danger btn-sm btn-baixa-rapida" data-id="${b.id}">Baixar</button>
-              </td>
-            </tr>
-          `;
-        }).join("");
-
-        document.querySelectorAll(".btn-baixa-rapida").forEach(btn => {
-          btn.addEventListener("click", () => {
-            UI.alternarAba("gerenciar");
-            UI.el.inputBaixaId.value = btn.dataset.id;
-            this.preverBaixaManual();
-            UI.el.inputBaixaId.scrollIntoView({ behavior: "smooth" });
-          });
-        });
-
+        UI.el.tabelaEstoqueBody.innerHTML = lista.map(b => `
+          <tr>
+            <td style="text-align: center;"><input type="checkbox" class="check-item-estoque" data-id="${b.id}" ${this.idsSelecionados.has(b.id)?"checked":""} onchange="Controlador.alternarSelecaoItem(${b.id}, this.checked)"></td>
+            <td><span class="badge">#${b.id}</span></td>
+            <td class="mono" style="font-size:0.8rem; color:var(--text-muted)">${b.data}</td>
+            <td class="mono"><strong>Ø ${b.bitola.toFixed(2)}mm</strong></td>
+            <td class="mono" style="color:var(--brand)"><strong>${b.medida.toFixed(2)}m</strong></td>
+            <td class="mono">${b.peso.toFixed(2)}kg</td>
+            <td style="font-size:0.8rem; color:var(--text-muted)">${b.obs}</td>
+            <td style="display:flex; gap:6px;">
+              <button class="icon-btn btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta">🏷️</button>
+              <button class="btn btn-danger btn-sm" onclick="UI.alternarAba('gerenciar'); UI.el.inputBaixaId.value='${b.id}'; Controlador.preverBaixaManual();">Baixar</button>
+            </td>
+          </tr>`).join("");
         this.atualizarBotaoSelecionadas();
       },
-
       renderizarHistorico() {
-        const ultimosVendidos = [...state.vendidos]
-          .sort((a, b) => b.ordemPlanilha - a.ordemPlanilha)
-          .slice(0, 50);
-
-        if (ultimosVendidos.length === 0) {
-          UI.el.tabelaHistoricoBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px; color: var(--text-muted);">Nenhuma saída registrada ainda.</td></tr>`;
-          return;
-        }
-
-        UI.el.tabelaHistoricoBody.innerHTML = ultimosVendidos.map(b => `
+        const hist = [...state.vendidos].sort((a,b) => b.ordemPlanilha - a.ordemPlanilha).slice(0, 50);
+        if (hist.length === 0) return UI.el.tabelaHistoricoBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted)">Nenhum histórico.</td></tr>`;
+        UI.el.tabelaHistoricoBody.innerHTML = hist.map(b => `
           <tr>
-            <td><span class="badge danger-bg">#${b.id}</span></td>
-            <td class="mono" style="color: var(--text-muted); font-size: 0.8rem;">${b.data}</td>
-            <td class="mono">Ø ${b.bitola.toFixed(2)} mm</td>
-            <td class="mono">${b.medida.toFixed(2)} m</td>
-            <td class="mono">${b.peso.toFixed(2)} kg</td>
-            <td style="font-size: 0.82rem;">${b.obs}</td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-estornar" data-id="${b.id}">↩️ Estornar</button>
-            </td>
-          </tr>
-        `).join("");
-
-        document.querySelectorAll(".btn-estornar").forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            const id = e.target.dataset.id;
-            API.enviarRequisicao({ action: "estornar", id }, e.target, "Voltando...", "↩️ Estornar");
-          });
-        });
+            <td><span class="badge danger-bg">#${b.id}</span></td><td class="mono" style="font-size:0.8rem">${b.data}</td>
+            <td class="mono">Ø ${b.bitola.toFixed(2)}mm</td><td class="mono">${b.medida.toFixed(2)}m</td>
+            <td class="mono">${b.peso.toFixed(2)}kg</td><td style="font-size:0.82rem">${b.obs}</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="API.enviarRequisicao({action:'estornar', id:${b.id}}, this, 'Estornando...', '↩️ Estornar')">↩️ Estornar</button></td>
+          </tr>`).join("");
       },
-
       iniciarScannerQR() {
         UI.el.modalScanner.classList.add("active");
-        if (!window.Html5Qrcode) {
-          UI.mostrarNotificacao("Carregando módulo de câmera...", true);
-          return;
-        }
-
         state.qrScanner = new Html5Qrcode("qrReader");
-        state.qrScanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 220, height: 220 } },
-          (decodedText) => {
-            const idExtraido = decodedText.replace(/\D/g, "");
-            if (idExtraido) {
-              UI.el.inputBaixaId.value = idExtraido;
-              this.preverBaixaManual();
-              UI.mostrarNotificacao(`Etiqueta ID #${idExtraido} lida com sucesso!`);
-              this.pararScannerQR();
-            }
-          },
-          () => {}
-        ).catch(() => {
-          UI.mostrarNotificacao("Permita o acesso à câmera do celular.", true);
-          this.pararScannerQR();
-        });
+        state.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 }, (txt) => {
+          const id = txt.replace(/\D/g,"");
+          if(id) { UI.el.inputBaixaId.value = id; this.preverBaixaManual(); UI.mostrarNotificacao(`ID #${id} lido!`); this.pararScannerQR(); }
+        }, ()=>{});
       },
-
-      pararScannerQR() {
-        UI.el.modalScanner.classList.remove("active");
-        if (state.qrScanner) {
-          state.qrScanner.stop().then(() => state.qrScanner.clear()).catch(() => {});
-          state.qrScanner = null;
-        }
-      },
-
-      obterBitolaCadastro() {
-        const valorSelect = UI.el.cadBitolaSelect.value;
-        return valorSelect === "OUTRA" ? parseFloat(UI.el.cadBitolaCustom.value) : parseFloat(valorSelect);
-      },
-
+      pararScannerQR() { UI.el.modalScanner.classList.remove("active"); if(state.qrScanner) { state.qrScanner.stop().then(() => state.qrScanner.clear()).catch(()=>{}); state.qrScanner = null; } },
       atualizarPreviewPesoCadastro() {
-        const bitola = this.obterBitolaCadastro();
+        const sel = UI.el.cadBitolaSelect.value;
+        const bitola = sel === "OUTRA" ? parseFloat(UI.el.cadBitolaCustom.value) : parseFloat(sel);
         const medida = parseFloat(UI.el.inputCadMedida.value);
         const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
-
         if (bitola > 0 && medida > 0) {
-          const pesoUnitario = Utils.calcularPesoAco(bitola, medida);
-          const pesoTotal = pesoUnitario * qtde;
-          UI.el.previewPesoCadastro.innerHTML = `⚖️ Peso calculado: <strong class="mono" style="color:var(--brand)">${pesoUnitario.toFixed(2)} kg/barra</strong> (Total do lote: <strong class="mono">${pesoTotal.toFixed(2)} kg</strong>)`;
-        } else {
-          UI.el.previewPesoCadastro.innerHTML = "";
-        }
+          const p = Utils.calcularPesoAco(bitola, medida);
+          UI.el.previewPesoCadastro.innerHTML = `⚖️ Peso unitário: <strong class="mono" style="color:var(--brand)">${p.toFixed(2)} kg</strong> (Total: <strong class="mono">${(p*qtde).toFixed(2)} kg</strong>)`;
+        } else { UI.el.previewPesoCadastro.innerHTML = ""; }
       },
-
       preverBaixaManual() {
-        const idDigitado = UI.el.inputBaixaId.value.trim();
-        const { previewBaixa, btnBaixar } = UI.el;
-
-        if (!idDigitado) {
-          previewBaixa.innerHTML = "";
-          btnBaixar.style.display = "none";
-          return;
-        }
-
-        const barra = state.estoque.find(item => String(item.id) === idDigitado);
-
-        if (barra) {
-          previewBaixa.innerHTML = `
-            <div class="result-card danger-border" style="margin-top: 5px;">
-              <div class="result-info">
-                <h3><span class="badge danger-bg">ID #${barra.id}</span> Barra Selecionada para Baixa</h3>
-                <p>Bitola: <strong class="mono">Ø ${barra.bitola.toFixed(2)} mm</strong> • Medida: <strong class="mono">${barra.medida.toFixed(2)}m</strong></p>
-                <p>Peso Total: <strong class="mono">${barra.peso.toFixed(2)} kg</strong> • Origem: ${barra.obs}</p>
-              </div>
-            </div>`;
-          btnBaixar.style.display = "inline-flex";
-        } else {
-          previewBaixa.innerHTML = `
-            <div style="color: var(--danger); font-size: 0.85rem; margin-top: 10px;">
-              ❌ ID #${idDigitado} não encontrado no estoque ativo ou já foi vendido.
-            </div>`;
-          btnBaixar.style.display = "none";
-        }
-      },
-
-      executarBaixaAutomatica(botao) {
-        const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "";
-        const instrucoes = state.planoDeCorteAtual.map(item => ({
-          id: item.id,
-          sobra: item.sobra,
-          bitola: item.bitola
-        }));
-        API.enviarRequisicao({ action: "baixar", instrucoes, cliente }, botao, "Processando Baixa...", "✔️ Confirmar Baixa Automática");
-      },
-
-      executarBaixaManual() {
         const id = UI.el.inputBaixaId.value.trim();
-        const cliente = UI.el.inputBaixaClienteManual.value.trim();
-        if (!id) return;
-
-        const payload = { action: "baixar", cliente, instrucoes: [{ id, sobra: 0, bitola: 0 }] };
-        API.enviarRequisicao(payload, UI.el.btnBaixar, "Processando...", "Confirmar Baixa (Vendido)");
+        const prev = UI.el.previewBaixa; const btn = UI.el.btnBaixar;
+        if (!id) { prev.innerHTML = ""; btn.style.display = "none"; return; }
+        const b = state.estoque.find(i => String(i.id) === id);
+        if (b) {
+          prev.innerHTML = `<div class="result-card danger-border"><div class="result-info"><h3><span class="badge danger-bg">ID #${b.id}</span></h3><p>Ø ${b.bitola.toFixed(2)}mm • ${b.medida.toFixed(2)}m • ${b.peso.toFixed(2)}kg</p></div></div>`;
+          btn.style.display = "inline-flex";
+        } else { prev.innerHTML = `<div style="color:var(--danger)">ID não encontrado ou já vendido.</div>`; btn.style.display = "none"; }
       },
-
+      executarBaixaAutomatica(btn) {
+        const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "";
+        const instrucoes = state.planoDeCorteAtual.map(i => ({ id: i.id, sobra: i.sobra, bitola: i.bitola }));
+        API.enviarRequisicao({ action: "baixar", instrucoes, cliente }, btn, "Processando...", "✔️ Confirmar Baixa");
+      },
+      executarBaixaManual() {
+        const id = UI.el.inputBaixaId.value.trim(); const cliente = UI.el.inputBaixaClienteManual.value.trim();
+        if(!id) return; API.enviarRequisicao({ action: "baixar", cliente, instrucoes: [{ id, sobra: 0, bitola: 0 }] }, UI.el.btnBaixar, "Processando...", "Confirmar Baixa");
+      },
       executarCadastro() {
-        const bitola = this.obterBitolaCadastro();
-        const medida = parseFloat(UI.el.inputCadMedida.value);
-        const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
+        const sel = UI.el.cadBitolaSelect.value;
+        const bitola = sel === "OUTRA" ? parseFloat(UI.el.cadBitolaCustom.value) : parseFloat(sel);
+        const medida = parseFloat(UI.el.inputCadMedida.value); const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
         const obs = UI.el.inputCadObs.value.trim();
-
-        if (!bitola || isNaN(bitola) || !medida || isNaN(medida)) {
-          UI.mostrarNotificacao("Preencha a bitola e a medida corretamente.", true);
-          return;
-        }
-
-        const payload = { action: "cadastrar", bitola, medida, qtde, obs };
-        API.enviarRequisicao(payload, UI.el.btnCadastrar, "Salvando...", "Confirmar Cadastro");
+        if (!bitola || isNaN(bitola) || !medida || isNaN(medida)) return UI.mostrarNotificacao("Preencha bitola e medida.", true);
+        API.enviarRequisicao({ action: "cadastrar", bitola, medida, qtde, obs }, UI.el.btnCadastrar, "Salvando...", "Confirmar Cadastro");
       }
     };
 
-    /**
-     * ============================================================================
-     * 5.7 CONTROLE DE ACESSO POR PERFIL (VENDEDOR / OPERADOR)
-     * ============================================================================
-     */
     const Auth = {
       SENHAS: { vendedor: "vendedor123", operador: "operador123" },
-
-      init() {
-        const savedRole = localStorage.getItem("pontas_userRole") || "operador";
-        this.applyRoleUI(savedRole);
-      },
-
-      showLoginModal() {
-        UI.el.authOverlay.style.display = "flex";
-        UI.el.authPassword.value = "";
-        setTimeout(() => UI.el.authPassword.focus(), 100);
-      },
-
-      hideLoginModal() {
-        UI.el.authOverlay.style.display = "none";
-      },
-
-      setRole(role) {
-        state.userRole = role;
-        UI.el.tabVendedor.classList.toggle("active", role === "vendedor");
-        UI.el.tabOperador.classList.toggle("active", role === "operador");
-      },
-
+      init() { const role = localStorage.getItem("pontas_userRole") || "operador"; this.applyRoleUI(role); },
+      setRole(role) { state.userRole = role; document.getElementById("tabVendedor").classList.toggle("active", role==="vendedor"); document.getElementById("tabOperador").classList.toggle("active", role==="operador"); },
       login(role) {
-        const password = UI.el.authPassword.value;
-        if (password !== this.SENHAS[role]) {
-          UI.mostrarNotificacao(`Senha incorreta para ${role === "vendedor" ? "Vendedor" : "Operador"}`, true);
-          return;
-        }
-        localStorage.setItem("pontas_userRole", role);
-        this.applyRoleUI(role);
-        this.hideLoginModal();
-        UI.mostrarNotificacao(`Perfil alterado para: ${role === "vendedor" ? "Vendedor" : "Operador de Pátio"}`);
+        const p = UI.el.authPassword.value;
+        if (p !== this.SENHAS[role]) return UI.mostrarNotificacao("Senha incorreta!", true);
+        localStorage.setItem("pontas_userRole", role); this.applyRoleUI(role);
+        UI.el.authOverlay.style.display = "none"; UI.mostrarNotificacao(`Perfil: ${role}`);
       },
-
       applyRoleUI(role) {
-        state.userRole = role;
-        const isVendedor = role === "vendedor";
-        const isOperador = role === "operador";
-
-        document.documentElement.setAttribute("data-role", role);
-        UI.el.profileRole.textContent = isVendedor ? "Vendedor" : "Operador de Pátio";
-        UI.el.profileBadge.classList.toggle("operador", isOperador);
-
-        const tabGerenciar = document.querySelector('.tab[data-target="gerenciar"]');
-        const tabHistorico = document.querySelector('.tab[data-target="historico"]');
-        if (tabGerenciar) tabGerenciar.style.display = isOperador ? "flex" : "none";
-        if (tabHistorico) tabHistorico.style.display = isOperador ? "flex" : "none";
-
-        if (isVendedor) {
-          const activeTab = document.querySelector(".tab.active");
-          if (activeTab && (activeTab.dataset.target === "gerenciar" || activeTab.dataset.target === "historico")) {
-            UI.alternarAba("consulta");
-          }
-        }
+        state.userRole = role; document.documentElement.setAttribute("data-role", role);
+        UI.el.profileRole.textContent = role === "vendedor" ? "Vendedor" : "Operador";
+        UI.el.profileBadge.classList.toggle("operador", role === "operador");
+        const ger = document.querySelector('.tab[data-target="gerenciar"]'); const hist = document.querySelector('.tab[data-target="historico"]');
+        if(ger) ger.style.display = role === "operador" ? "flex" : "none";
+        if(hist) hist.style.display = role === "operador" ? "flex" : "none";
       }
     };
 
-    /**
-     * ============================================================================
-     * 5.8 IMPRESSORA TÉRMICA VIA CABO USB
-     * ============================================================================
-     */
     const ThermalPrinter = {
       paperSize: "100x50",
 
       init() {
         this.paperSize = localStorage.getItem("pontas_paperSize") || "100x50";
-
         const selectSize = document.getElementById("printerPaperSize");
         if (selectSize) {
           selectSize.value = this.paperSize;
@@ -1803,23 +990,28 @@
             this.paperSize = e.target.value;
             localStorage.setItem("pontas_paperSize", this.paperSize);
             this.aplicarEstiloPagina();
-            UI.mostrarNotificacao("Tamanho da etiqueta ajustado para " + this.paperSize);
+            UI.mostrarNotificacao("Formato da etiqueta ajustado para " + this.paperSize);
           });
         }
 
-        UI.el.btnPrinter.addEventListener("click", () => this.openModal());
-        UI.el.btnClosePrinter.addEventListener("click", () => this.closeModal());
-        UI.el.btnTestPrint.addEventListener("click", () => this.printTest());
+        UI.el.btnPrinter.addEventListener("click", () => UI.el.printerOverlay.style.display = "flex");
+        UI.el.btnClosePrinter.addEventListener("click", () => UI.el.printerOverlay.style.display = "none");
+        UI.el.btnTestPrint.addEventListener("click", () => {
+          UI.el.printerOverlay.style.display = "none";
+          const b = state.estoque[0] || { id: 267, bitola: 6.30, medida: 0.84, peso: 0.21, data: "22/10/2026" };
+          const canvasId = "qrTest_print";
+          UI.el.printArea.innerHTML = `<div class="print-labels-grid">${Utils.gerarHtmlEtiqueta(b, canvasId)}</div>`;
+          new QRious({ element: document.getElementById(canvasId), value: String(b.id), size: this.getQrSize(), level: "M" });
+          setTimeout(() => window.print(), 300);
+        });
 
         this.aplicarEstiloPagina();
       },
 
-      openModal() {
-        UI.el.printerOverlay.style.display = "flex";
-      },
-
-      closeModal() {
-        UI.el.printerOverlay.style.display = "none";
+      getQrSize() {
+        if (this.paperSize === "60x40") return 76;
+        if (this.paperSize === "80x40") return 98;
+        return 122; // 100x50mm ou A4
       },
 
       aplicarEstiloPagina() {
@@ -1835,232 +1027,85 @@
             @media print {
               @page { size: 100mm 50mm; margin: 0mm; }
               .print-labels-grid { display: block !important; margin: 0 !important; }
-              .thermal-label { width: 98mm !important; height: 48mm !important; margin: 1mm auto !important; padding: 3mm 4mm !important; page-break-after: always !important; box-sizing: border-box !important; }
-              .thermal-label-info h2 { font-size: 24pt !important; margin: 2px 0 !important; }
-              .thermal-label-info p { font-size: 11pt !important; margin: 2px 0 !important; }
+              .thermal-label { width: 96mm !important; height: 46mm !important; margin: 2mm auto !important; padding: 3.5mm 4mm !important; border-width: 2.5px !important; border-radius: 12px !important; }
+              .tl-header { font-size: 10pt !important; margin-bottom: 3px !important; }
+              .tl-id-box { font-size: 22pt !important; padding: 2px 10px !important; margin-bottom: 6px !important; }
+              .tl-row { font-size: 10.5pt !important; gap: 5px !important; }
+              .tl-icon { width: 15px !important; height: 15px !important; }
             }`;
         } else if (this.paperSize === "80x40") {
           styleEl.innerHTML = `
             @media print {
               @page { size: 80mm 40mm; margin: 0mm; }
               .print-labels-grid { display: block !important; margin: 0 !important; }
-              .thermal-label { width: 78mm !important; height: 38mm !important; margin: 1mm auto !important; padding: 2mm 3mm !important; page-break-after: always !important; box-sizing: border-box !important; }
-              .thermal-label-info h2 { font-size: 18pt !important; margin: 1px 0 !important; }
-              .thermal-label-info p { font-size: 9.5pt !important; margin: 1px 0 !important; }
+              .thermal-label { width: 76mm !important; height: 36mm !important; margin: 2mm auto !important; padding: 2.5mm 3mm !important; border-width: 2px !important; border-radius: 10px !important; }
+              .tl-header { font-size: 8.5pt !important; margin-bottom: 2px !important; }
+              .tl-id-box { font-size: 17pt !important; padding: 1px 7px !important; margin-bottom: 4px !important; }
+              .tl-row { font-size: 8.5pt !important; gap: 4px !important; }
+              .tl-icon { width: 13px !important; height: 13px !important; }
+              .thermal-qr-box { padding: 4px !important; }
             }`;
         } else if (this.paperSize === "60x40") {
           styleEl.innerHTML = `
             @media print {
               @page { size: 60mm 40mm; margin: 0mm; }
               .print-labels-grid { display: block !important; margin: 0 !important; }
-              .thermal-label { width: 58mm !important; height: 38mm !important; margin: 1mm auto !important; padding: 2mm !important; page-break-after: always !important; box-sizing: border-box !important; }
-              .thermal-label-info h2 { font-size: 15pt !important; margin: 1px 0 !important; }
-              .thermal-label-info p { font-size: 8.5pt !important; margin: 1px 0 !important; }
-              .thermal-canvas-container { width: 62px !important; height: 62px !important; }
+              .thermal-label { width: 57mm !important; height: 36mm !important; margin: 2mm auto !important; padding: 2mm !important; border-width: 2px !important; border-radius: 8px !important; gap: 6px !important; }
+              .tl-header { font-size: 7pt !important; margin-bottom: 2px !important; }
+              .tl-id-box { font-size: 13pt !important; padding: 1px 5px !important; margin-bottom: 3px !important; }
+              .tl-row { font-size: 7pt !important; gap: 3px !important; }
+              .tl-icon { width: 11px !important; height: 11px !important; }
+              .thermal-qr-box { padding: 3px !important; border-width: 1.5px !important; }
             }`;
         } else {
-          styleEl.innerHTML = `
-            @media print {
-              @page { size: A4; margin: 10mm; }
-            }`;
+          styleEl.innerHTML = `@media print { @page { size: A4; margin: 10mm; } }`;
         }
-      },
-
-      printTest() {
-        this.closeModal();
-        const barraTeste = state.estoque[0] || {
-          id: 999,
-          bitola: 12.5,
-          medida: 3.45,
-          peso: 3.32,
-          data: new Date().toLocaleDateString("pt-BR")
-        };
-
-        UI.el.printArea.innerHTML = `
-          <div class="print-labels-grid">
-            <div class="thermal-label">
-              <div class="thermal-label-info">
-                <div style="font-size:9px; font-weight:bold;">GRANDE AÇO • PONTA DE ESTOQUE</div>
-                <h2>ID #${barraTeste.id}</h2>
-                <p>Ø ${barraTeste.bitola.toFixed(2)} mm | ${barraTeste.medida.toFixed(2)} m</p>
-                <p>Peso: ${barraTeste.peso.toFixed(2)} kg</p>
-                <div style="font-size:9px;">Data: ${barraTeste.data}</div>
-              </div>
-              <div class="thermal-canvas-container"><canvas id="qrCanvas_test"></canvas></div>
-            </div>
-          </div>
-        `;
-
-        if (window.QRious) {
-          new QRious({
-            element: document.getElementById("qrCanvas_test"),
-            value: String(barraTeste.id),
-            size: this.paperSize === "60x40" ? 60 : 80
-          });
-        }
-
-        setTimeout(() => window.print(), 250);
       }
     };
 
-    /**
-     * ============================================================================
-     * 5.9 EXPORTAÇÃO DE RELATÓRIOS (EXCEL & PDF)
-     * ============================================================================
-     */
     const ExportManager = {
       init() {
         UI.el.btnExport.addEventListener("click", () => UI.el.exportOverlay.style.display = "flex");
         UI.el.btnCancelExport.addEventListener("click", () => UI.el.exportOverlay.style.display = "none");
         UI.el.btnGenerateExport.addEventListener("click", () => this.generate());
-
-        const hoje = new Date();
-        const trintaDias = new Date(hoje.getTime() - 30 * 86400000);
-        UI.el.exportDateFrom.value = trintaDias.toISOString().split("T")[0];
+        const hoje = new Date(); const antes = new Date(hoje.getTime() - 30*86400000);
+        UI.el.exportDateFrom.value = antes.toISOString().split("T")[0];
         UI.el.exportDateTo.value = hoje.toISOString().split("T")[0];
       },
-
-      getFilteredData() {
-        const from = UI.el.exportDateFrom.value ? new Date(UI.el.exportDateFrom.value + "T00:00:00") : null;
-        const to = UI.el.exportDateTo.value ? new Date(UI.el.exportDateTo.value + "T23:59:59") : null;
-
-        const filtrarPorData = (lista) => lista.filter(b => {
-          const d = Utils.parseDataBR(b.data);
-          if (!d) return true;
-          if (from && d < from) return false;
-          if (to && d > to) return false;
-          return true;
-        });
-
-        return {
-          estoque: filtrarPorData(state.estoque),
-          vendidos: filtrarPorData(state.vendidos)
-        };
-      },
-
-      async generate() {
-        const format = document.querySelector('input[name="exportFormat"]:checked').value;
-        const { estoque, vendidos } = this.getFilteredData();
-
-        try {
-          if (format === "excel" || format === "both") this.generateExcel(estoque, vendidos);
-          if (format === "pdf" || format === "both") this.generatePDF(estoque, vendidos);
-          UI.el.exportOverlay.style.display = "none";
-          UI.mostrarNotificacao("📊 Relatório exportado com sucesso!");
-        } catch (err) {
-          UI.mostrarNotificacao("Erro ao exportar: " + err.message, true);
-        }
-      },
-
-      generateExcel(estoque, vendidos) {
+      generate() {
         const wb = XLSX.utils.book_new();
-        const dataHoje = new Date().toLocaleDateString("pt-BR").replace(/\//g, "-");
-
-        const wsEstoque = XLSX.utils.aoa_to_sheet([
-          ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Observação"],
-          ...estoque.map(b => [b.id, b.data, b.bitola, b.medida, Number(b.peso.toFixed(2)), b.obs])
-        ]);
-        XLSX.utils.book_append_sheet(wb, wsEstoque, "Estoque Ativo");
-
-        const wsVendidos = XLSX.utils.aoa_to_sheet([
-          ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Cliente / Pedido"],
-          ...vendidos.map(b => [b.id, b.data, b.bitola, b.medida, Number(b.peso.toFixed(2)), b.obs])
-        ]);
-        XLSX.utils.book_append_sheet(wb, wsVendidos, "Histórico Vendidos");
-
-        XLSX.writeFile(wb, `Relatorio_Pontas_GrandeAco_${dataHoje}.xlsx`);
-      },
-
-      generatePDF(estoque, vendidos) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const dataHoje = new Date().toLocaleDateString("pt-BR");
-
-        doc.setFontSize(16);
-        doc.text("GRANDE AÇO - Relatório de Controle de Pontas", 14, 18);
-        doc.setFontSize(10);
-        doc.text(`Gerado em: ${dataHoje} | Total em Estoque: ${estoque.length} pontas`, 14, 25);
-
-        doc.autoTable({
-          startY: 32,
-          head: [["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Origem / Obs"]],
-          body: estoque.map(b => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
-          headStyles: { fillColor: [16, 185, 129] },
-          styles: { fontSize: 8 }
-        });
-
-        if (vendidos.length > 0) {
-          doc.autoTable({
-            startY: doc.lastAutoTable.finalY + 10,
-            head: [["ID (Vendido)", "Data", "Bitola", "Medida", "Peso", "Cliente / Pedido"]],
-            body: vendidos.slice(0, 50).map(b => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
-            headStyles: { fillColor: [229, 72, 77] },
-            styles: { fontSize: 8 }
-          });
-        }
-
-        doc.save(`Relatorio_Pontas_GrandeAco_${dataHoje.replace(/\//g, "-")}.pdf`);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["ID","Data","Bitola","Medida","Peso","Obs"], ...state.estoque.map(b => [b.id, b.data, b.bitola, b.medida, b.peso, b.obs])]), "Estoque");
+        XLSX.writeFile(wb, "Relatorio_Pontas.xlsx");
+        UI.el.exportOverlay.style.display = "none";
+        UI.mostrarNotificacao("Relatório gerado!");
       }
     };
 
-    /**
-     * ============================================================================
-     * 6. INICIALIZAÇÃO E EVENTOS
-     * ============================================================================
-     */
-    function iniciarAplicacao() {
-      UI.carregarTemaSalvo();
-      Auth.init();
-      ThermalPrinter.init();
-      ExportManager.init();
-
-      API.carregarEstoque();
-
-      // Eventos de Perfil / Login
-      UI.el.tabVendedor.addEventListener("click", () => Auth.setRole("vendedor"));
-      UI.el.tabOperador.addEventListener("click", () => Auth.setRole("operador"));
-      UI.el.authForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        Auth.login(state.userRole || "operador");
-      });
-      UI.el.btnLogout.addEventListener("click", () => Auth.showLoginModal());
-      UI.el.profileBadge.addEventListener("click", () => Auth.showLoginModal());
-      UI.el.btnSkipAuth.addEventListener("click", () => Auth.hideLoginModal());
-
-      // Navegação entre abas
-      document.querySelectorAll(".tab").forEach(tab => {
-        tab.addEventListener("click", () => UI.alternarAba(tab.dataset.target));
-      });
-
+    document.addEventListener("DOMContentLoaded", () => {
+      UI.carregarTemaSalvo(); Auth.init(); ThermalPrinter.init(); ExportManager.init(); API.carregarEstoque();
+      document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => UI.alternarAba(t.dataset.target)));
       UI.el.btnTheme.addEventListener("click", () => UI.alternarTema());
       UI.el.btnRecarregar.addEventListener("click", () => API.carregarEstoque());
-
-      // Corte e Carrinho
       UI.el.btnAddCarrinho.addEventListener("click", () => Controlador.adicionarAoCarrinho());
       UI.el.btnBuscar.addEventListener("click", () => Controlador.gerarPlanoDeCorte());
-
-      // Filtros de Estoque
       UI.el.filtroTabelaBitola.addEventListener("change", () => Controlador.renderizarVisaoGeralEstoque());
       UI.el.filtroTabelaBusca.addEventListener("input", () => Controlador.renderizarTabelaEstoque());
-
-      // Cadastro
-      UI.el.cadBitolaSelect.addEventListener("change", (e) => {
-        UI.el.grupoBitolaCustom.style.display = e.target.value === "OUTRA" ? "flex" : "none";
-        Controlador.atualizarPreviewPesoCadastro();
-      });
+      UI.el.cadBitolaSelect.addEventListener("change", (e) => { UI.el.grupoBitolaCustom.style.display = e.target.value === "OUTRA" ? "flex" : "none"; Controlador.atualizarPreviewPesoCadastro(); });
       UI.el.cadBitolaCustom.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
       UI.el.inputCadMedida.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
       UI.el.inputCadQtde.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
       UI.el.btnCadastrar.addEventListener("click", () => Controlador.executarCadastro());
-
-      // Baixa Manual e Scanner QR
       UI.el.inputBaixaId.addEventListener("input", () => Controlador.preverBaixaManual());
       UI.el.btnBaixar.addEventListener("click", () => Controlador.executarBaixaManual());
       UI.el.btnAbrirScanner.addEventListener("click", () => Controlador.iniciarScannerQR());
       UI.el.btnFecharScanner.addEventListener("click", () => Controlador.pararScannerQR());
-    }
-
-    document.addEventListener("DOMContentLoaded", iniciarAplicacao);
+      UI.el.tabVendedor.addEventListener("click", () => Auth.setRole("vendedor"));
+      UI.el.tabOperador.addEventListener("click", () => Auth.setRole("operador"));
+      UI.el.authForm.addEventListener("submit", (e) => { e.preventDefault(); Auth.login(state.userRole); });
+      UI.el.btnLogout.addEventListener("click", () => UI.el.authOverlay.style.display = "flex");
+      UI.el.profileBadge.addEventListener("click", () => UI.el.authOverlay.style.display = "flex");
+      UI.el.btnSkipAuth.addEventListener("click", () => UI.el.authOverlay.style.display = "none");
+    });
   </script>
 </body>
 </html>
