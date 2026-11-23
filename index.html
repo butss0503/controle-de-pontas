@@ -2,1043 +2,72 @@
 <html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Controle de Pontas — Grande Aço</title>
-  
-  <!-- Tipografia Apple Stack + Inter Fallback & JetBrains Mono para dados técnicos -->
+
+  <!-- Aplica o tema antes de desenhar a página (evita "piscar" claro → escuro) -->
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Bibliotecas QR Code e Exportação -->
-  <script src="https://unpkg.com/html5-qrcode" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js" defer></script>
-
-  <style>
-    /* ==========================================================================
-       1. APPLE DESIGN SYSTEM TOKENS (Baseado em DESIGN.md)
-       ========================================================================== */
-    :root {
-      /* Brand & Accent */
-      --primary: #0066cc;
-      --primary-focus: #0071e3;
-      --primary-on-dark: #2997ff;
-      --on-primary: #ffffff;
-
-      /* Light Surfaces (Default Apple Store / Configurator Mode) */
-      --canvas: #ffffff;
-      --canvas-parchment: #f5f5f7;
-      --surface-pearl: #fafafc;
-      --surface-chip-translucent: rgba(210, 210, 215, 0.64);
-      --frosted-bg: rgba(245, 245, 247, 0.80);
-
-      /* Text & Hairlines */
-      --ink: #1d1d1f;
-      --ink-muted-80: #333333;
-      --ink-muted-48: #7a7a7a;
-      --divider-soft: rgba(0, 0, 0, 0.04);
-      --hairline: #e0e0e0;
-      --hairline-subtle: rgba(0, 0, 0, 0.08);
-
-      /* Semantic Status */
-      --danger: #d93025;
-      --danger-bg: rgba(217, 48, 37, 0.08);
-      --warning: #b25e09;
-      --warning-bg: rgba(245, 166, 35, 0.12);
-      --success: #0066cc;
-
-      /* Radii & Spacing */
-      --rounded-xs: 5px;
-      --rounded-sm: 8px;
-      --rounded-md: 11px;
-      --rounded-lg: 18px;
-      --rounded-pill: 9999px;
-
-      /* Typography */
-      --font-display: "SF Pro Display", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-text: "SF Pro Text", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-      
-      --transition: 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-    }
-
-    [data-theme="dark"] {
-      --primary: #2997ff;
-      --primary-focus: #2997ff;
-      --on-primary: #ffffff;
-
-      --canvas: #272729;
-      --canvas-parchment: #121212;
-      --surface-pearl: #2a2a2c;
-      --surface-chip-translucent: rgba(60, 60, 65, 0.64);
-      --frosted-bg: rgba(18, 18, 18, 0.80);
-
-      --ink: #ffffff;
-      --ink-muted-80: #cccccc;
-      --ink-muted-48: #86868b;
-      --divider-soft: rgba(255, 255, 255, 0.06);
-      --hairline: #38383a;
-      --hairline-subtle: rgba(255, 255, 255, 0.12);
-
-      --danger: #ff453a;
-      --danger-bg: rgba(255, 69, 58, 0.14);
-      --warning: #ffd60a;
-      --warning-bg: rgba(255, 214, 10, 0.14);
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: var(--font-text);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    body {
-      background-color: var(--canvas-parchment);
-      color: var(--ink);
-      margin: 0;
-      padding: 0 0 64px 0;
-      font-size: 17px;
-      line-height: 1.47;
-      letter-spacing: -0.374px;
-      transition: background-color var(--transition), color var(--transition);
-    }
-
-    .mono {
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
-    }
-
-    /* ==========================================================================
-       2. GLOBAL NAV (44px Pure Black) & FROSTED SUB-NAV (52px)
-       ========================================================================== */
-    .global-nav {
-      background-color: #000000;
-      color: #ffffff;
-      height: 44px;
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      letter-spacing: -0.12px;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .global-nav-inner {
-      max-width: 1120px;
-      width: 100%;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .brand-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #ffffff;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .brand-logo {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #ffffff;
-      object-fit: contain;
-      padding: 2px;
-    }
-
-    .global-nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .nav-util-link {
-      background: none;
-      border: none;
-      color: #cccccc;
-      font-size: 12px;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: var(--rounded-xs);
-      transition: color var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .nav-util-link:hover {
-      color: #ffffff;
-    }
-
-    .sub-nav-frosted {
-      background: var(--frosted-bg);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-bottom: 1px solid var(--hairline-subtle);
-      min-height: 52px;
-      padding: 8px 24px;
-      position: sticky;
-      top: 44px;
-      z-index: 999;
-    }
-
-    .sub-nav-inner {
-      max-width: 1120px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .sub-nav-title {
-      font-family: var(--font-display);
-      font-size: 21px;
-      font-weight: 600;
-      line-height: 1.19;
-      letter-spacing: 0.231px;
-      margin: 0;
-      color: var(--ink);
-    }
-
-    .tabs {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      overflow-x: auto;
-    }
-
-    .tab {
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 1.29;
-      letter-spacing: -0.224px;
-      color: var(--ink-muted-80);
-      cursor: pointer;
-      padding: 6px 0;
-      border-bottom: 2px solid transparent;
-      transition: var(--transition);
-      white-space: nowrap;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      user-select: none;
-    }
-
-    .tab:hover {
-      color: var(--primary);
-    }
-
-    .tab.active {
-      color: var(--ink);
-      font-weight: 600;
-      border-bottom-color: var(--ink);
-    }
-
-    .tab-badge {
-      background: var(--divider-soft);
-      color: var(--ink);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 1px 7px;
-      border-radius: var(--rounded-pill);
-    }
-
-    /* ==========================================================================
-       3. CONTAINER PRINCIPAL & STORE UTILITY CARDS (rounded.lg = 18px)
-       ========================================================================== */
-    .container {
-      max-width: 1120px;
-      margin: 32px auto 0;
-      padding: 0 24px;
-    }
-
-    .page-header {
-      margin-bottom: 28px;
-    }
-
-    .page-header h2 {
-      font-family: var(--font-display);
-      font-size: 34px;
-      font-weight: 600;
-      line-height: 1.15;
-      letter-spacing: -0.374px;
-      margin: 0 0 6px 0;
-      color: var(--ink);
-    }
-
-    .page-header p {
-      font-size: 17px;
-      color: var(--ink-muted-48);
-      margin: 0;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    /* Store Utility Card: Pure White, 1px hairline border, 18px radius, 24px padding, zero shadow */
-    .box {
-      background-color: var(--canvas);
-      border: 1px solid var(--hairline);
-      border-radius: var(--rounded-lg);
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-
-    .box-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .box-title {
-      font-family: var(--font-display);
-      font-size: 21px;
-      font-weight: 600;
-      line-height: 1.19;
-      letter-spacing: -0.2px;
-      margin: 0;
-      color: var(--ink);
-    }
-
-    .box-subtitle {
-      font-size: 14px;
-      color: var(--ink-muted-48);
-      letter-spacing: -0.224px;
-    }
-
-    /* ==========================================================================
-       4. FORMULÁRIOS & BOTÕES (Apple Pill Grammar)
-       ========================================================================== */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.29;
-      letter-spacing: -0.224px;
-      color: var(--ink);
-    }
-
-    select, input[type="text"], input[type="number"], input[type="password"], input[type="date"] {
-      height: 44px;
-      padding: 10px 16px;
-      border: 1px solid var(--hairline);
-      border-radius: var(--rounded-md);
-      background-color: var(--canvas);
-      color: var(--ink);
-      font-size: 16px;
-      outline: none;
-      transition: border-color var(--transition), box-shadow var(--transition);
-      width: 100%;
-    }
-
-    select:focus, input:focus {
-      border-color: var(--primary-focus);
-      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
-    }
-
-    .input-with-btn {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* Primary Button: Action Blue Pill (9999px) + scale(0.95) press state */
-    .btn {
-      background-color: var(--primary);
-      color: var(--on-primary);
-      border: 1px solid transparent;
-      padding: 11px 22px;
-      border-radius: var(--rounded-pill);
-      font-size: 15px;
-      font-weight: 400;
-      line-height: 1.2;
-      letter-spacing: -0.224px;
-      cursor: pointer;
-      transition: transform 0.12s ease, opacity var(--transition);
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-    }
-
-    .btn:hover:not(:disabled) {
-      opacity: 0.92;
-    }
-
-    .btn:active:not(:disabled), .btn-secondary:active:not(:disabled), .btn-pearl:active:not(:disabled), .btn-danger:active:not(:disabled) {
-      transform: scale(0.95);
-    }
-
-    .btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    /* Secondary Ghost Pill */
-    .btn-secondary {
-      background-color: transparent;
-      color: var(--primary);
-      border: 1px solid var(--primary);
-      padding: 11px 22px;
-      border-radius: var(--rounded-pill);
-      font-size: 15px;
-      font-weight: 400;
-      cursor: pointer;
-      transition: transform 0.12s ease, background-color var(--transition);
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background-color: rgba(0, 102, 204, 0.06);
-    }
-
-    /* Pearl Capsule Button */
-    .btn-pearl {
-      background-color: var(--surface-pearl);
-      color: var(--ink-muted-80);
-      border: 1px solid var(--hairline);
-      padding: 8px 14px;
-      border-radius: var(--rounded-md);
-      font-size: 14px;
-      font-weight: 400;
-      cursor: pointer;
-      transition: transform 0.12s ease, border-color var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-pearl:hover:not(:disabled) {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    /* Danger Pill */
-    .btn-danger {
-      background-color: var(--danger);
-      color: #ffffff;
-      border: none;
-      padding: 11px 22px;
-      border-radius: var(--rounded-pill);
-      font-size: 15px;
-      cursor: pointer;
-      transition: transform 0.12s ease, opacity var(--transition);
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-sm {
-      padding: 6px 14px;
-      font-size: 13px;
-    }
-
-    .actions-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .actions-row > button {
-      flex: 1;
-      min-width: 190px;
-    }
-
-    /* Carrinho de Cortes (Configurator Option Chips) */
-    .cart-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 12px 0;
-      padding: 12px;
-      background-color: var(--canvas-parchment);
-      border-radius: var(--rounded-md);
-    }
-
-    .cart-chip {
-      background-color: var(--canvas);
-      border: 2px solid var(--primary-focus);
-      padding: 6px 14px;
-      border-radius: var(--rounded-pill);
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .cart-chip button {
-      background: none;
-      border: none;
-      color: var(--ink-muted-48);
-      cursor: pointer;
-      font-size: 14px;
-      padding: 0;
-    }
-
-    .cart-chip button:hover {
-      color: var(--danger);
-    }
-
-    /* ==========================================================================
-       5. KPIs, PLANO DE CORTE E BARRA VISUAL
-       ========================================================================== */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .kpi-card {
-      background-color: var(--canvas-parchment);
-      border-radius: var(--rounded-md);
-      padding: 16px;
-    }
-
-    .kpi-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--ink-muted-48);
-      letter-spacing: -0.12px;
-    }
-
-    .kpi-value {
-      font-family: var(--font-display);
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--ink);
-      margin-top: 4px;
-    }
-
-    .kpi-sub {
-      font-size: 12px;
-      color: var(--ink-muted-48);
-      margin-top: 2px;
-    }
-
-    .result-card {
-      background-color: var(--canvas-parchment);
-      border-radius: var(--rounded-md);
-      padding: 16px 20px;
-      margin-bottom: 12px;
-    }
-
-    .result-card.danger-border {
-      background-color: var(--danger-bg);
-      border: 1px solid var(--danger);
-    }
-
-    .result-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .result-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 17px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .result-info p {
-      margin: 2px 0 0 0;
-      color: var(--ink-muted-80);
-      font-size: 14px;
-    }
-
-    .badge {
-      background-color: var(--primary);
-      color: var(--on-primary);
-      font-family: var(--font-mono);
-      padding: 2px 10px;
-      border-radius: var(--rounded-pill);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .badge.danger-bg {
-      background-color: var(--danger);
-    }
-
-    .sobra-box {
-      text-align: right;
-    }
-
-    .sobra-label {
-      margin: 0;
-      font-size: 12px;
-      color: var(--ink-muted-48);
-    }
-
-    .sobra-val {
-      font-family: var(--font-mono);
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    .cut-bar-visual {
-      display: flex;
-      width: 100%;
-      height: 28px;
-      background-color: var(--hairline);
-      border-radius: var(--rounded-sm);
-      overflow: hidden;
-      margin-top: 14px;
-    }
-
-    .cut-segment {
-      background-color: var(--primary);
-      color: #ffffff;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-right: 1px solid rgba(255, 255, 255, 0.35);
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
-    .cut-segment:nth-child(even) {
-      opacity: 0.88;
-    }
-
-    .cut-leftover {
-      background-color: var(--surface-pearl);
-      color: var(--ink-muted-80);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
-    /* ==========================================================================
-       6. VISÃO GERAL (CONFIGURATOR CHIPS) E TABELAS
-       ========================================================================== */
-    .bitola-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .bitola-card {
-      background-color: var(--canvas);
-      border: 1px solid var(--hairline);
-      border-radius: var(--rounded-md);
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: border-color var(--transition);
-    }
-
-    .bitola-card:hover {
-      border-color: var(--primary);
-    }
-
-    .bitola-card.active {
-      border: 2px solid var(--primary-focus);
-    }
-
-    .bitola-card h4 {
-      margin: 0 0 6px 0;
-      color: var(--ink);
-      font-family: var(--font-mono);
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .bitola-card p {
-      margin: 2px 0;
-      font-size: 13px;
-      color: var(--ink-muted-48);
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .bitola-card strong {
-      color: var(--ink);
-      font-family: var(--font-mono);
-    }
-
-    .table-container {
-      overflow-x: auto;
-      border: 1px solid var(--hairline);
-      border-radius: var(--rounded-md);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      text-align: left;
-    }
-
-    th, td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--hairline);
-    }
-
-    th {
-      background-color: var(--canvas-parchment);
-      color: var(--ink-muted-48);
-      font-weight: 600;
-      font-size: 12px;
-      letter-spacing: -0.12px;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    tr:hover td {
-      background-color: var(--divider-soft);
-    }
-
-    /* ==========================================================================
-       7. MODAIS & TOAST
-       ========================================================================== */
-    .modal-overlay, .auth-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.48);
-      backdrop-filter: blur(8px);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-box, .auth-modal {
-      background-color: var(--canvas);
-      border: 1px solid var(--hairline);
-      border-radius: var(--rounded-lg);
-      max-width: 460px;
-      width: 100%;
-      padding: 28px;
-    }
-
-    .auth-modal h2 {
-      font-family: var(--font-display);
-      margin: 0 0 6px;
-      font-size: 24px;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    .auth-modal .subtitle {
-      text-align: center;
-      color: var(--ink-muted-48);
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    .role-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 18px;
-      background-color: var(--canvas-parchment);
-      padding: 4px;
-      border-radius: var(--rounded-pill);
-    }
-
-    .role-tab {
-      flex: 1;
-      padding: 8px 12px;
-      border: none;
-      background: transparent;
-      color: var(--ink-muted-80);
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: var(--rounded-pill);
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .role-tab.active {
-      background-color: var(--canvas);
-      color: var(--ink);
-      border: 1px solid var(--hairline);
-    }
-
-    .export-options {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .export-option {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px;
-      border: 1px solid var(--hairline);
-      border-radius: var(--rounded-md);
-      cursor: pointer;
-    }
-
-    .export-option:hover {
-      border-color: var(--primary);
-    }
-
-    .export-option input {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--primary);
-    }
-
-    .export-date-range {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    #qrReader {
-      width: 100%;
-      border-radius: var(--rounded-md);
-      overflow: hidden;
-    }
-
-    #toast {
-      visibility: hidden;
-      min-width: 280px;
-      background-color: #1d1d1f;
-      color: #ffffff;
-      text-align: center;
-      border-radius: var(--rounded-pill);
-      padding: 12px 24px;
-      position: fixed;
-      z-index: 3000;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 14px;
-      font-weight: 400;
-    }
-
-    #toast.show {
-      visibility: visible;
-      animation: fadein 0.2s, fadeout 0.2s 3.8s;
-    }
-
-    #toast.error {
-      background-color: var(--danger);
-    }
-
-    @keyframes fadein { from { bottom: 12px; opacity: 0; } to { bottom: 28px; opacity: 1; } }
-    @keyframes fadeout { from { bottom: 28px; opacity: 1; } to { bottom: 12px; opacity: 0; } }
-
-    /* ==========================================================================
-       8. LAYOUT DA ETIQUETA INDUSTRIAL (ID EM CAIXA + ÍCONES SVG + QR CODE)
-       ========================================================================== */
-    #printArea { display: none; }
-
-    .thermal-label {
-      border: 2.5px solid #000;
-      border-radius: 14px;
-      padding: 12px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      background: #fff;
-      color: #000;
-      box-sizing: border-box;
-      page-break-inside: avoid;
-      page-break-after: always;
-    }
-
-    .thermal-label-info {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .tl-header {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      color: #000;
-      margin-bottom: 4px;
-      white-space: nowrap;
-    }
-
-    .tl-id-box {
-      border: 2.5px solid #000;
-      border-radius: 7px;
-      padding: 2px 10px;
-      font-size: 28px;
-      font-weight: 900;
-      line-height: 1.1;
-      text-align: center;
-      color: #000;
-      margin-bottom: 8px;
-      display: inline-block;
-      width: fit-content;
-      white-space: nowrap;
-    }
-
-    .tl-specs {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .tl-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #000;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-
-    .tl-icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      stroke: #000;
-      fill: none;
-    }
-
-    .tl-divider {
-      font-weight: 400;
-      margin: 0 2px;
-      color: #000;
-    }
-
-    .thermal-qr-box {
-      border: 2.5px solid #000;
-      border-radius: 10px;
-      padding: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fff;
-      flex-shrink: 0;
-    }
-
-    .thermal-qr-box canvas {
-      display: block;
-    }
-
-    @media print {
-      body { background: #fff !important; color: #000 !important; padding: 0 !important; margin: 0 !important; }
-      .global-nav, .sub-nav-frosted, .container, #toast, .modal-overlay, .auth-overlay { display: none !important; }
-      #printArea { display: block !important; width: 100%; font-family: 'Inter', Arial, sans-serif; color: #000; }
-      .print-section-title { font-size: 15px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin: 12px 0; text-transform: uppercase; }
-      .print-order-item { border: 1px solid #000; padding: 8px; margin-bottom: 8px; border-radius: 4px; page-break-inside: avoid; font-size: 13px; }
-      .print-labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-top: 10px; }
-    }
-
-    @media (max-width: 735px) {
-      .global-nav, .sub-nav-frosted { padding: 0 16px; }
-      .container { padding: 0 16px; margin-top: 20px; }
-      .page-header h2 { font-size: 28px; }
-      .box { padding: 18px; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Bibliotecas com versão fixa + verificação de integridade (SRI) -->
+  <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" integrity="sha384-Dr98ddmUw2QkdCarNQ+OL7xLty7cSxgR0T7v1tq4UErS/qLV0132sBYTolRAFuOV" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js" integrity="sha384-b8MpgG2ZzWN6OPAtiB1JiBmDr9MpTt3NKK6KQf61hC/L7X4wJrvoTeVmMFPgp3nL" crossorigin="anonymous"></script>
+
+  <script defer src="corte.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
 
-  <!-- GLOBAL NAV (Apple 44px Pure Black) -->
+  <!-- GLOBAL NAV -->
   <header class="global-nav">
     <div class="global-nav-inner">
-      <a href="#" class="brand-link" onclick="return false;">
-        <img src="image_1d6ea0.png" alt="Grande Aço" class="brand-logo" onerror="this.style.display='none'">
+      <span class="brand-link">
+        <img src="image_1d6ea0.png" alt="" class="brand-logo" onerror="this.style.display='none'">
         <span>Grande Aço</span>
-      </a>
+      </span>
       <div class="global-nav-actions">
-        <button class="nav-util-link" id="profileBadge" title="Alterar Perfil">👤 <span id="profileRole">Operador</span></button>
-        <button class="nav-util-link" id="btnPrinter">🖨️ Etiqueta USB</button>
-        <button class="nav-util-link" id="btnExport">📊 Relatórios</button>
-        <button class="nav-util-link" id="btnRecarregar">🔄 Sincronizar</button>
-        <button class="nav-util-link" id="btnTheme" title="Alternar Aparência">🌙</button>
+        <button type="button" class="nav-util-link" data-action="abrir-login" title="Trocar perfil / sair">👤 <span id="profileRole">Entrar</span></button>
+        <button type="button" class="nav-util-link" data-action="abrir-modal" data-modal="modalImpressora" title="Impressora de etiquetas">🖨️ <span class="nav-label">Etiqueta USB</span></button>
+        <button type="button" class="nav-util-link" data-action="abrir-modal" data-modal="modalExportar" title="Relatórios">📊 <span class="nav-label">Relatórios</span></button>
+        <button type="button" class="nav-util-link" id="btnRecarregar" data-action="sincronizar" title="Sincronizar com a planilha">🔄 <span class="nav-label">Sincronizar</span></button>
+        <button type="button" class="nav-util-link" id="btnTheme" data-action="alternar-tema" title="Alternar aparência" aria-label="Alternar aparência">🌙</button>
       </div>
     </div>
   </header>
 
-  <!-- FROSTED SUB-NAV (52px Backdrop Blur) -->
+  <!-- SUB-NAV -->
   <nav class="sub-nav-frosted">
     <div class="sub-nav-inner">
       <h1 class="sub-nav-title">Controle de Pontas</h1>
-      <div class="tabs">
-        <div class="tab active" data-target="consulta">Plano de Corte</div>
-        <div class="tab" data-target="estoque">Estoque <span class="tab-badge" id="contadorEstoque">0</span></div>
-        <div class="tab" data-target="gerenciar">Cadastrar e Baixar</div>
-        <div class="tab" data-target="historico">Histórico</div>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" role="tab" aria-selected="true" aria-controls="consulta" data-target="consulta">Plano de Corte</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="estoque" data-target="estoque">Estoque <span class="tab-badge" id="contadorEstoque">0</span></button>
+        <button type="button" class="tab so-operador" role="tab" aria-selected="false" aria-controls="gerenciar" data-target="gerenciar">Cadastrar e Baixar</button>
+        <button type="button" class="tab so-operador" role="tab" aria-selected="false" aria-controls="historico" data-target="historico">Histórico</button>
       </div>
     </div>
   </nav>
 
   <div class="container">
     <!-- ABA 1: PLANO DE CORTE -->
-    <main id="consulta" class="tab-content active">
+    <main id="consulta" class="tab-content active" role="tabpanel">
       <div class="page-header">
         <h2>Plano de Corte Otimizado.</h2>
         <p>Combine medidas e extraia o máximo rendimento das pontas em pátio.</p>
@@ -1057,34 +86,39 @@
           </div>
           <div class="form-group">
             <label for="buscaMedida">Medida do Corte (m)</label>
-            <input type="number" id="buscaMedida" class="mono" step="0.05" min="0.05" placeholder="Ex: 1.50">
+            <input type="number" id="buscaMedida" class="mono" step="0.01" min="0.05" inputmode="decimal" placeholder="Ex: 1.50">
           </div>
           <div class="form-group">
             <label for="buscaQtde">Quantidade de Peças</label>
-            <input type="number" id="buscaQtde" class="mono" min="1" value="1">
+            <input type="number" id="buscaQtde" class="mono" min="1" max="500" value="1" inputmode="numeric">
           </div>
           <div class="form-group">
             <label for="buscaPrecoKg">Preço R$/kg (Opcional)</label>
-            <input type="number" id="buscaPrecoKg" class="mono" step="0.10" min="0" placeholder="Ex: 7.50">
+            <input type="number" id="buscaPrecoKg" class="mono" step="0.01" min="0" inputmode="decimal" placeholder="Ex: 7.50">
+          </div>
+          <div class="form-group">
+            <label for="buscaKerf">Perda por Corte (mm)</label>
+            <input type="number" id="buscaKerf" class="mono" step="0.5" min="0" max="20" value="0" inputmode="decimal">
+            <span class="input-hint">0 para tesoura/guilhotina · ~3 para serra</span>
           </div>
         </div>
 
-        <div id="areaCarrinhoCortes" style="display: none;">
-          <label>Medidas adicionadas ao pedido:</label>
+        <div id="areaCarrinhoCortes" hidden>
+          <span class="box-subtitle">Medidas adicionadas ao pedido:</span>
           <div class="cart-list" id="listaCarrinhoCortes"></div>
         </div>
 
         <div class="actions-row">
-          <button class="btn-secondary" id="btnAddCarrinho">Adicionar Medida</button>
-          <button class="btn" id="btnBuscar">Calcular Aproveitamento</button>
+          <button type="button" class="btn-secondary" data-action="adicionar-carrinho">Adicionar Medida</button>
+          <button type="button" class="btn" data-action="calcular-plano">Calcular Aproveitamento</button>
         </div>
       </section>
 
-      <section id="areaResultados"></section>
+      <section id="areaResultados" aria-live="polite"></section>
     </main>
 
     <!-- ABA 2: ESTOQUE -->
-    <section id="estoque" class="tab-content">
+    <section id="estoque" class="tab-content" role="tabpanel">
       <div class="page-header">
         <h2>Inventário de Pátio.</h2>
         <p>Visão em tempo real das pontas disponíveis e impressão de etiquetas térmicas.</p>
@@ -1094,12 +128,10 @@
         <div class="box-header">
           <h3 class="box-title">Resumo por Bitola</h3>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn-secondary btn-sm" id="btnImprimirSelecionadas" style="display: none;" onclick="Controlador.imprimirEtiquetasEmLote('selecionadas')">
+            <button type="button" class="btn-secondary btn-sm" id="btnImprimirSelecionadas" hidden data-action="imprimir-selecionadas">
               Imprimir Selecionadas (<span id="countSelecionadas">0</span>)
             </button>
-            <button class="btn btn-sm" onclick="Controlador.imprimirEtiquetasEmLote('visiveis')">
-              Imprimir Todas Visíveis
-            </button>
+            <button type="button" class="btn btn-sm" data-action="imprimir-visiveis">Imprimir Todas Visíveis</button>
           </div>
         </div>
 
@@ -1112,8 +144,8 @@
             <select id="filtroTabelaBitola" class="mono"><option value="TODAS">Todas</option></select>
           </div>
           <div class="form-group">
-            <label for="filtroTabelaBusca">Buscar por ID ou Medida Mínima (m)</label>
-            <input type="text" id="filtroTabelaBusca" class="mono" placeholder="Ex: #314 ou 3.50">
+            <label for="filtroTabelaBusca">Buscar</label>
+            <input type="text" id="filtroTabelaBusca" class="mono" placeholder="#314 (ID) · 3.50 (medida mín.) · texto">
           </div>
         </div>
 
@@ -1121,7 +153,7 @@
           <table>
             <thead>
               <tr>
-                <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkTodasEstoque" onchange="Controlador.alternarSelecaoTodas(this.checked)"></th>
+                <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkTodasEstoque" aria-label="Selecionar todas as visíveis"></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Bitola</th>
@@ -1132,7 +164,7 @@
               </tr>
             </thead>
             <tbody id="tabelaEstoqueBody">
-              <tr><td colspan="8" style="text-align:center; padding: 24px;">Sincronizando banco de dados...</td></tr>
+              <tr><td colspan="8" style="text-align:center; padding: 24px;">Entre com seu perfil para carregar o estoque.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1140,7 +172,7 @@
     </section>
 
     <!-- ABA 3: CADASTRAR E BAIXAR -->
-    <section id="gerenciar" class="tab-content">
+    <section id="gerenciar" class="tab-content" role="tabpanel">
       <div class="page-header">
         <h2>Movimentação de Estoque.</h2>
         <p>Entrada de novas pontas ou baixa manual via ID e leitor de QR Code.</p>
@@ -1153,77 +185,73 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="cadBitolaSelect">Bitola Comercial (mm)</label>
-            <select id="cadBitolaSelect" class="mono">
-              <option value="4.20">4.20 mm</option>
-              <option value="5.00">5.00 mm</option>
-              <option value="6.30">6.30 mm</option>
-              <option value="8.00" selected>8.00 mm</option>
-              <option value="10.00">10.00 mm</option>
-              <option value="12.50">12.50 mm</option>
-              <option value="16.00">16.00 mm</option>
-              <option value="20.00">20.00 mm</option>
-              <option value="25.00">25.00 mm</option>
-              <option value="32.00">32.00 mm</option>
-              <option value="OUTRA">Outra medida...</option>
-            </select>
+            <select id="cadBitolaSelect" class="mono"></select>
           </div>
-          <div class="form-group" id="grupoBitolaCustom" style="display:none;">
+          <div class="form-group" id="grupoBitolaCustom" hidden>
             <label for="cadBitolaCustom">Bitola Personalizada (mm)</label>
-            <input type="number" id="cadBitolaCustom" class="mono" step="0.01" min="1" placeholder="Ex: 9.50">
+            <input type="number" id="cadBitolaCustom" class="mono" step="0.01" min="1" inputmode="decimal" placeholder="Ex: 9.50">
           </div>
           <div class="form-group">
             <label for="cadMedida">Medida da Barra (m)</label>
-            <input type="number" id="cadMedida" class="mono" step="0.01" min="0.05" placeholder="Ex: 5.50">
+            <input type="number" id="cadMedida" class="mono" step="0.01" min="0.05" inputmode="decimal" placeholder="Ex: 5.50">
           </div>
           <div class="form-group">
             <label for="cadQtde">Quantidade</label>
-            <input type="number" id="cadQtde" class="mono" min="1" value="1">
+            <input type="number" id="cadQtde" class="mono" min="1" max="200" value="1" inputmode="numeric">
           </div>
           <div class="form-group">
             <label for="cadObs">Origem / Observação</label>
-            <input type="text" id="cadObs" placeholder="Ex: Sobra de obra">
+            <input type="text" id="cadObs" maxlength="120" placeholder="Ex: Sobra de obra">
           </div>
         </div>
         <div id="previewPesoCadastro" class="box-subtitle" style="margin-bottom: 16px;"></div>
-        <button class="btn" id="btnCadastrar" style="width: auto;">Confirmar Cadastro</button>
+        <button type="button" class="btn" id="btnCadastrar" data-action="cadastrar">Confirmar Cadastro</button>
+        <div id="resultadoCadastro"></div>
       </div>
 
       <div class="box">
         <div class="box-header">
           <h3 class="box-title">Baixa Manual por ID</h3>
+          <span class="box-subtitle">Venda da barra inteira, sem gerar sobra</span>
         </div>
         <div class="form-grid">
           <div class="form-group">
             <label for="baixaId">ID da Ponta</label>
             <div class="input-with-btn">
-              <input type="number" id="baixaId" class="mono" placeholder="Ex: 342">
-              <button class="btn-pearl" id="btnAbrirScanner" type="button">📷 Ler QR</button>
+              <input type="number" id="baixaId" class="mono" inputmode="numeric" placeholder="Ex: 342">
+              <button type="button" class="btn-pearl" data-action="abrir-scanner">📷 Ler QR</button>
             </div>
           </div>
           <div class="form-group">
             <label for="baixaClienteManual">Cliente / Nº do Pedido</label>
-            <input type="text" id="baixaClienteManual" placeholder="Ex: Pedido 1045">
+            <input type="text" id="baixaClienteManual" maxlength="100" placeholder="Ex: Pedido 1045">
           </div>
         </div>
         <div id="previewBaixa" style="margin-bottom: 16px;"></div>
-        <button class="btn-danger" id="btnBaixar" style="display:none;">Confirmar Baixa (Vendido)</button>
+        <button type="button" class="btn-danger" id="btnBaixar" data-action="baixar-manual" hidden>Confirmar Baixa (Vendido)</button>
       </div>
     </section>
 
     <!-- ABA 4: HISTÓRICO -->
-    <section id="historico" class="tab-content">
+    <section id="historico" class="tab-content" role="tabpanel">
       <div class="page-header">
         <h2>Histórico de Saídas.</h2>
-        <p>Últimas barras vendidas ou cortadas, com opção de estorno rápido.</p>
+        <p>Barras vendidas ou cortadas, com opção de estorno.</p>
       </div>
 
       <div class="box">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="filtroHistorico">Buscar</label>
+            <input type="text" id="filtroHistorico" placeholder="#ID, cliente ou pedido">
+          </div>
+        </div>
         <div class="table-container">
           <table>
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Data</th>
+                <th>Saída</th>
                 <th>Bitola</th>
                 <th>Medida</th>
                 <th>Peso</th>
@@ -1235,46 +263,51 @@
               <tr><td colspan="7" style="text-align:center; padding: 24px;">Carregando histórico...</td></tr>
             </tbody>
           </table>
+          <div class="table-footer" id="historicoRodape" hidden>
+            <button type="button" class="btn-pearl" data-action="historico-mais">Mostrar mais</button>
+          </div>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- MODAL CÂMERA QR CODE -->
-  <div class="modal-overlay" id="modalScanner">
+  <!-- MODAL: CÂMERA QR CODE -->
+  <div class="modal-overlay" id="modalScanner" role="dialog" aria-modal="true" aria-labelledby="tituloScanner">
     <div class="modal-box">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="margin:0; font-size:18px; font-weight:600;">Escanear Etiqueta</h3>
-        <button class="btn-pearl" id="btnFecharScanner">Fechar</button>
+      <div class="modal-head">
+        <h3 id="tituloScanner">Escanear Etiqueta</h3>
+        <button type="button" class="btn-pearl" data-action="fechar-modal">Fechar</button>
       </div>
       <div id="qrReader"></div>
     </div>
   </div>
 
-  <!-- MODAL PERFIL -->
-  <div class="auth-overlay" id="authOverlay">
-    <div class="auth-modal">
-      <h2>Perfil de Acesso</h2>
-      <p class="subtitle">Selecione o modo de operação no sistema</p>
-      <div class="role-tabs">
-        <button class="role-tab active" data-role="vendedor" id="tabVendedor">Vendedor</button>
-        <button class="role-tab" data-role="operador" id="tabOperador">Operador</button>
+  <!-- MODAL: LOGIN / PERFIL -->
+  <div class="modal-overlay" id="modalLogin" role="dialog" aria-modal="true" aria-labelledby="tituloLogin">
+    <div class="modal-box">
+      <h2 id="tituloLogin">Perfil de Acesso</h2>
+      <p class="subtitle" id="loginSubtitulo">Selecione o perfil e informe a senha</p>
+      <div class="role-tabs" role="radiogroup" aria-label="Perfil">
+        <button type="button" class="role-tab active" role="radio" aria-checked="true" data-role="vendedor">Vendedor</button>
+        <button type="button" class="role-tab" role="radio" aria-checked="false" data-role="operador">Operador</button>
       </div>
       <form id="authForm">
-        <div class="form-group" style="margin-bottom: 16px;">
+        <div class="form-group">
           <label for="authPassword">Senha</label>
-          <input type="password" id="authPassword" class="mono" placeholder="Digite a senha">
+          <input type="password" id="authPassword" class="mono" autocomplete="current-password" placeholder="Digite a senha" required>
         </div>
-        <button type="submit" class="btn" style="width: 100%;">Confirmar</button>
+        <div class="form-error" id="authErro" role="alert"></div>
+        <button type="submit" class="btn" id="btnEntrar" style="width: 100%;">Entrar</button>
       </form>
-      <button type="button" class="btn-secondary" id="btnSkipAuth" style="width: 100%; margin-top: 10px;">Cancelar</button>
+      <button type="button" class="btn-secondary" id="btnSair" data-action="sair" style="width: 100%; margin-top: 10px;" hidden>Sair da sessão</button>
+      <button type="button" class="btn-secondary" id="btnCancelarLogin" data-action="fechar-modal" style="width: 100%; margin-top: 10px;" hidden>Cancelar</button>
     </div>
   </div>
 
-  <!-- MODAL IMPRESSORA USB -->
-  <div class="auth-overlay" id="printerOverlay">
-    <div class="auth-modal">
-      <h2>Impressora Térmica USB</h2>
+  <!-- MODAL: IMPRESSORA -->
+  <div class="modal-overlay" id="modalImpressora" role="dialog" aria-modal="true" aria-labelledby="tituloImpressora">
+    <div class="modal-box">
+      <h2 id="tituloImpressora">Impressora Térmica USB</h2>
       <p class="subtitle">Configure o formato da etiqueta instalada na máquina</p>
       <div class="form-group" style="margin-bottom: 18px;">
         <label for="printerPaperSize">Dimensão da Etiqueta</label>
@@ -1285,880 +318,44 @@
           <option value="a4">Folha A4</option>
         </select>
       </div>
-      <button class="btn" id="btnTestPrint" style="width: 100%;">Imprimir Etiqueta de Teste</button>
-      <button class="btn-secondary" id="btnClosePrinter" style="width: 100%; margin-top: 10px;">Fechar</button>
+      <button type="button" class="btn" data-action="imprimir-teste" style="width: 100%;">Imprimir Etiqueta de Teste</button>
+      <button type="button" class="btn-secondary" data-action="fechar-modal" style="width: 100%; margin-top: 10px;">Fechar</button>
     </div>
   </div>
 
-  <!-- MODAL EXPORTAÇÃO -->
-  <div class="auth-overlay" id="exportOverlay">
-    <div class="auth-modal">
-      <h2>Exportar Relatório</h2>
-      <p class="subtitle">Exporte os dados do estoque e histórico de vendas</p>
+  <!-- MODAL: EXPORTAÇÃO -->
+  <div class="modal-overlay" id="modalExportar" role="dialog" aria-modal="true" aria-labelledby="tituloExportar">
+    <div class="modal-box">
+      <h2 id="tituloExportar">Exportar Relatório</h2>
+      <p class="subtitle">Estoque atual completo + vendas do período escolhido</p>
       <div class="export-date-range">
-        <div class="form-group"><label>Início</label><input type="date" id="exportDateFrom"></div>
-        <div class="form-group"><label>Fim</label><input type="date" id="exportDateTo"></div>
+        <div class="form-group"><label for="exportDateFrom">Vendas desde</label><input type="date" id="exportDateFrom"></div>
+        <div class="form-group"><label for="exportDateTo">Até</label><input type="date" id="exportDateTo"></div>
       </div>
       <div class="export-options">
         <label class="export-option"><input type="radio" name="exportFormat" value="excel" checked><div><strong>Planilha Excel (.xlsx)</strong></div></label>
         <label class="export-option"><input type="radio" name="exportFormat" value="pdf"><div><strong>Documento PDF (.pdf)</strong></div></label>
       </div>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn-secondary" id="btnCancelExport" style="flex: 1;">Cancelar</button>
-        <button class="btn" id="btnGenerateExport" style="flex: 1;">Baixar</button>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-action="fechar-modal">Cancelar</button>
+        <button type="button" class="btn" data-action="exportar">Baixar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRMAÇÃO -->
+  <div class="modal-overlay" id="modalConfirmar" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitulo" aria-describedby="confirmCorpo">
+    <div class="modal-box">
+      <h2 id="confirmTitulo">Confirmar</h2>
+      <div class="confirm-body" id="confirmCorpo"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="confirmCancelar">Cancelar</button>
+        <button type="button" class="btn" id="confirmOk">Confirmar</button>
       </div>
     </div>
   </div>
 
   <div id="printArea"></div>
-  <div id="toast"></div>
-
-  <script>
-    const CONFIG = {
-      SCRIPT_URL: "https://script.google.com/macros/s/AKfycbynp6oZY1KhlMWv9WugDFcd6P98CgVIL4YBuj_vazYDM3b-y5VeZHgEW3uvYt83lj6F/exec",
-      SPREADSHEET_ID: "1dtIpGk97RggIA7E-4diWtiEPa0GbI6d1i_F7UsA9CtI",
-      SHEET_NAME: "Pontas",
-      FATOR_PESO_ACO: 162,
-      DELAY_ATUALIZACAO_MS: 1500
-    };
-
-    const state = {
-      estoque: [],
-      vendidos: [],
-      carrinhoCortes: [],
-      planoDeCorteAtual: [],
-      resumoCorteAtual: null,
-      maxIdPlanilha: 0,
-      qrScanner: null,
-      userRole: "operador"
-    };
-
-    const Utils = {
-      escapeHTML(str) {
-        if (!str) return "";
-        return String(str).replace(/[&<>'"]/g, tag => ({
-          '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-        }[tag]));
-      },
-      parseNumero(val) {
-        if (typeof val === "number") return val;
-        if (!val) return 0;
-        return parseFloat(String(val).replace(",", ".")) || 0;
-      },
-      parseNumeroPlanilha(cel) {
-        if (!cel) return 0;
-        return this.parseNumero(cel.v !== undefined ? cel.v : cel.f);
-      },
-      parseTextoPlanilha(cel) {
-        if (!cel) return "-";
-        return String(cel.f || cel.v || "-");
-      },
-      calcularPesoAco(bitola, medida) {
-        if (!bitola || !medida) return 0;
-        return (Math.pow(bitola, 2) / CONFIG.FATOR_PESO_ACO) * medida;
-      },
-      arredondarMedida(v) {
-        return Math.round(v * 1000) / 1000;
-      },
-      formatarMoeda(v) {
-        return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      },
-      parseDataBR(str) {
-        if (!str || str === "-") return null;
-        const p = String(str).split(" ")[0].split("/");
-        if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]);
-        const d = new Date(str);
-        return isNaN(d.getTime()) ? null : d;
-      },
-
-      // GERADOR DO LAYOUT DE ETIQUETA INDUSTRIAL (ID EM CAIXA + ÍCONES SVG + QR GRANDE)
-      gerarHtmlEtiqueta(barra, canvasId) {
-        const dataFormatada = barra.data && barra.data !== "-" ? this.escapeHTML(barra.data) : new Date().toLocaleDateString("pt-BR");
-        return `
-          <div class="thermal-label">
-            <div class="thermal-label-info">
-              <div class="tl-header">GRANDE AÇO • PONTA</div>
-              <div class="tl-id-box">ID #${barra.id}</div>
-              <div class="tl-specs">
-                <div class="tl-row">
-                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="8"></circle>
-                    <line x1="5" y1="19" x2="19" y2="5"></line>
-                  </svg>
-                  <span>${Number(barra.bitola).toFixed(2)} mm</span>
-                  <span class="tl-divider">|</span>
-                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="9" cy="11" r="6"></circle>
-                    <circle cx="9" cy="11" r="2"></circle>
-                    <path d="M9 17h12v-4H14"></path>
-                    <line x1="16" y1="17" x2="16" y2="15"></line>
-                    <line x1="19" y1="17" x2="19" y2="15"></line>
-                  </svg>
-                  <span>${Number(barra.medida).toFixed(2)} m</span>
-                </div>
-                <div class="tl-row">
-                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 5h6"></path>
-                    <path d="M12 5v3"></path>
-                    <path d="M6 8h12l2 12H4L6 8z"></path>
-                  </svg>
-                  <span>Peso: ${Number(barra.peso).toFixed(2)} kg</span>
-                </div>
-                <div class="tl-row">
-                  <svg class="tl-icon" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="17" rx="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                    <circle cx="8" cy="13" r="1" fill="#000"></circle>
-                    <circle cx="12" cy="13" r="1" fill="#000"></circle>
-                    <circle cx="16" cy="13" r="1" fill="#000"></circle>
-                    <circle cx="8" cy="17" r="1" fill="#000"></circle>
-                    <circle cx="12" cy="17" r="1" fill="#000"></circle>
-                    <circle cx="16" cy="17" r="1" fill="#000"></circle>
-                  </svg>
-                  <span>Data: ${dataFormatada}</span>
-                </div>
-              </div>
-            </div>
-            <div class="thermal-qr-box">
-              <canvas id="${canvasId}"></canvas>
-            </div>
-          </div>
-        `;
-      }
-    };
-
-    const UI = {
-      el: {
-        selectBitola: document.getElementById("buscaBitola"),
-        inputBuscaMedida: document.getElementById("buscaMedida"),
-        inputBuscaQtde: document.getElementById("buscaQtde"),
-        inputBuscaPrecoKg: document.getElementById("buscaPrecoKg"),
-        areaCarrinhoCortes: document.getElementById("areaCarrinhoCortes"),
-        listaCarrinhoCortes: document.getElementById("listaCarrinhoCortes"),
-        areaResultados: document.getElementById("areaResultados"),
-        cadBitolaSelect: document.getElementById("cadBitolaSelect"),
-        grupoBitolaCustom: document.getElementById("grupoBitolaCustom"),
-        cadBitolaCustom: document.getElementById("cadBitolaCustom"),
-        inputCadMedida: document.getElementById("cadMedida"),
-        inputCadQtde: document.getElementById("cadQtde"),
-        inputCadObs: document.getElementById("cadObs"),
-        previewPesoCadastro: document.getElementById("previewPesoCadastro"),
-        inputBaixaId: document.getElementById("baixaId"),
-        inputBaixaClienteManual: document.getElementById("baixaClienteManual"),
-        previewBaixa: document.getElementById("previewBaixa"),
-        contadorEstoque: document.getElementById("contadorEstoque"),
-        kpisEstoque: document.getElementById("kpisEstoque"),
-        cardsBitolaEstoque: document.getElementById("cardsBitolaEstoque"),
-        filtroTabelaBitola: document.getElementById("filtroTabelaBitola"),
-        filtroTabelaBusca: document.getElementById("filtroTabelaBusca"),
-        tabelaEstoqueBody: document.getElementById("tabelaEstoqueBody"),
-        tabelaHistoricoBody: document.getElementById("tabelaHistoricoBody"),
-        btnAddCarrinho: document.getElementById("btnAddCarrinho"),
-        btnBuscar: document.getElementById("btnBuscar"),
-        btnCadastrar: document.getElementById("btnCadastrar"),
-        btnBaixar: document.getElementById("btnBaixar"),
-        btnRecarregar: document.getElementById("btnRecarregar"),
-        btnTheme: document.getElementById("btnTheme"),
-        btnAbrirScanner: document.getElementById("btnAbrirScanner"),
-        btnFecharScanner: document.getElementById("btnFecharScanner"),
-        modalScanner: document.getElementById("modalScanner"),
-        printArea: document.getElementById("printArea"),
-        toast: document.getElementById("toast"),
-        profileBadge: document.getElementById("profileBadge"),
-        profileRole: document.getElementById("profileRole"),
-        btnPrinter: document.getElementById("btnPrinter"),
-        btnExport: document.getElementById("btnExport"),
-        authOverlay: document.getElementById("authOverlay"),
-        authForm: document.getElementById("authForm"),
-        authPassword: document.getElementById("authPassword"),
-        tabVendedor: document.getElementById("tabVendedor"),
-        tabOperador: document.getElementById("tabOperador"),
-        printerOverlay: document.getElementById("printerOverlay"),
-        btnTestPrint: document.getElementById("btnTestPrint"),
-        btnClosePrinter: document.getElementById("btnClosePrinter"),
-        exportOverlay: document.getElementById("exportOverlay"),
-        exportDateFrom: document.getElementById("exportDateFrom"),
-        exportDateTo: document.getElementById("exportDateTo"),
-        btnGenerateExport: document.getElementById("btnGenerateExport"),
-        btnCancelExport: document.getElementById("btnCancelExport")
-      },
-      mostrarNotificacao(msg, isErro = false) {
-        const t = this.el.toast;
-        t.textContent = msg || "Operação concluída!";
-        t.className = isErro ? "show error" : "show";
-        setTimeout(() => { t.className = ""; }, 4000);
-      },
-      alternarAba(id) {
-        document.querySelectorAll(".tab, .tab-content").forEach(el => el.classList.remove("active"));
-        document.querySelector(`.tab[data-target="${id}"]`).classList.add("active");
-        document.getElementById(id).classList.add("active");
-      },
-      atualizarSelectBitolas(estoque) {
-        const bitolas = [...new Set(estoque.map(i => i.bitola))].filter(b => b > 0).sort((a, b) => a - b);
-        const atual = this.el.selectBitola.value;
-        this.el.selectBitola.innerHTML = '<option value="">Selecione...</option>' + bitolas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
-        if (atual) this.el.selectBitola.value = atual;
-        this.el.filtroTabelaBitola.innerHTML = '<option value="TODAS">Todas</option>' + bitolas.map(b => `<option value="${b}">Ø ${b.toFixed(2)} mm</option>`).join("");
-      },
-      limparFormulariosOperacao() {
-        this.el.areaResultados.innerHTML = "";
-        state.carrinhoCortes = [];
-        Controlador.renderizarCarrinhoCortes();
-        this.el.inputBaixaId.value = "";
-        this.el.inputBaixaClienteManual.value = "";
-        this.el.previewBaixa.innerHTML = "";
-        this.el.btnBaixar.style.display = "none";
-        this.el.inputCadMedida.value = "";
-        this.el.inputCadObs.value = "";
-        this.el.previewPesoCadastro.innerHTML = "";
-      },
-      alternarTema() {
-        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-        const novoTema = isDark ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", novoTema);
-        this.el.btnTheme.textContent = isDark ? "🌙" : "☀️";
-        localStorage.setItem("theme", novoTema);
-      },
-      carregarTemaSalvo() {
-        const tema = localStorage.getItem("theme") || "light";
-        document.documentElement.setAttribute("data-theme", tema);
-        this.el.btnTheme.textContent = tema === "dark" ? "☀️" : "🌙";
-      }
-    };
-
-    const API = {
-      async carregarEstoque(silencioso = false) {
-        try {
-          if (!silencioso) UI.el.btnRecarregar.textContent = "⏳...";
-          const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H");
-          const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?sheet=${CONFIG.SHEET_NAME}&tq=${query}&tqx=out:json&_cb=${Date.now()}`;
-          const res = await fetch(url);
-          const txt = await res.text();
-          const json = JSON.parse(txt.substring(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
-
-          state.estoque = [];
-          state.vendidos = [];
-          state.maxIdPlanilha = 0;
-
-          json.table.rows.forEach((row, idx) => {
-            const id = parseInt(row.c[0]?.v, 10);
-            if (!isNaN(id) && id > state.maxIdPlanilha) state.maxIdPlanilha = id;
-            const bitola = Utils.parseNumeroPlanilha(row.c[3]);
-            const medida = Utils.parseNumeroPlanilha(row.c[4]);
-            if (!id || bitola <= 0 || medida <= 0) return;
-
-            const item = {
-              ordemPlanilha: idx,
-              id,
-              data: Utils.parseTextoPlanilha(row.c[1]),
-              bitola,
-              medida,
-              peso: Utils.parseNumeroPlanilha(row.c[5]) || Utils.calcularPesoAco(bitola, medida),
-              situacao: Utils.parseTextoPlanilha(row.c[6]).trim(),
-              obs: Utils.parseTextoPlanilha(row.c[7])
-            };
-            if (item.situacao.toLowerCase().includes("vendido")) state.vendidos.push(item);
-            else state.estoque.push(item);
-          });
-
-          UI.el.contadorEstoque.textContent = state.estoque.length;
-          UI.atualizarSelectBitolas(state.estoque);
-          Controlador.renderizarVisaoGeralEstoque();
-          Controlador.renderizarHistorico();
-        } catch (e) {
-          UI.mostrarNotificacao("Erro ao sincronizar com a planilha.", true);
-        } finally {
-          UI.el.btnRecarregar.textContent = "🔄 Sincronizar";
-        }
-      },
-      async enviarRequisicao(payload, btn, txtLoad, txtOrig) {
-        if (btn) { btn.disabled = true; btn.textContent = txtLoad; }
-        try {
-          const res = await fetch(CONFIG.SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-          const json = await res.json();
-          UI.mostrarNotificacao(json.mensagem || json.message || "Sucesso!", !(json.sucesso ?? json.success));
-        } catch (e) {
-          UI.mostrarNotificacao("Comando enviado com sucesso!", false);
-        } finally {
-          UI.limparFormulariosOperacao();
-          Controlador.idsSelecionados.clear();
-          setTimeout(async () => {
-            await this.carregarEstoque(true);
-            if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
-          }, CONFIG.DELAY_ATUALIZACAO_MS);
-        }
-      }
-    };
-
-    const Controlador = {
-      listaFiltradaAtual: [],
-      idsSelecionados: new Set(),
-
-      adicionarAoCarrinho() {
-        const bitola = parseFloat(UI.el.selectBitola.value);
-        const medida = parseFloat(UI.el.inputBuscaMedida.value);
-        const qtde = parseInt(UI.el.inputBuscaQtde.value, 10) || 1;
-        if (!bitola || isNaN(medida) || medida <= 0) return UI.mostrarNotificacao("Preencha bitola e medida.", true);
-        const ex = state.carrinhoCortes.find(i => i.medida === medida);
-        if (ex) ex.qtde += qtde;
-        else state.carrinhoCortes.push({ medida, qtde });
-        UI.el.inputBuscaMedida.value = "";
-        UI.el.inputBuscaQtde.value = "1";
-        this.renderizarCarrinhoCortes();
-      },
-      removerDoCarrinho(i) {
-        state.carrinhoCortes.splice(i, 1);
-        this.renderizarCarrinhoCortes();
-      },
-      renderizarCarrinhoCortes() {
-        const area = UI.el.areaCarrinhoCortes;
-        if (state.carrinhoCortes.length === 0) return area.style.display = "none";
-        area.style.display = "block";
-        UI.el.listaCarrinhoCortes.innerHTML = state.carrinhoCortes.map((item, idx) => `
-          <div class="cart-chip mono">
-            <span><strong>${item.qtde}x</strong> de <strong>${item.medida.toFixed(2)}m</strong></span>
-            <button type="button" onclick="Controlador.removerDoCarrinho(${idx})">✕</button>
-          </div>
-        `).join("");
-      },
-      gerarPlanoDeCorte() {
-        const bitola = parseFloat(UI.el.selectBitola.value);
-        const medidaDigitada = parseFloat(UI.el.inputBuscaMedida.value);
-        const qtdeDigitada = parseInt(UI.el.inputBuscaQtde.value, 10) || 1;
-        const precoKg = parseFloat(UI.el.inputBuscaPrecoKg.value) || 0;
-        if (!bitola) return UI.mostrarNotificacao("Selecione a bitola.", true);
-
-        let lista = [...state.carrinhoCortes];
-        if (!isNaN(medidaDigitada) && medidaDigitada > 0) lista.push({ medida: medidaDigitada, qtde: qtdeDigitada });
-        if (lista.length === 0) return UI.mostrarNotificacao("Adicione itens ao pedido.", true);
-
-        let pecas = [];
-        lista.forEach(p => { for (let i = 0; i < p.qtde; i++) pecas.push(p.medida); });
-        pecas.sort((a, b) => b - a);
-
-        const candidatas = state.estoque
-          .filter(b => b.bitola === bitola && b.medida >= Math.min(...pecas))
-          .sort((a, b) => a.medida - b.medida);
-
-        state.planoDeCorteAtual = [];
-        let restantes = [...pecas];
-        let nextSobraId = state.maxIdPlanilha + 1;
-
-        candidatas.forEach(barra => {
-          if (restantes.length === 0) return;
-          let livre = barra.medida;
-          let cortes = [];
-          for (let i = 0; i < restantes.length; i++) {
-            if (restantes[i] <= livre + 0.0001) {
-              cortes.push(restantes[i]);
-              livre = Utils.arredondarMedida(livre - restantes[i]);
-              restantes.splice(i, 1);
-              i--;
-            }
-          }
-          if (cortes.length > 0) {
-            const consumido = Utils.arredondarMedida(barra.medida - livre);
-            const contagem = {};
-            cortes.forEach(c => contagem[c] = (contagem[c] || 0) + 1);
-            const desc = Object.entries(contagem).map(([m, q]) => `${q}x de ${parseFloat(m).toFixed(2)}m`).join(" + ");
-            state.planoDeCorteAtual.push({
-              id: barra.id,
-              bitola: barra.bitola,
-              medidaOriginal: barra.medida,
-              cortesDetalhados: cortes,
-              descricaoCortes: desc,
-              sobra: livre,
-              idSobraPrevisto: livre >= 0.05 ? nextSobraId++ : null,
-              pesoTotal: Utils.calcularPesoAco(barra.bitola, barra.medida),
-              pesoLiquido: Utils.calcularPesoAco(barra.bitola, consumido)
-            });
-          }
-        });
-
-        this.renderizarResultadoCorte(pecas.length, restantes.length, precoKg, bitola, UI.el.areaResultados);
-      },
-      renderizarResultadoCorte(total, faltante, precoKg, bitola, container) {
-        if (faltante > 0) {
-          container.innerHTML = `<div class="box" style="border-color:var(--danger)">❌ Estoque insuficiente. Faltaram ${faltante} peça(s).</div>`;
-          return;
-        }
-        const totalBarras = state.planoDeCorteAtual.length;
-        const pBruto = state.planoDeCorteAtual.reduce((s, b) => s + b.pesoTotal, 0);
-        const pLiq = state.planoDeCorteAtual.reduce((s, b) => s + b.pesoLiquido, 0);
-        const pSobra = Math.max(0, pBruto - pLiq);
-        state.resumoCorteAtual = { bitola, totalSolicitado: total, totalBarrasFisicas: totalBarras, pesoBrutoTotal: pBruto, pesoLiquidoTotal: pLiq, pesoSobraTotal: pSobra, precoKg };
-
-        container.innerHTML = `
-          <div class="box">
-            <div class="box-header">
-              <h3 class="box-title">Plano de Corte Sugerido</h3>
-            </div>
-            <div class="summary-grid">
-              <div class="kpi-card"><div class="kpi-label">Barras Físicas</div><div class="kpi-value">${totalBarras} un</div></div>
-              <div class="kpi-card"><div class="kpi-label">Peso Bruto</div><div class="kpi-value">${pBruto.toFixed(2)} kg</div></div>
-              <div class="kpi-card"><div class="kpi-label">Peso Líquido</div><div class="kpi-value" style="color:var(--primary)">${pLiq.toFixed(2)} kg</div></div>
-              <div class="kpi-card"><div class="kpi-label">Retorno Sobras</div><div class="kpi-value">${pSobra.toFixed(2)} kg</div></div>
-              ${precoKg > 0 ? `<div class="kpi-card"><div class="kpi-label">Valor Líquido</div><div class="kpi-value" style="color:var(--primary)">${Utils.formatarMoeda(pLiq * precoKg)}</div></div>` : ''}
-            </div>
-            ${state.planoDeCorteAtual.map(b => `
-              <div class="result-card">
-                <div class="result-header">
-                  <div class="result-info">
-                    <h3><span class="badge">ID #${b.id}</span> Barra Original de <strong class="mono">${b.medidaOriginal.toFixed(2)}m</strong></h3>
-                    <p>Cortar: <strong class="mono">${b.descricaoCortes}</strong> • Peso Total: <strong class="mono">${b.pesoTotal.toFixed(2)} kg</strong></p>
-                  </div>
-                  <div class="sobra-box"><p class="sobra-label">Sobra ${b.idSobraPrevisto ? `(#${b.idSobraPrevisto})` : ''}</p><div class="sobra-val">${b.sobra.toFixed(2)}m</div></div>
-                </div>
-                <div class="cut-bar-visual">
-                  ${b.cortesDetalhados.map(c => `<div class="cut-segment" style="width:${(c / b.medidaOriginal) * 100}%">${c.toFixed(2)}m</div>`).join("")}
-                  ${b.sobra > 0.01 ? `<div class="cut-leftover" style="width:${(b.sobra / b.medidaOriginal) * 100}%">${b.sobra >= 0.3 ? b.sobra.toFixed(2) + 'm' : ''}</div>` : ''}
-                </div>
-              </div>
-            `).join("")}
-            <div class="form-group" style="margin-top:16px;">
-              <label for="inputClienteCorte">Cliente / Nº do Pedido</label>
-              <input type="text" id="inputClienteCorte" placeholder="Ex: João / Pedido 4510">
-            </div>
-            <div class="actions-row">
-              <button class="btn-secondary" onclick="Controlador.copiarOrdemWhatsApp()">Copiar p/ WhatsApp</button>
-              <button class="btn-secondary" onclick="Controlador.imprimirOrdemEEtiquetas()">Imprimir Ordem / Etiquetas</button>
-              <button class="btn" onclick="Controlador.executarBaixaAutomatica(this)">Confirmar Baixa</button>
-            </div>
-          </div>`;
-      },
-      copiarOrdemWhatsApp() {
-        if (!state.planoDeCorteAtual.length) return;
-        const c = document.getElementById("inputClienteCorte")?.value.trim();
-        let txt = [`✂️ *ORDEM DE CORTE - GRANDE AÇO*`, c ? `👤 *Cliente:* ${c}` : null, `------------------`].filter(Boolean);
-        state.planoDeCorteAtual.forEach(b => txt.push(`▪ *ID #${b.id}* (${b.medidaOriginal.toFixed(2)}m) ↳ ${b.descricaoCortes} | Sobra: ${b.sobra.toFixed(2)}m`));
-        navigator.clipboard.writeText(txt.join("\n")).then(() => UI.mostrarNotificacao("Ordem copiada para o WhatsApp!"));
-      },
-      imprimirOrdemEEtiquetas() {
-        if (!state.planoDeCorteAtual.length) return;
-        const c = Utils.escapeHTML(document.getElementById("inputClienteCorte")?.value.trim() || "Balcão");
-        const dataHoje = new Date().toLocaleDateString("pt-BR");
-        const sobras = state.planoDeCorteAtual.filter(b => b.idSobraPrevisto);
-
-        UI.el.printArea.innerHTML = `
-          <div class="print-section-title">ORDEM DE CORTE - ${c} (${dataHoje})</div>
-          ${state.planoDeCorteAtual.map(b => `<div class="print-order-item"><strong>ID #${b.id}</strong> (${b.medidaOriginal.toFixed(2)}m) ➔ Cortar: <strong>${b.descricaoCortes}</strong> | Sobra: <strong>${b.sobra.toFixed(2)}m</strong></div>`).join("")}
-          ${sobras.length > 0 ? `<div class="print-section-title" style="margin-top:20px;">ETIQUETAS DE SOBRAS</div><div class="print-labels-grid" id="loteSobrasPrint"></div>` : ''}`;
-
-        if (sobras.length > 0) {
-          const cont = document.getElementById("loteSobrasPrint");
-          const qrSize = ThermalPrinter.getQrSize();
-          sobras.forEach(b => {
-            const pesoSobra = Utils.calcularPesoAco(b.bitola, b.sobra);
-            const canvasId = `qrSobra_${b.idSobraPrevisto}`;
-            const wrapper = document.createElement("div");
-            wrapper.innerHTML = Utils.gerarHtmlEtiqueta({
-              id: b.idSobraPrevisto,
-              bitola: b.bitola,
-              medida: b.sobra,
-              peso: pesoSobra,
-              data: dataHoje
-            }, canvasId);
-            cont.appendChild(wrapper.firstElementChild);
-            new QRious({ element: document.getElementById(canvasId), value: String(b.idSobraPrevisto), size: qrSize, level: "M" });
-          });
-        }
-        setTimeout(() => window.print(), 300);
-      },
-      imprimirEtiquetaUnica(id) {
-        const b = state.estoque.find(i => i.id === id);
-        if (!b) return;
-        const canvasId = `qrSingle_${b.id}`;
-        UI.el.printArea.innerHTML = `<div class="print-labels-grid">${Utils.gerarHtmlEtiqueta(b, canvasId)}</div>`;
-        new QRious({ element: document.getElementById(canvasId), value: String(b.id), size: ThermalPrinter.getQrSize(), level: "M" });
-        setTimeout(() => window.print(), 300);
-      },
-      alternarSelecaoItem(id, m) {
-        if (m) this.idsSelecionados.add(id);
-        else this.idsSelecionados.delete(id);
-        this.atualizarBotaoSelecionadas();
-      },
-      alternarSelecaoTodas(m) {
-        this.listaFiltradaAtual.forEach(b => {
-          if (m) this.idsSelecionados.add(b.id);
-          else this.idsSelecionados.delete(b.id);
-        });
-        document.querySelectorAll(".check-item-estoque").forEach(chk => chk.checked = m);
-        this.atualizarBotaoSelecionadas();
-      },
-      atualizarBotaoSelecionadas() {
-        const btn = document.getElementById("btnImprimirSelecionadas");
-        const cnt = document.getElementById("countSelecionadas");
-        if (!btn || !cnt) return;
-        cnt.textContent = this.idsSelecionados.size;
-        btn.style.display = this.idsSelecionados.size > 0 ? "inline-flex" : "none";
-      },
-      imprimirEtiquetasEmLote(modo) {
-        const lista = modo === "selecionadas"
-          ? state.estoque.filter(b => this.idsSelecionados.has(b.id))
-          : (this.listaFiltradaAtual.length > 0 ? this.listaFiltradaAtual : state.estoque);
-
-        if (lista.length === 0) return UI.mostrarNotificacao("Nenhuma ponta selecionada para imprimir.", true);
-
-        if (lista.length > 30) {
-          if (!confirm(`Deseja imprimir ${lista.length} etiquetas de uma só vez?`)) return;
-        }
-
-        UI.el.printArea.innerHTML = `<div class="print-labels-grid" id="loteContainer"></div>`;
-        const cont = document.getElementById("loteContainer");
-        const qrSize = ThermalPrinter.getQrSize();
-
-        lista.forEach(b => {
-          const canvasId = `qrLote_${b.id}`;
-          const wrapper = document.createElement("div");
-          wrapper.innerHTML = Utils.gerarHtmlEtiqueta(b, canvasId);
-          cont.appendChild(wrapper.firstElementChild);
-          new QRious({ element: document.getElementById(canvasId), value: String(b.id), size: qrSize, level: "M" });
-        });
-
-        setTimeout(() => window.print(), 350);
-      },
-      renderizarVisaoGeralEstoque() {
-        const est = state.estoque;
-        UI.el.kpisEstoque.innerHTML = `
-          <div class="kpi-card"><div class="kpi-label">Total de Pontas</div><div class="kpi-value">${est.length} un</div></div>
-          <div class="kpi-card"><div class="kpi-label">Metragem Linear</div><div class="kpi-value">${est.reduce((s, i) => s + i.medida, 0).toFixed(1)} m</div></div>
-          <div class="kpi-card"><div class="kpi-label">Peso Total</div><div class="kpi-value" style="color:var(--primary)">${est.reduce((s, i) => s + i.peso, 0).toFixed(1)} kg</div></div>`;
-        
-        const mapa = {};
-        est.forEach(i => {
-          if (!mapa[i.bitola]) mapa[i.bitola] = { q: 0, m: 0 };
-          mapa[i.bitola].q++;
-          mapa[i.bitola].m += i.medida;
-        });
-
-        const filtroAtual = UI.el.filtroTabelaBitola.value;
-        UI.el.cardsBitolaEstoque.innerHTML = Object.keys(mapa).map(Number).sort((a, b) => a - b).map(b => `
-          <div class="bitola-card ${String(filtroAtual) === String(b) ? 'active' : ''}" onclick="UI.el.filtroTabelaBitola.value = (UI.el.filtroTabelaBitola.value == '${b}' ? 'TODAS' : '${b}'); Controlador.renderizarVisaoGeralEstoque()">
-            <h4>Ø ${b.toFixed(2)} mm</h4>
-            <p><span>Barras:</span> <strong>${mapa[b].q}</strong></p>
-            <p><span>Metros:</span> <strong>${mapa[b].m.toFixed(1)} m</strong></p>
-          </div>`).join("");
-        this.renderizarTabelaEstoque();
-      },
-      renderizarTabelaEstoque() {
-        const bit = UI.el.filtroTabelaBitola.value;
-        const busca = UI.el.filtroTabelaBusca.value.trim().toLowerCase();
-        let lista = state.estoque.filter(i => {
-          if (bit !== "TODAS" && i.bitola !== parseFloat(bit)) return false;
-          if (busca) {
-            const l = busca.replace("#", "").replace(",", ".");
-            const num = parseFloat(l);
-            return String(i.id).includes(l) || (!isNaN(num) && i.medida >= num);
-          }
-          return true;
-        });
-        lista.sort((a, b) => a.bitola - b.bitola || b.medida - a.medida);
-        this.listaFiltradaAtual = lista;
-        const master = document.getElementById("checkTodasEstoque");
-        if (master) master.checked = false;
-
-        if (lista.length === 0) {
-          UI.el.tabelaEstoqueBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--ink-muted-48)">Nenhuma ponta encontrada.</td></tr>`;
-          this.atualizarBotaoSelecionadas();
-          return;
-        }
-
-        UI.el.tabelaEstoqueBody.innerHTML = lista.map(b => `
-          <tr>
-            <td style="text-align: center;"><input type="checkbox" class="check-item-estoque" data-id="${b.id}" ${this.idsSelecionados.has(b.id) ? "checked" : ""} onchange="Controlador.alternarSelecaoItem(${b.id}, this.checked)"></td>
-            <td><span class="badge">#${b.id}</span></td>
-            <td class="mono" style="font-size:13px; color:var(--ink-muted-48)">${Utils.escapeHTML(b.data)}</td>
-            <td class="mono"><strong>Ø ${b.bitola.toFixed(2)} mm</strong></td>
-            <td class="mono" style="color:var(--primary)"><strong>${b.medida.toFixed(2)} m</strong></td>
-            <td class="mono">${b.peso.toFixed(2)} kg</td>
-            <td style="font-size:13px; color:var(--ink-muted-48)">${Utils.escapeHTML(b.obs)}</td>
-            <td style="display:flex; gap:6px;">
-              <button class="btn-pearl btn-sm" onclick="Controlador.imprimirEtiquetaUnica(${b.id})" title="Imprimir Etiqueta">🏷️</button>
-              <button class="btn-danger btn-sm" onclick="UI.alternarAba('gerenciar'); UI.el.inputBaixaId.value='${b.id}'; Controlador.preverBaixaManual();">Baixar</button>
-            </td>
-          </tr>`).join("");
-        this.atualizarBotaoSelecionadas();
-      },
-      renderizarHistorico() {
-        const hist = [...state.vendidos].sort((a, b) => b.ordemPlanilha - a.ordemPlanilha).slice(0, 50);
-        if (hist.length === 0) {
-          UI.el.tabelaHistoricoBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--ink-muted-48)">Nenhum histórico recente.</td></tr>`;
-          return;
-        }
-        UI.el.tabelaHistoricoBody.innerHTML = hist.map(b => `
-          <tr>
-            <td><span class="badge danger-bg">#${b.id}</span></td>
-            <td class="mono" style="font-size:13px">${Utils.escapeHTML(b.data)}</td>
-            <td class="mono">Ø ${b.bitola.toFixed(2)} mm</td>
-            <td class="mono">${b.medida.toFixed(2)} m</td>
-            <td class="mono">${b.peso.toFixed(2)} kg</td>
-            <td style="font-size:13px">${Utils.escapeHTML(b.obs)}</td>
-            <td><button class="btn-pearl btn-sm" onclick="API.enviarRequisicao({action:'estornar', id:${b.id}}, this, 'Estornando...', 'Estornar')">Estornar</button></td>
-          </tr>`).join("");
-      },
-      iniciarScannerQR() {
-        UI.el.modalScanner.classList.add("active");
-        state.qrScanner = new Html5Qrcode("qrReader");
-        state.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 }, (txt) => {
-          const id = txt.replace(/\D/g, "");
-          if (id) {
-            UI.el.inputBaixaId.value = id;
-            this.preverBaixaManual();
-            UI.mostrarNotificacao(`ID #${id} lido!`);
-            this.pararScannerQR();
-          }
-        }, () => {});
-      },
-      pararScannerQR() {
-        UI.el.modalScanner.classList.remove("active");
-        if (state.qrScanner) {
-          state.qrScanner.stop().then(() => state.qrScanner.clear()).catch(() => {});
-          state.qrScanner = null;
-        }
-      },
-      atualizarPreviewPesoCadastro() {
-        const sel = UI.el.cadBitolaSelect.value;
-        const bitola = sel === "OUTRA" ? parseFloat(UI.el.cadBitolaCustom.value) : parseFloat(sel);
-        const medida = parseFloat(UI.el.inputCadMedida.value);
-        const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
-        if (bitola > 0 && medida > 0) {
-          const p = Utils.calcularPesoAco(bitola, medida);
-          UI.el.previewPesoCadastro.innerHTML = `Peso estimado: <strong class="mono">${p.toFixed(2)} kg/barra</strong> (Total: <strong class="mono">${(p * qtde).toFixed(2)} kg</strong>)`;
-        } else {
-          UI.el.previewPesoCadastro.innerHTML = "";
-        }
-      },
-      preverBaixaManual() {
-        const id = UI.el.inputBaixaId.value.trim();
-        const prev = UI.el.previewBaixa;
-        const btn = UI.el.btnBaixar;
-        if (!id) { prev.innerHTML = ""; btn.style.display = "none"; return; }
-        const b = state.estoque.find(i => String(i.id) === id);
-        if (b) {
-          prev.innerHTML = `<div class="result-card danger-border"><div class="result-info"><h3><span class="badge danger-bg">ID #${b.id}</span></h3><p>Ø ${b.bitola.toFixed(2)} mm • ${b.medida.toFixed(2)} m • ${b.peso.toFixed(2)} kg</p></div></div>`;
-          btn.style.display = "inline-flex";
-        } else {
-          prev.innerHTML = `<div style="color:var(--danger); font-size:14px;">ID não encontrado ou já vendido.</div>`;
-          btn.style.display = "none";
-        }
-      },
-      executarBaixaAutomatica(btn) {
-        const cliente = document.getElementById("inputClienteCorte")?.value.trim() || "";
-        const instrucoes = state.planoDeCorteAtual.map(i => ({ id: i.id, sobra: i.sobra, bitola: i.bitola }));
-        API.enviarRequisicao({ action: "baixar", instrucoes, cliente }, btn, "Processando...", "Confirmar Baixa");
-      },
-      executarBaixaManual() {
-        const id = UI.el.inputBaixaId.value.trim();
-        const cliente = UI.el.inputBaixaClienteManual.value.trim();
-        if (!id) return;
-        API.enviarRequisicao({ action: "baixar", cliente, instrucoes: [{ id, sobra: 0, bitola: 0 }] }, UI.el.btnBaixar, "Processando...", "Confirmar Baixa (Vendido)");
-      },
-      executarCadastro() {
-        const sel = UI.el.cadBitolaSelect.value;
-        const bitola = sel === "OUTRA" ? parseFloat(UI.el.cadBitolaCustom.value) : parseFloat(sel);
-        const medida = parseFloat(UI.el.inputCadMedida.value);
-        const qtde = parseInt(UI.el.inputCadQtde.value, 10) || 1;
-        const obs = UI.el.inputCadObs.value.trim();
-        if (!bitola || isNaN(bitola) || !medida || isNaN(medida)) return UI.mostrarNotificacao("Preencha bitola e medida.", true);
-        API.enviarRequisicao({ action: "cadastrar", bitola, medida, qtde, obs }, UI.el.btnCadastrar, "Salvando...", "Confirmar Cadastro");
-      }
-    };
-
-    const Auth = {
-      SENHAS: { vendedor: "vendedor123", operador: "operador123" },
-      init() { const role = localStorage.getItem("pontas_userRole") || "operador"; this.applyRoleUI(role); },
-      setRole(role) {
-        state.userRole = role;
-        document.getElementById("tabVendedor").classList.toggle("active", role === "vendedor");
-        document.getElementById("tabOperador").classList.toggle("active", role === "operador");
-      },
-      login(role) {
-        const p = UI.el.authPassword.value;
-        if (p !== this.SENHAS[role]) return UI.mostrarNotificacao("Senha incorreta!", true);
-        localStorage.setItem("pontas_userRole", role);
-        this.applyRoleUI(role);
-        UI.el.authOverlay.style.display = "none";
-        UI.mostrarNotificacao(`Perfil ativo: ${role === "vendedor" ? "Vendedor" : "Operador"}`);
-      },
-      applyRoleUI(role) {
-        state.userRole = role;
-        document.documentElement.setAttribute("data-role", role);
-        UI.el.profileRole.textContent = role === "vendedor" ? "Vendedor" : "Operador";
-        const ger = document.querySelector('.tab[data-target="gerenciar"]');
-        const hist = document.querySelector('.tab[data-target="historico"]');
-        if (ger) ger.style.display = role === "operador" ? "inline-flex" : "none";
-        if (hist) hist.style.display = role === "operador" ? "inline-flex" : "none";
-        if (role === "vendedor") UI.alternarAba("consulta");
-      }
-    };
-
-    const ThermalPrinter = {
-      paperSize: "100x50",
-      init() {
-        this.paperSize = localStorage.getItem("pontas_paperSize") || "100x50";
-        const selectSize = document.getElementById("printerPaperSize");
-        if (selectSize) {
-          selectSize.value = this.paperSize;
-          selectSize.addEventListener("change", (e) => {
-            this.paperSize = e.target.value;
-            localStorage.setItem("pontas_paperSize", this.paperSize);
-            this.aplicarEstiloPagina();
-            UI.mostrarNotificacao("Formato da etiqueta: " + this.paperSize);
-          });
-        }
-
-        UI.el.btnPrinter.addEventListener("click", () => UI.el.printerOverlay.style.display = "flex");
-        UI.el.btnClosePrinter.addEventListener("click", () => UI.el.printerOverlay.style.display = "none");
-        UI.el.btnTestPrint.addEventListener("click", () => {
-          UI.el.printerOverlay.style.display = "none";
-          const b = state.estoque[0] || { id: 267, bitola: 6.30, medida: 0.84, peso: 0.21, data: "22/10/2026" };
-          const canvasId = "qrTest_print";
-          UI.el.printArea.innerHTML = `<div class="print-labels-grid">${Utils.gerarHtmlEtiqueta(b, canvasId)}</div>`;
-          new QRious({ element: document.getElementById(canvasId), value: String(b.id), size: this.getQrSize(), level: "M" });
-          setTimeout(() => window.print(), 300);
-        });
-
-        this.aplicarEstiloPagina();
-      },
-      getQrSize() {
-        if (this.paperSize === "60x40") return 76;
-        if (this.paperSize === "80x40") return 98;
-        return 122;
-      },
-      aplicarEstiloPagina() {
-        let styleEl = document.getElementById("dynamicPrintStyle");
-        if (!styleEl) {
-          styleEl = document.createElement("style");
-          styleEl.id = "dynamicPrintStyle";
-          document.head.appendChild(styleEl);
-        }
-
-        if (this.paperSize === "100x50") {
-          styleEl.innerHTML = `
-            @media print {
-              @page { size: 100mm 50mm; margin: 0mm; }
-              .print-labels-grid { display: block !important; margin: 0 !important; }
-              .thermal-label { width: 96mm !important; height: 46mm !important; margin: 2mm auto !important; padding: 3.5mm 4mm !important; border-width: 2.5px !important; border-radius: 12px !important; }
-              .tl-header { font-size: 10pt !important; margin-bottom: 3px !important; }
-              .tl-id-box { font-size: 22pt !important; padding: 2px 10px !important; margin-bottom: 6px !important; }
-              .tl-row { font-size: 10.5pt !important; gap: 5px !important; }
-              .tl-icon { width: 15px !important; height: 15px !important; }
-            }`;
-        } else if (this.paperSize === "80x40") {
-          styleEl.innerHTML = `
-            @media print {
-              @page { size: 80mm 40mm; margin: 0mm; }
-              .print-labels-grid { display: block !important; margin: 0 !important; }
-              .thermal-label { width: 76mm !important; height: 36mm !important; margin: 2mm auto !important; padding: 2.5mm 3mm !important; border-width: 2px !important; border-radius: 10px !important; }
-              .tl-header { font-size: 8.5pt !important; margin-bottom: 2px !important; }
-              .tl-id-box { font-size: 17pt !important; padding: 1px 7px !important; margin-bottom: 4px !important; }
-              .tl-row { font-size: 8.5pt !important; gap: 4px !important; }
-              .tl-icon { width: 13px !important; height: 13px !important; }
-              .thermal-qr-box { padding: 4px !important; }
-            }`;
-        } else if (this.paperSize === "60x40") {
-          styleEl.innerHTML = `
-            @media print {
-              @page { size: 60mm 40mm; margin: 0mm; }
-              .print-labels-grid { display: block !important; margin: 0 !important; }
-              .thermal-label { width: 57mm !important; height: 36mm !important; margin: 2mm auto !important; padding: 2mm !important; border-width: 2px !important; border-radius: 8px !important; gap: 6px !important; }
-              .tl-header { font-size: 7pt !important; margin-bottom: 2px !important; }
-              .tl-id-box { font-size: 13pt !important; padding: 1px 5px !important; margin-bottom: 3px !important; }
-              .tl-row { font-size: 7pt !important; gap: 3px !important; }
-              .tl-icon { width: 11px !important; height: 11px !important; }
-              .thermal-qr-box { padding: 3px !important; border-width: 1.5px !important; }
-            }`;
-        } else {
-          styleEl.innerHTML = `@media print { @page { size: A4; margin: 10mm; } }`;
-        }
-      }
-    };
-
-    const ExportManager = {
-      init() {
-        UI.el.btnExport.addEventListener("click", () => UI.el.exportOverlay.style.display = "flex");
-        UI.el.btnCancelExport.addEventListener("click", () => UI.el.exportOverlay.style.display = "none");
-        UI.el.btnGenerateExport.addEventListener("click", () => this.generate());
-        const hoje = new Date();
-        const antes = new Date(hoje.getTime() - 30 * 86400000);
-        UI.el.exportDateFrom.value = antes.toISOString().split("T")[0];
-        UI.el.exportDateTo.value = hoje.toISOString().split("T")[0];
-      },
-      generate() {
-        const format = document.querySelector('input[name="exportFormat"]:checked').value;
-        const dataHoje = new Date().toLocaleDateString("pt-BR");
-
-        if (format === "excel") {
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
-            ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Obs"],
-            ...state.estoque.map(b => [b.id, b.data, b.bitola, b.medida, Number(b.peso.toFixed(2)), b.obs])
-          ]), "Estoque");
-          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
-            ["ID", "Data", "Bitola (mm)", "Medida (m)", "Peso (kg)", "Cliente/Pedido"],
-            ...state.vendidos.map(b => [b.id, b.data, b.bitola, b.medida, Number(b.peso.toFixed(2)), b.obs])
-          ]), "Vendidos");
-          XLSX.writeFile(wb, `Relatorio_Pontas_${dataHoje.replace(/\//g, "-")}.xlsx`);
-        } else {
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF();
-          doc.setFontSize(16);
-          doc.text("GRANDE AÇO - Relatório de Pontas", 14, 18);
-          doc.setFontSize(10);
-          doc.text(`Data: ${dataHoje} | Total em Estoque: ${state.estoque.length} pontas`, 14, 25);
-          doc.autoTable({
-            startY: 32,
-            head: [["ID", "Data", "Bitola", "Medida", "Peso", "Observação"]],
-            body: state.estoque.map(b => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
-            headStyles: { fillColor: [0, 102, 204] },
-            styles: { fontSize: 8 }
-          });
-          doc.save(`Relatorio_Pontas_${dataHoje.replace(/\//g, "-")}.pdf`);
-        }
-
-        UI.el.exportOverlay.style.display = "none";
-        UI.mostrarNotificacao("Relatório gerado com sucesso!");
-      }
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-      UI.carregarTemaSalvo();
-      Auth.init();
-      ThermalPrinter.init();
-      ExportManager.init();
-      API.carregarEstoque();
-
-      document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => UI.alternarAba(t.dataset.target)));
-      UI.el.btnTheme.addEventListener("click", () => UI.alternarTema());
-      UI.el.btnRecarregar.addEventListener("click", () => API.carregarEstoque());
-      UI.el.btnAddCarrinho.addEventListener("click", () => Controlador.adicionarAoCarrinho());
-      UI.el.btnBuscar.addEventListener("click", () => Controlador.gerarPlanoDeCorte());
-      UI.el.filtroTabelaBitola.addEventListener("change", () => Controlador.renderizarVisaoGeralEstoque());
-      UI.el.filtroTabelaBusca.addEventListener("input", () => Controlador.renderizarTabelaEstoque());
-      UI.el.cadBitolaSelect.addEventListener("change", (e) => {
-        UI.el.grupoBitolaCustom.style.display = e.target.value === "OUTRA" ? "flex" : "none";
-        Controlador.atualizarPreviewPesoCadastro();
-      });
-      UI.el.cadBitolaCustom.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
-      UI.el.inputCadMedida.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
-      UI.el.inputCadQtde.addEventListener("input", () => Controlador.atualizarPreviewPesoCadastro());
-      UI.el.btnCadastrar.addEventListener("click", () => Controlador.executarCadastro());
-      UI.el.inputBaixaId.addEventListener("input", () => Controlador.preverBaixaManual());
-      UI.el.btnBaixar.addEventListener("click", () => Controlador.executarBaixaManual());
-      UI.el.btnAbrirScanner.addEventListener("click", () => Controlador.iniciarScannerQR());
-      UI.el.btnFecharScanner.addEventListener("click", () => Controlador.pararScannerQR());
-      UI.el.tabVendedor.addEventListener("click", () => Auth.setRole("vendedor"));
-      UI.el.tabOperador.addEventListener("click", () => Auth.setRole("operador"));
-      UI.el.authForm.addEventListener("submit", (e) => { e.preventDefault(); Auth.login(state.userRole); });
-      UI.el.profileBadge.addEventListener("click", () => UI.el.authOverlay.style.display = "flex");
-      document.getElementById("btnSkipAuth").addEventListener("click", () => UI.el.authOverlay.style.display = "none");
-    });
-  </script>
+  <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
