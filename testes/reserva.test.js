@@ -34,3 +34,10 @@ test("relógio do servidor corrige o relógio adiantado do PC", () => {
   assert.equal(ReservaLogica.ativa(r, pcPertoDoFim, desvio), true);
   assert.equal(ReservaLogica.ativa(r, agoraPC + 7300000, desvio), false);
 });
+
+test("mesmasBarras: o plano usa exatamente as barras da reserva (ordem não importa)", () => {
+  assert.equal(ReservaLogica.mesmasBarras([2, 1], minha), true);
+  assert.equal(ReservaLogica.mesmasBarras([1], minha), false);
+  assert.equal(ReservaLogica.mesmasBarras([1, 2, 3], minha), false);
+  assert.equal(ReservaLogica.mesmasBarras([1, 2], null), false);
+});

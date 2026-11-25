@@ -35,7 +35,15 @@
     return reserva.expira > agoraPC + (desvio || 0);
   }
 
-  const ReservaLogica = { pertence, clienteConfere, desvioRelogio, ativa, TOLERANCIA_MS };
+  /** O plano em tela usa exatamente as barras da reserva? (sim = só renova o prazo) */
+  function mesmasBarras(ids, reserva) {
+    if (!reserva) return false;
+    const a = [...new Set(ids)].sort((x, y) => x - y);
+    const b = [...new Set(reserva.ids)].sort((x, y) => x - y);
+    return a.length === b.length && a.every((v, i) => v === b[i]);
+  }
+
+  const ReservaLogica = { pertence, clienteConfere, desvioRelogio, ativa, mesmasBarras, TOLERANCIA_MS };
   if (typeof module !== "undefined" && module.exports) module.exports = ReservaLogica;
   else raiz.ReservaLogica = ReservaLogica;
 })(typeof window !== "undefined" ? window : globalThis);

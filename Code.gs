@@ -1,10 +1,12 @@
 /**
  * ============================================================================
- * GOOGLE APPS SCRIPT - BACKEND v2 (CONTROLE DE PONTAS - GRANDE AÇO)
+ * GOOGLE APPS SCRIPT - BACKEND v3 (CONTROLE DE PONTAS - GRANDE AÇO)
  * ============================================================================
  * Estrutura da Planilha "Pontas":
  *  A ID | B Data entrada | C Qtde | D Bitola (mm) | E Medida (m) | F Peso (kg)
- *  G Situação | H Cliente/Obs | I Data Saída (novo) | J ID Origem (novo)
+ *  G Situação | H Cliente/Obs | I Data Saída | J ID Origem
+ *  K Reserva até | L Reserva para | M Reserva código
+ * Aba "Movimentos": uma linha por barra em cada baixa, estorno e cadastro (base do Painel).
  *
  * COMO INSTALAR (uma vez):
  *  1. Cole este arquivo no editor do Apps Script (substituindo o anterior).
@@ -160,6 +162,19 @@ function registrarMovimentos(linhas) {
   if (!linhas || !linhas.length) return;
   const sheet = getMovSheet();
   sheet.getRange(sheet.getLastRow() + 1, 1, linhas.length, MOV_CAB.length).setValues(linhas);
+}
+
+/**
+ * Grava em Movimentos sem desfazer o que já foi gravado em Pontas: o Apps Script
+ * não tem transação entre abas. Se falhar, devolve um aviso para a mensagem final.
+ */
+function registrarSemQuebrar(fn) {
+  try {
+    fn();
+    return '';
+  } catch (e) {
+    return ' Atenção: a operação foi gravada, mas não entrou na aba Movimentos (o Painel não vai contar): ' + e.message + '.';
+  }
 }
 
 /** Monta uma linha de Movimentos a partir de um objeto { 'Nome da coluna': valor }. */
@@ -385,8 +400,8 @@ function doPost(e) {
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(20000)) return erro('Sistema ocupado com outra operação. Tente novamente em instantes.', 'OCUPADO');
     try {
+      if (action === 'movimentos') return acaoMovimentos(params); // só lê a aba Movimentos
       const ctx = lerPlanilha();
-      if (action === 'movimentos') return acaoMovimentos(params);
       if (action === 'cadastrar') return acaoCadastrar(ctx, params, role);
       if (action === 'baixar') return acaoBaixar(ctx, params, role);
       if (action === 'estornarBarraNova') return acaoEstornarBarraNova(ctx, params, role);
@@ -470,15 +485,17 @@ function acaoCadastrar(ctx, params, role) {
   }
   ctx.sheet.getRange(ctx.sheet.getLastRow() + 1, 1, linhas.length, NUM_COLS).setValues(linhas);
   const agora = new Date(Date.now());
-  registrarMovimentos(ids.map(function (id) {
-    return linhaMov({ 'Data/hora': agora, 'Ação': 'cadastro', 'Perfil': role, 'Cliente': obs, 'ID barra': id, 'Origem': 'ponta',
-      'Bitola': bitola, 'Medida original': medida, 'Kg peças': pesoMov(bitola, medida) });
-  }));
+  const aviso = registrarSemQuebrar(function () {
+    registrarMovimentos(ids.map(function (id) {
+      return linhaMov({ 'Data/hora': agora, 'Ação': 'cadastro', 'Perfil': role, 'Cliente': obs, 'ID barra': id, 'Origem': 'ponta',
+        'Bitola': bitola, 'Medida original': medida, 'Kg peças': pesoMov(bitola, medida) });
+    }));
+  });
   SpreadsheetApp.flush();
 
   return resposta({
     sucesso: true,
-    mensagem: qtde + ' ponta(s) cadastrada(s): ' + (qtde > 1 ? '#' + ids[0] + ' a #' + ids[ids.length - 1] : '#' + ids[0]) + '.',
+    mensagem: qtde + ' ponta(s) cadastrada(s): ' + (qtde > 1 ? '#' + ids[0] + ' a #' + ids[ids.length - 1] : '#' + ids[0]) + '.' + aviso,
     itens: ids.map(function (id) {
       return { id: id, data: dataStr, bitola: bitola, medida: medida, peso: calcularPeso(bitola, medida) };
     })
@@ -641,6 +658,10 @@ function acaoBaixar(ctx, params, role) {
     planos.push({ item: item, bitola: item.bitola, medida: item.medida, cortes: cortes });
   });
 
+  const bitolas = planos.map(function (p) { return p.bitola; })
+    .filter(function (b, i, a) { return a.indexOf(b) === i; });
+  if (bitolas.length > 1) problemas.push('o lote mistura bitolas diferentes (' + bitolas.map(formatNumVirgula).join(', ') + ' mm)');
+
   if (problemas.length) {
     return erro('Nada foi baixado. ' + problemas.join('; ') + '. Sincronize e refaça o plano.', 'CONFLITO');
   }
@@ -692,14 +713,14 @@ function acaoBaixar(ctx, params, role) {
       if (it.reserva && it.reserva.codigo === codigoReserva && !vistos[it.id]) limparReserva(ctx.sheet, it);
     });
   }
-  registrarMovimentos(movLinhas);
+  const aviso = registrarSemQuebrar(function () { registrarMovimentos(movLinhas); });
   SpreadsheetApp.flush();
 
   const nNovas = planos.filter(function (p) { return p.nova; }).length;
   return resposta({
     sucesso: true,
     mensagem: (planos.length - nNovas) + ' ponta(s) baixada(s)' + (nNovas ? ' + ' + nNovas + ' barra(s) nova(s)' : '') + '. ' +
-      sobras.length + ' sobra(s) gerada(s).',
+      sobras.length + ' sobra(s) gerada(s).' + aviso,
     lote: lote,
     baixados: planos.filter(function (p) { return !p.nova; }).map(function (p) { return p.item.id; }),
     sobras: sobras
@@ -723,6 +744,11 @@ function acaoEstornar(ctx, params, role) {
     return erro('Não é possível estornar o ID #' + id + ': a sobra ' +
       filhosVendidos.map(function (f) { return '#' + f.id; }).join(', ') + ' gerada dele já foi vendida. Estorne a sobra primeiro.', 'CONFLITO');
   }
+  const filhosReservados = filhos.filter(function (i) { return i.reserva; });
+  if (filhosReservados.length) {
+    return erro('Não é possível estornar o ID #' + id + ': a sobra ' + filhosReservados.map(textoReservada).join('; ') +
+      '. Libere a reserva antes de estornar.', 'CONFLITO');
+  }
 
   const dataStr = formatDateBR(new Date());
   filhos.forEach(function (f) {
@@ -731,21 +757,23 @@ function acaoEstornar(ctx, params, role) {
   ctx.sheet.getRange(item.linha, COL.SITUACAO + 1, 1, 3).setValues([['Em estoque', 'Estornado em ' + dataStr, '']]);
 
   // Movimentos: a baixa mais recente desta barra deixa de contar; baixas antigas (sem linha) seguem normais.
-  const mv = lerMovimentos();
-  for (let i = mv.vals.length - 1; i >= 0; i--) {
-    const r = mv.vals[i];
-    if (r[MC['Ação']] === 'baixa' && parseInt(r[MC['ID barra']], 10) === id && String(r[MC['Estornado']]).toLowerCase() !== 'sim') {
-      marcarEstornado(mv.sheet, i);
-      break;
+  const aviso = registrarSemQuebrar(function () {
+    const mv = lerMovimentos();
+    for (let i = mv.vals.length - 1; i >= 0; i--) {
+      const r = mv.vals[i];
+      if (r[MC['Ação']] === 'baixa' && parseInt(r[MC['ID barra']], 10) === id && String(r[MC['Estornado']]).toLowerCase() !== 'sim') {
+        marcarEstornado(mv.sheet, i);
+        break;
+      }
     }
-  }
-  registrarMovimentos([linhaMov({ 'Data/hora': new Date(Date.now()), 'Ação': 'estorno', 'Perfil': role, 'ID barra': id,
-    'Origem': 'ponta', 'Bitola': item.bitola, 'Medida original': item.medida })]);
+    registrarMovimentos([linhaMov({ 'Data/hora': new Date(Date.now()), 'Ação': 'estorno', 'Perfil': role, 'ID barra': id,
+      'Origem': 'ponta', 'Bitola': item.bitola, 'Medida original': item.medida })]);
+  });
   SpreadsheetApp.flush();
 
   return resposta({
     sucesso: true,
-    mensagem: 'ID #' + id + ' devolvido ao estoque.' + (filhos.length ? ' Sobra(s) cancelada(s): ' + filhos.map(function (f) { return '#' + f.id; }).join(', ') + '.' : ''),
+    mensagem: 'ID #' + id + ' devolvido ao estoque.' + (filhos.length ? ' Sobra(s) cancelada(s): ' + filhos.map(function (f) { return '#' + f.id; }).join(', ') + '.' : '') + aviso,
     cancelados: filhos.map(function (f) { return f.id; })
   });
 }
@@ -772,19 +800,23 @@ function acaoEstornarBarraNova(ctx, params, role) {
   if (sobra && sobra.status === 'vendido') {
     return erro('Não é possível estornar: a sobra #' + idSobra + ' desta barra nova já foi vendida. Estorne a sobra primeiro.', 'CONFLITO');
   }
+  if (sobra && sobra.reserva) {
+    return erro('Não é possível estornar: a sobra ' + textoReservada(sobra) + '. Libere a reserva antes de estornar.', 'CONFLITO');
+  }
 
   const dataStr = formatDateBR(new Date());
+  // A barra nova só existe em Movimentos: marca ali primeiro; se falhar, nada foi mexido em Pontas.
+  marcarEstornado(mv.sheet, indice);
   if (sobra && sobra.status === 'estoque') {
     ctx.sheet.getRange(sobra.linha, COL.SITUACAO + 1, 1, 7).setValues([['Cancelado', 'Cancelado: estorno de barra nova', dataStr, '', '', '', '']]);
   }
-  marcarEstornado(mv.sheet, indice);
-  registrarMovimentos([linhaMov({ 'Data/hora': new Date(Date.now()), 'Lote': r[MC['Lote']], 'Ação': 'estorno', 'Perfil': role,
-    'Origem': 'barra nova', 'Bitola': r[MC['Bitola']], 'Medida original': r[MC['Medida original']], 'ID sobra': idSobra || '' })]);
+  const aviso = registrarSemQuebrar(function () { registrarMovimentos([linhaMov({ 'Data/hora': new Date(Date.now()), 'Lote': r[MC['Lote']], 'Ação': 'estorno', 'Perfil': role,
+    'Origem': 'barra nova', 'Bitola': r[MC['Bitola']], 'Medida original': r[MC['Medida original']], 'ID sobra': idSobra || '' })]); });
   SpreadsheetApp.flush();
 
   return resposta({
     sucesso: true,
-    mensagem: 'Barra nova estornada.' + (sobra && sobra.status === 'estoque' ? ' Sobra #' + idSobra + ' cancelada.' : ''),
+    mensagem: 'Barra nova estornada.' + (sobra && sobra.status === 'estoque' ? ' Sobra #' + idSobra + ' cancelada.' : '') + aviso,
     cancelados: sobra && sobra.status === 'estoque' ? [idSobra] : []
   });
 }

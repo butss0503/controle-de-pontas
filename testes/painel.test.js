@@ -93,3 +93,8 @@ test("periodo devolve datas locais", () => {
   assert.deepEqual(Painel.periodo("mesPassado", new Date(2027, 0, 15)), { de: "2026-12-01", ate: "2026-12-31" });
   assert.deepEqual(Painel.periodo("30dias", new Date(2026, 10, 25)), { de: "2026-10-27", ate: "2026-11-25" });
 });
+
+test("baixas sem preço contam pedidos (lotes), não barras", () => {
+  const r = Painel.resumir([mov({ lote: "L1", kgPecas: 1 }), mov({ lote: "L1", kgPecas: 1 }), mov({ lote: "L2", kgPecas: 1 })]);
+  assert.equal(r.baixasSemPreco, 2);
+});
