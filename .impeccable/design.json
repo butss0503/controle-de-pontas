@@ -1,0 +1,752 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T11:31:44.846Z",
+  "title": "Design System: Controle de Pontas — Grande Aço",
+  "extensions": {
+    "colorMeta": {
+      "ga-azul": {
+        "role": "primary",
+        "displayName": "Azul GA",
+        "canonical": "#3BADE8",
+        "cssVar": "--ga-azul",
+        "tonalRamp": [
+          "oklch(15.0% 0.020 235.9)",
+          "oklch(26.0% 0.053 235.9)",
+          "oklch(37.0% 0.089 235.9)",
+          "oklch(48.0% 0.125 235.9)",
+          "oklch(60.0% 0.132 235.9)",
+          "oklch(72.0% 0.092 235.9)",
+          "oklch(84.0% 0.053 235.9)",
+          "oklch(95.0% 0.020 235.9)"
+        ]
+      },
+      "ga-grafite": {
+        "role": "neutral",
+        "displayName": "Grafite GA",
+        "canonical": "#171E26",
+        "cssVar": "--ga-grafite",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 252.0)",
+          "oklch(26.0% 0.007 252.0)",
+          "oklch(37.0% 0.013 252.0)",
+          "oklch(48.0% 0.018 252.0)",
+          "oklch(60.0% 0.019 252.0)",
+          "oklch(72.0% 0.013 252.0)",
+          "oklch(84.0% 0.007 252.0)",
+          "oklch(95.0% 0.003 252.0)"
+        ]
+      },
+      "shell-bg": {
+        "role": "neutral",
+        "displayName": "Grafite de Casca",
+        "canonical": "#171E26",
+        "cssVar": "--shell-bg",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 252.0)",
+          "oklch(26.0% 0.007 252.0)",
+          "oklch(37.0% 0.013 252.0)",
+          "oklch(48.0% 0.018 252.0)",
+          "oklch(60.0% 0.019 252.0)",
+          "oklch(72.0% 0.013 252.0)",
+          "oklch(84.0% 0.007 252.0)",
+          "oklch(95.0% 0.003 252.0)"
+        ],
+        "dark": "#0B0F14"
+      },
+      "shell-ink": {
+        "role": "neutral",
+        "displayName": "Branco de Casca",
+        "canonical": "#FFFFFF",
+        "cssVar": "--shell-ink",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0)",
+          "oklch(26.0% 0.000 0)",
+          "oklch(37.0% 0.000 0)",
+          "oklch(48.0% 0.000 0)",
+          "oklch(60.0% 0.000 0)",
+          "oklch(72.0% 0.000 0)",
+          "oklch(84.0% 0.000 0)",
+          "oklch(95.0% 0.000 0)"
+        ]
+      },
+      "shell-ink-muted": {
+        "role": "neutral",
+        "displayName": "Névoa de Casca",
+        "canonical": "#A9B4C0",
+        "cssVar": "--shell-ink-muted",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 250.4)",
+          "oklch(26.0% 0.008 250.4)",
+          "oklch(37.0% 0.014 250.4)",
+          "oklch(48.0% 0.020 250.4)",
+          "oklch(60.0% 0.021 250.4)",
+          "oklch(72.0% 0.015 250.4)",
+          "oklch(84.0% 0.008 250.4)",
+          "oklch(95.0% 0.003 250.4)"
+        ]
+      },
+      "shell-hover": {
+        "role": "neutral",
+        "displayName": "Grafite Realce",
+        "canonical": "#232C37",
+        "cssVar": "--shell-hover",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 253.7)",
+          "oklch(26.0% 0.010 253.7)",
+          "oklch(37.0% 0.016 253.7)",
+          "oklch(48.0% 0.023 253.7)",
+          "oklch(60.0% 0.024 253.7)",
+          "oklch(72.0% 0.017 253.7)",
+          "oklch(84.0% 0.010 253.7)",
+          "oklch(95.0% 0.004 253.7)"
+        ],
+        "dark": "#18202A"
+      },
+      "chao": {
+        "role": "neutral",
+        "displayName": "Aço Frio",
+        "canonical": "#EEF1F4",
+        "cssVar": "--chao",
+        "tonalRamp": [
+          "oklch(15.0% 0.001 0)",
+          "oklch(26.0% 0.002 247.9)",
+          "oklch(37.0% 0.003 247.9)",
+          "oklch(48.0% 0.005 247.9)",
+          "oklch(60.0% 0.005 247.9)",
+          "oklch(72.0% 0.004 247.9)",
+          "oklch(84.0% 0.002 247.9)",
+          "oklch(95.0% 0.001 0)"
+        ],
+        "dark": "#0F141A"
+      },
+      "painel": {
+        "role": "neutral",
+        "displayName": "Branco Painel",
+        "canonical": "#FFFFFF",
+        "cssVar": "--painel",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0)",
+          "oklch(26.0% 0.000 0)",
+          "oklch(37.0% 0.000 0)",
+          "oklch(48.0% 0.000 0)",
+          "oklch(60.0% 0.000 0)",
+          "oklch(72.0% 0.000 0)",
+          "oklch(84.0% 0.000 0)",
+          "oklch(95.0% 0.000 0)"
+        ],
+        "dark": "#171E26"
+      },
+      "painel-2": {
+        "role": "neutral",
+        "displayName": "Painel Interno",
+        "canonical": "#F5F7F9",
+        "cssVar": "--painel-2",
+        "tonalRamp": [
+          "oklch(15.0% 0.001 0)",
+          "oklch(26.0% 0.001 0)",
+          "oklch(37.0% 0.002 247.9)",
+          "oklch(48.0% 0.003 247.9)",
+          "oklch(60.0% 0.003 247.9)",
+          "oklch(72.0% 0.002 247.9)",
+          "oklch(84.0% 0.001 0)",
+          "oklch(95.0% 0.001 0)"
+        ],
+        "dark": "#1D2630"
+      },
+      "aco-claro": {
+        "role": "neutral",
+        "displayName": "Aço Claro",
+        "canonical": "#D6DDE4",
+        "cssVar": "--aco-claro",
+        "tonalRamp": [
+          "oklch(15.0% 0.002 0)",
+          "oklch(26.0% 0.005 248.0)",
+          "oklch(37.0% 0.008 248.0)",
+          "oklch(48.0% 0.012 248.0)",
+          "oklch(60.0% 0.012 248.0)",
+          "oklch(72.0% 0.009 248.0)",
+          "oklch(84.0% 0.005 248.0)",
+          "oklch(95.0% 0.002 0)"
+        ],
+        "dark": "#3A4654"
+      },
+      "linha": {
+        "role": "neutral",
+        "displayName": "Linha",
+        "canonical": "#D3DAE1",
+        "cssVar": "--linha",
+        "tonalRamp": [
+          "oklch(15.0% 0.002 0)",
+          "oklch(26.0% 0.005 248.0)",
+          "oklch(37.0% 0.008 248.0)",
+          "oklch(48.0% 0.012 248.0)",
+          "oklch(60.0% 0.012 248.0)",
+          "oklch(72.0% 0.009 248.0)",
+          "oklch(84.0% 0.005 248.0)",
+          "oklch(95.0% 0.002 0)"
+        ],
+        "dark": "#2A3440"
+      },
+      "linha-forte": {
+        "role": "neutral",
+        "displayName": "Linha Forte",
+        "canonical": "#AEB8C3",
+        "cssVar": "--linha-forte",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 250.6)",
+          "oklch(26.0% 0.008 250.6)",
+          "oklch(37.0% 0.013 250.6)",
+          "oklch(48.0% 0.018 250.6)",
+          "oklch(60.0% 0.019 250.6)",
+          "oklch(72.0% 0.013 250.6)",
+          "oklch(84.0% 0.008 250.6)",
+          "oklch(95.0% 0.003 250.6)"
+        ],
+        "dark": "#3E4B59"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta Grafite",
+        "canonical": "#171E26",
+        "cssVar": "--ink",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 252.0)",
+          "oklch(26.0% 0.007 252.0)",
+          "oklch(37.0% 0.013 252.0)",
+          "oklch(48.0% 0.018 252.0)",
+          "oklch(60.0% 0.019 252.0)",
+          "oklch(72.0% 0.013 252.0)",
+          "oklch(84.0% 0.007 252.0)",
+          "oklch(95.0% 0.003 252.0)"
+        ],
+        "dark": "#E9EEF3"
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Tinta 2",
+        "canonical": "#3D4955",
+        "cssVar": "--ink-2",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 248.5)",
+          "oklch(26.0% 0.010 248.5)",
+          "oklch(37.0% 0.017 248.5)",
+          "oklch(48.0% 0.024 248.5)",
+          "oklch(60.0% 0.026 248.5)",
+          "oklch(72.0% 0.018 248.5)",
+          "oklch(84.0% 0.010 248.5)",
+          "oklch(95.0% 0.004 248.5)"
+        ],
+        "dark": "#C3CDD7"
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Tinta 3",
+        "canonical": "#5B6874",
+        "cssVar": "--ink-3",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 246.2)",
+          "oklch(26.0% 0.010 246.2)",
+          "oklch(37.0% 0.017 246.2)",
+          "oklch(48.0% 0.024 246.2)",
+          "oklch(60.0% 0.025 246.2)",
+          "oklch(72.0% 0.017 246.2)",
+          "oklch(84.0% 0.010 246.2)",
+          "oklch(95.0% 0.004 246.2)"
+        ],
+        "dark": "#93A1AF"
+      },
+      "acao": {
+        "role": "primary",
+        "displayName": "Azul GA (ação)",
+        "canonical": "#3BADE8",
+        "cssVar": "--acao",
+        "tonalRamp": [
+          "oklch(15.0% 0.020 235.9)",
+          "oklch(26.0% 0.053 235.9)",
+          "oklch(37.0% 0.089 235.9)",
+          "oklch(48.0% 0.125 235.9)",
+          "oklch(60.0% 0.132 235.9)",
+          "oklch(72.0% 0.092 235.9)",
+          "oklch(84.0% 0.053 235.9)",
+          "oklch(95.0% 0.020 235.9)"
+        ]
+      },
+      "acao-hover": {
+        "role": "primary",
+        "displayName": "Azul GA Claro",
+        "canonical": "#5BBDEF",
+        "cssVar": "--acao-hover",
+        "tonalRamp": [
+          "oklch(15.0% 0.017 233.4)",
+          "oklch(26.0% 0.047 233.4)",
+          "oklch(37.0% 0.079 233.4)",
+          "oklch(48.0% 0.111 233.4)",
+          "oklch(60.0% 0.116 233.4)",
+          "oklch(72.0% 0.082 233.4)",
+          "oklch(84.0% 0.047 233.4)",
+          "oklch(95.0% 0.017 233.4)"
+        ]
+      },
+      "acao-press": {
+        "role": "primary",
+        "displayName": "Azul GA Pressionado",
+        "canonical": "#2A9BD6",
+        "cssVar": "--acao-press",
+        "tonalRamp": [
+          "oklch(15.0% 0.020 237.3)",
+          "oklch(26.0% 0.052 237.3)",
+          "oklch(37.0% 0.088 237.3)",
+          "oklch(48.0% 0.124 237.3)",
+          "oklch(60.0% 0.130 237.3)",
+          "oklch(72.0% 0.091 237.3)",
+          "oklch(84.0% 0.052 237.3)",
+          "oklch(95.0% 0.020 237.3)"
+        ]
+      },
+      "acao-ink": {
+        "role": "neutral",
+        "displayName": "Grafite sobre Ação",
+        "canonical": "#171E26",
+        "cssVar": "--acao-ink",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 252.0)",
+          "oklch(26.0% 0.007 252.0)",
+          "oklch(37.0% 0.013 252.0)",
+          "oklch(48.0% 0.018 252.0)",
+          "oklch(60.0% 0.019 252.0)",
+          "oklch(72.0% 0.013 252.0)",
+          "oklch(84.0% 0.007 252.0)",
+          "oklch(95.0% 0.003 252.0)"
+        ]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Azul Profundo",
+        "canonical": "#0B6FA4",
+        "cssVar": "--link",
+        "tonalRamp": [
+          "oklch(15.0% 0.017 240.6)",
+          "oklch(26.0% 0.047 240.6)",
+          "oklch(37.0% 0.079 240.6)",
+          "oklch(48.0% 0.111 240.6)",
+          "oklch(60.0% 0.116 240.6)",
+          "oklch(72.0% 0.081 240.6)",
+          "oklch(84.0% 0.047 240.6)",
+          "oklch(95.0% 0.017 240.6)"
+        ],
+        "dark": "#6CC6F2"
+      },
+      "acao-tint": {
+        "role": "primary",
+        "displayName": "Bruma Azul",
+        "canonical": "#E6F5FD",
+        "cssVar": "--acao-tint",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 230.7)",
+          "oklch(26.0% 0.008 230.7)",
+          "oklch(37.0% 0.013 230.7)",
+          "oklch(48.0% 0.018 230.7)",
+          "oklch(60.0% 0.019 230.7)",
+          "oklch(72.0% 0.013 230.7)",
+          "oklch(84.0% 0.008 230.7)",
+          "oklch(95.0% 0.003 230.7)"
+        ],
+        "dark": "#12303F"
+      },
+      "perigo": {
+        "role": "error",
+        "displayName": "Vermelho de Baixa",
+        "canonical": "#C62828",
+        "cssVar": "--perigo",
+        "tonalRamp": [
+          "oklch(15.0% 0.029 26.7)",
+          "oklch(26.0% 0.077 26.7)",
+          "oklch(37.0% 0.131 26.7)",
+          "oklch(48.0% 0.184 26.7)",
+          "oklch(60.0% 0.194 26.7)",
+          "oklch(72.0% 0.136 26.7)",
+          "oklch(84.0% 0.077 26.7)",
+          "oklch(95.0% 0.029 26.7)"
+        ],
+        "dark": "#E5484D"
+      },
+      "perigo-ink": {
+        "role": "error",
+        "displayName": "Branco sobre Perigo",
+        "canonical": "#FFFFFF",
+        "cssVar": "--perigo-ink",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0)",
+          "oklch(26.0% 0.000 0)",
+          "oklch(37.0% 0.000 0)",
+          "oklch(48.0% 0.000 0)",
+          "oklch(60.0% 0.000 0)",
+          "oklch(72.0% 0.000 0)",
+          "oklch(84.0% 0.000 0)",
+          "oklch(95.0% 0.000 0)"
+        ]
+      },
+      "perigo-tint": {
+        "role": "error",
+        "displayName": "Bruma Vermelha",
+        "canonical": "#FDECEC",
+        "cssVar": "--perigo-tint",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 17.5)",
+          "oklch(26.0% 0.007 17.5)",
+          "oklch(37.0% 0.012 17.5)",
+          "oklch(48.0% 0.018 17.5)",
+          "oklch(60.0% 0.018 17.5)",
+          "oklch(72.0% 0.013 17.5)",
+          "oklch(84.0% 0.007 17.5)",
+          "oklch(95.0% 0.003 17.5)"
+        ],
+        "dark": "#3A1517"
+      },
+      "perigo-texto": {
+        "role": "error",
+        "displayName": "Vermelho Texto",
+        "canonical": "#A61F1F",
+        "cssVar": "--perigo-texto",
+        "tonalRamp": [
+          "oklch(15.0% 0.026 26.8)",
+          "oklch(26.0% 0.068 26.8)",
+          "oklch(37.0% 0.115 26.8)",
+          "oklch(48.0% 0.162 26.8)",
+          "oklch(60.0% 0.171 26.8)",
+          "oklch(72.0% 0.119 26.8)",
+          "oklch(84.0% 0.068 26.8)",
+          "oklch(95.0% 0.026 26.8)"
+        ],
+        "dark": "#FF9592"
+      },
+      "aviso-tint": {
+        "role": "warning",
+        "displayName": "Âmbar de Aviso",
+        "canonical": "#FFF3D1",
+        "cssVar": "--aviso-tint",
+        "tonalRamp": [
+          "oklch(15.0% 0.007 90.9)",
+          "oklch(26.0% 0.018 90.9)",
+          "oklch(37.0% 0.031 90.9)",
+          "oklch(48.0% 0.044 90.9)",
+          "oklch(60.0% 0.046 90.9)",
+          "oklch(72.0% 0.032 90.9)",
+          "oklch(84.0% 0.018 90.9)",
+          "oklch(95.0% 0.007 90.9)"
+        ],
+        "dark": "#3A2C08"
+      },
+      "aviso-texto": {
+        "role": "warning",
+        "displayName": "Âmbar Texto",
+        "canonical": "#6E4600",
+        "cssVar": "--aviso-texto",
+        "tonalRamp": [
+          "oklch(15.0% 0.014 72.3)",
+          "oklch(26.0% 0.037 72.3)",
+          "oklch(37.0% 0.062 72.3)",
+          "oklch(48.0% 0.087 72.3)",
+          "oklch(60.0% 0.092 72.3)",
+          "oklch(72.0% 0.064 72.3)",
+          "oklch(84.0% 0.037 72.3)",
+          "oklch(95.0% 0.014 72.3)"
+        ],
+        "dark": "#F5C76A"
+      },
+      "sucata": {
+        "role": "error",
+        "displayName": "Rosa Sucata",
+        "canonical": "#F6D3D1",
+        "cssVar": "--sucata",
+        "tonalRamp": [
+          "oklch(15.0% 0.006 21.8)",
+          "oklch(26.0% 0.016 21.8)",
+          "oklch(37.0% 0.027 21.8)",
+          "oklch(48.0% 0.037 21.8)",
+          "oklch(60.0% 0.039 21.8)",
+          "oklch(72.0% 0.028 21.8)",
+          "oklch(84.0% 0.016 21.8)",
+          "oklch(95.0% 0.006 21.8)"
+        ],
+        "dark": "#5A2326"
+      }
+    },
+    "themes": {
+      "dark": {
+        "selector": ":root[data-theme=\"dark\"]",
+        "note": "Mesmos nomes de token; valores em colorMeta.<token>.dark. Azul GA, grafite e estados de ação não mudam."
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título de cada aba; caixa alta, largura 125%, text-wrap: balance.",
+        "css": "font-stretch: 125%; text-transform: uppercase;"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de modal."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Valor de KPI na faixa de indicadores."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Título de painel (box-title)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto e campos; 16px evita zoom no iOS; descrição de página até 62ch."
+      },
+      "body-sm": {
+        "displayName": "Body pequeno",
+        "purpose": "Tabelas, subtítulos e textos de resultado."
+      },
+      "label": {
+        "displayName": "Rótulo de dado",
+        "purpose": "Rótulos de campo, th, rótulos de KPI e de sobra; caixa alta, eco do 'INDÚSTRIA DE AÇO' do logo.",
+        "css": "text-transform: uppercase;"
+      },
+      "data": {
+        "displayName": "Dado",
+        "purpose": "Badges de ID e números dentro da barra de corte."
+      },
+      "data-lg": {
+        "displayName": "Dado grande",
+        "purpose": "Valor da sobra no cartão da barra."
+      }
+    },
+    "shadows": [
+      {
+        "name": "modal",
+        "value": "0 18px 48px -12px rgba(11, 15, 20, 0.45)",
+        "purpose": "Caixa de modal sobre o véu grafite; removida na tela de login."
+      },
+      {
+        "name": "toast",
+        "value": "0 10px 30px -8px rgba(11, 15, 20, 0.5)",
+        "purpose": "Aviso flutuante no rodapé."
+      },
+      {
+        "name": "coluna-presa",
+        "value": "-8px 0 12px -8px rgba(11, 15, 20, 0.25)",
+        "purpose": "Coluna de ação presa à direita da tabela, só no celular."
+      },
+      {
+        "name": "foco-campo",
+        "value": "0 0 0 3px rgba(59, 173, 232, 0.28)",
+        "purpose": "Halo azul GA no campo focado, junto da borda --link."
+      },
+      {
+        "name": "veu-modal",
+        "value": "rgba(11, 15, 20, 0.62)",
+        "purpose": "Fundo do overlay de modal (não é sombra; cor do véu)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Curva única de saída para todas as transições e entradas (--ease)."
+      },
+      {
+        "name": "t",
+        "value": "160ms var(--ease)",
+        "purpose": "Transição padrão de cor, borda e fundo (--t)."
+      },
+      {
+        "name": "press",
+        "value": "transform 90ms ease",
+        "purpose": "Botão desce 1px ao pressionar."
+      },
+      {
+        "name": "tab-underline",
+        "value": "transform 220ms var(--ease)",
+        "purpose": "Sublinhado da aba ativa cresce do centro (scaleX)."
+      },
+      {
+        "name": "entrar",
+        "value": "260ms var(--ease)",
+        "purpose": "Troca de aba: opacidade 0.4→1 e 4px de subida."
+      },
+      {
+        "name": "modal",
+        "value": "180ms (véu) / 220ms (caixa) var(--ease)",
+        "purpose": "Véu aparece; caixa sobe 10px."
+      },
+      {
+        "name": "toast",
+        "value": "220ms var(--ease) entrada; saída após 3.8s (5.8s em erro)",
+        "purpose": "Toast sobe 12px e some sozinho."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce → sem transições nem animações",
+        "purpose": "Respeito obrigatório à preferência do sistema."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "casca-compacta",
+        "value": "860px",
+        "purpose": "Somem nome do produto e divisor da casca (max-width)."
+      },
+      {
+        "name": "celular",
+        "value": "735px",
+        "purpose": "Layout de celular (max-width)."
+      },
+      {
+        "name": "toque",
+        "value": "pointer: coarse",
+        "purpose": "Controles pequenos sobem para 44px."
+      }
+    ],
+    "layout": {
+      "maxWidth": "1180px",
+      "gutter": "24px (12px no celular)",
+      "controlHeight": "44px (--ctrl-h)"
+    }
+  },
+  "components": [
+    {
+      "name": "Botão primário",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal do painel: azul GA com texto grafite.",
+      "html": "<button class=\"ds-btn\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"6\" r=\"3\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12\"/></svg>Calcular aproveitamento</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 20px; border-radius:var(--r-ctrl,6px); background:var(--acao,#3BADE8); color:var(--acao-ink,#171E26); border:1.5px solid var(--acao,#3BADE8); font-family:'Archivo',system-ui,sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:background-color 160ms cubic-bezier(0.16,1,0.3,1), border-color 160ms cubic-bezier(0.16,1,0.3,1), transform 90ms ease; } .ds-btn:hover { background:var(--acao-hover,#5BBDEF); border-color:var(--acao-hover,#5BBDEF); } .ds-btn:active { background:var(--acao-press,#2A9BD6); border-color:var(--acao-press,#2A9BD6); transform:translateY(1px); } .ds-btn:focus-visible { outline:2px solid var(--link,#0B6FA4); outline-offset:2px; } .ds-icon { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }"
+    },
+    {
+      "name": "Botão secundário",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação de apoio: contorno grafite.",
+      "html": "<button class=\"ds-btn-secondary\">Adicionar medida</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 20px; border-radius:var(--r-ctrl,6px); background:transparent; color:var(--ink,#171E26); border:1.5px solid var(--ink,#171E26); font-family:'Archivo',system-ui,sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:background-color 160ms cubic-bezier(0.16,1,0.3,1), transform 90ms ease; } .ds-btn-secondary:hover { background:var(--painel-2,#F5F7F9); } .ds-btn-secondary:active { transform:translateY(1px); } .ds-btn-secondary:focus-visible { outline:2px solid var(--link,#0B6FA4); outline-offset:2px; }"
+    },
+    {
+      "name": "Botão de baixa (contorno)",
+      "kind": "button",
+      "refersTo": "button-danger-contorno",
+      "description": "Ação destrutiva repetida em lista; o vermelho cheio fica para a confirmação.",
+      "html": "<button class=\"ds-btn-danger-contorno\">Dar baixa</button>",
+      "css": ".ds-btn-danger-contorno { display:inline-flex; align-items:center; min-height:36px; padding:0 12px; border-radius:var(--r-ctrl,6px); background:transparent; color:var(--perigo-texto,#A61F1F); border:1.5px solid currentColor; font-family:'Archivo',system-ui,sans-serif; font-size:13.5px; font-weight:700; cursor:pointer; transition:background-color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-danger-contorno:hover { background:var(--perigo-tint,#FDECEC); } .ds-btn-danger-contorno:focus-visible { outline:2px solid var(--link,#0B6FA4); outline-offset:2px; }"
+    },
+    {
+      "name": "Campo com rótulo de dado",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Rótulo mono em caixa alta sobre campo de 44px com foco azul.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-bitola\">Medida (m)</label><input class=\"ds-input\" id=\"ds-bitola\" type=\"text\" placeholder=\"Ex: 2,35\"></div>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; max-width:260px; } .ds-label { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2,#3D4955); } .ds-input { height:44px; padding:0 14px; border:1.5px solid var(--linha-forte,#AEB8C3); border-radius:var(--r-ctrl,6px); background:var(--painel,#FFFFFF); color:var(--ink,#171E26); font-family:'Archivo',system-ui,sans-serif; font-size:16px; outline:none; transition:border-color 160ms cubic-bezier(0.16,1,0.3,1), box-shadow 160ms cubic-bezier(0.16,1,0.3,1); } .ds-input::placeholder { color:var(--ink-3,#5B6874); } .ds-input:hover { border-color:var(--ink-3,#5B6874); } .ds-input:focus { border-color:var(--link,#0B6FA4); box-shadow:0 0 0 3px rgba(59,173,232,0.28); }"
+    },
+    {
+      "name": "Casca e abas",
+      "kind": "nav",
+      "refersTo": "shell-bar",
+      "description": "Faixa grafite com filete azul GA de 3px e abas brancas com sublinhado azul na ativa.",
+      "html": "<div class=\"ds-shell\"><div class=\"ds-shell-bar\"><span class=\"ds-brand\">GRANDE AÇO</span><span class=\"ds-divider\"></span><span class=\"ds-product\">Controle de Pontas</span><button class=\"ds-shell-btn\">Sincronizar</button></div><div class=\"ds-tabs\"><button class=\"ds-tab ds-active\">Plano de Corte</button><button class=\"ds-tab\">Estoque <span class=\"ds-tab-badge\">128</span></button><button class=\"ds-tab\">Histórico</button></div></div>",
+      "css": ".ds-shell { font-family:'Archivo',system-ui,sans-serif; } .ds-shell-bar { display:flex; align-items:center; gap:16px; height:60px; padding:0 24px; background:var(--shell-bg,#171E26); color:var(--shell-ink,#FFFFFF); border-bottom:3px solid var(--ga-azul,#3BADE8); } .ds-brand { font-weight:800; font-stretch:125%; letter-spacing:0.02em; } .ds-divider { width:1px; height:28px; background:#3A4654; } .ds-product { font-weight:700; font-stretch:112%; font-size:15px; } .ds-shell-btn { margin-left:auto; height:40px; padding:0 12px; border:0; border-radius:var(--r-ctrl,6px); background:transparent; color:var(--shell-ink-muted,#A9B4C0); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; transition:background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-shell-btn:hover { background:var(--shell-hover,#232C37); color:var(--shell-ink,#FFFFFF); } .ds-shell-btn:focus-visible { outline:2px solid var(--ga-azul,#3BADE8); outline-offset:2px; } .ds-tabs { display:flex; gap:4px; padding:0 24px; background:var(--painel,#FFFFFF); border-bottom:1px solid var(--linha,#D3DAE1); } .ds-tab { position:relative; display:inline-flex; align-items:center; gap:8px; height:50px; padding:0 14px; border:0; background:none; color:var(--ink-3,#5B6874); font:inherit; font-size:14.5px; font-weight:600; cursor:pointer; transition:color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-tab::after { content:''; position:absolute; left:10px; right:10px; bottom:-1px; height:3px; border-radius:3px 3px 0 0; background:var(--ga-azul,#3BADE8); transform:scaleX(0); transition:transform 220ms cubic-bezier(0.16,1,0.3,1); } .ds-tab:hover { color:var(--ink,#171E26); } .ds-tab:focus-visible { outline:2px solid var(--link,#0B6FA4); outline-offset:2px; } .ds-tab.ds-active { color:var(--ink,#171E26); font-weight:700; } .ds-tab.ds-active::after { transform:scaleX(1); } .ds-tab-badge { min-width:26px; padding:1px 7px; border-radius:999px; background:var(--ga-grafite,#171E26); color:#FFFFFF; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11.5px; font-weight:700; text-align:center; }"
+    },
+    {
+      "name": "Chip do carrinho de medidas",
+      "kind": "chip",
+      "refersTo": "cart-chip",
+      "description": "Medida adicionada ao pedido, com botão de remover.",
+      "html": "<span class=\"ds-chip\">2 × 3,40 m<button class=\"ds-chip-x\" aria-label=\"Remover\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg></button></span>",
+      "css": ".ds-chip { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 6px 0 12px; border:1.5px solid var(--ga-azul,#3BADE8); border-radius:var(--r-ctrl,6px); background:var(--acao-tint,#E6F5FD); color:var(--ink,#171E26); font-family:'JetBrains Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums slashed-zero; font-size:14px; } .ds-chip-x { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border:0; border-radius:4px; background:transparent; color:var(--ink-3,#5B6874); cursor:pointer; } .ds-chip-x svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; } .ds-chip-x:hover { background:var(--perigo-tint,#FDECEC); color:var(--perigo-texto,#A61F1F); } .ds-chip-x:focus-visible { outline:2px solid var(--link,#0B6FA4); outline-offset:2px; }"
+    },
+    {
+      "name": "Faixa de indicadores",
+      "kind": "card",
+      "refersTo": "kpi-card",
+      "description": "KPIs numa faixa única dividida por vãos de 1px, não cartões soltos.",
+      "html": "<div class=\"ds-kpis\"><div class=\"ds-kpi\"><div class=\"ds-kpi-label\">Pontas</div><div class=\"ds-kpi-value\">128</div></div><div class=\"ds-kpi\"><div class=\"ds-kpi-label\">Peso total</div><div class=\"ds-kpi-value\">1.842 kg</div></div><div class=\"ds-kpi\"><div class=\"ds-kpi-label\">Valor</div><div class=\"ds-kpi-value ds-destaque\">R$ 9.210</div></div></div>",
+      "css": ".ds-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; border:1px solid var(--linha,#D3DAE1); border-radius:var(--r-painel,10px); background:var(--linha,#D3DAE1); overflow:hidden; } .ds-kpi { padding:14px 18px 16px; background:var(--painel-2,#F5F7F9); } .ds-kpi-label { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-3,#5B6874); } .ds-kpi-value { margin-top:4px; font-family:'Archivo',system-ui,sans-serif; font-size:26px; font-weight:800; font-stretch:118%; font-variant-numeric:tabular-nums; line-height:1.1; color:var(--ink,#171E26); } .ds-kpi-value.ds-destaque { color:var(--link,#0B6FA4); }"
+    },
+    {
+      "name": "Barra de corte sobre trena",
+      "kind": "custom",
+      "refersTo": "cut-bar",
+      "description": "Assinatura: barra de aço em escala, peças em azul GA, sobra em aço claro, vão de 2px como linha de corte, trena graduada abaixo.",
+      "html": "<div class=\"ds-barra\"><div class=\"ds-cut-bar\"><div class=\"ds-seg\" style=\"flex:3.4 1 0\">3,40</div><div class=\"ds-seg\" style=\"flex:3.4 1 0\">3,40</div><div class=\"ds-seg\" style=\"flex:1.2 1 0\">1,20</div><div class=\"ds-sobra\" style=\"flex:1.6 1 0\">1,60</div></div><div class=\"ds-trena\"><span class=\"ds-tick ds-major ds-inicio\" style=\"left:0%\"><span>0</span></span><span class=\"ds-tick\" style=\"left:5.1%\"></span><span class=\"ds-tick ds-major\" style=\"left:10.2%\"><span>1</span></span><span class=\"ds-tick\" style=\"left:15.3%\"></span><span class=\"ds-tick ds-major\" style=\"left:20.4%\"><span>2</span></span><span class=\"ds-tick\" style=\"left:25.5%\"></span><span class=\"ds-tick ds-major\" style=\"left:30.6%\"><span>3</span></span><span class=\"ds-tick\" style=\"left:35.7%\"></span><span class=\"ds-tick ds-major\" style=\"left:40.8%\"><span>4</span></span><span class=\"ds-tick\" style=\"left:45.9%\"></span><span class=\"ds-tick ds-major\" style=\"left:51%\"><span>5</span></span><span class=\"ds-tick\" style=\"left:56.1%\"></span><span class=\"ds-tick ds-major\" style=\"left:61.2%\"><span>6</span></span><span class=\"ds-tick\" style=\"left:66.3%\"></span><span class=\"ds-tick ds-major\" style=\"left:71.4%\"><span>7</span></span><span class=\"ds-tick\" style=\"left:76.5%\"></span><span class=\"ds-tick ds-major\" style=\"left:81.6%\"><span>8</span></span><span class=\"ds-tick\" style=\"left:86.7%\"></span><span class=\"ds-tick ds-major\" style=\"left:91.8%\"></span><span class=\"ds-tick ds-major ds-fim\" style=\"left:100%\"><span>9,80 m</span></span></div></div>",
+      "css": ".ds-barra { padding:8px 4px 4px; } .ds-cut-bar { display:flex; gap:2px; height:34px; padding:2px; border-radius:5px; background:var(--ga-grafite,#171E26); } .ds-seg, .ds-sobra { display:flex; align-items:center; justify-content:center; min-width:2px; overflow:hidden; white-space:nowrap; font-family:'JetBrains Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; font-size:12.5px; font-weight:700; border-radius:3px; } .ds-seg { background:var(--ga-azul,#3BADE8); color:var(--ga-grafite,#171E26); } .ds-sobra { background:var(--aco-claro,#D6DDE4); color:var(--ink,#171E26); } .ds-trena { position:relative; height:26px; margin:0 2px; border-top:1.5px solid var(--linha-forte,#AEB8C3); } .ds-tick { position:absolute; top:0; width:1.5px; height:6px; background:var(--ink-3,#5B6874); transform:translateX(-50%); } .ds-tick.ds-major { height:9px; background:var(--ink-2,#3D4955); } .ds-tick span { position:absolute; top:9px; left:50%; transform:translateX(-50%); font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; font-weight:700; color:var(--ink-2,#3D4955); white-space:nowrap; } .ds-tick.ds-inicio span { transform:none; left:0; } .ds-tick.ds-fim span { transform:translateX(-100%); left:100%; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Bancada da Usina",
+    "overview": "O app é a ferramenta da própria Grande Aço: a marca aparece firme na casca (faixa grafite, logo negativo, filete azul GA de 3px) e o centro da tela é o aço medido. Tudo que importa ao trabalho (ID, bitola, medida, sobra) é dado de oficina: lido de relance, em mono tabular, sobre painéis brancos num chão de aço frio. Os títulos usam Archivo expandida e pesada, parente direta das letras largas de \"GRANDE AÇO\" no logo; os rótulos de dado em mono, caixa alta e espaçados, ecoam o \"INDÚSTRIA DE AÇO\".\n\nA densidade é de ferramenta, não de vitrine: painéis com borda de 1px, sem sombra em repouso, grade de campos que vira pares no celular, alvos de toque de 44px. O mesmo sistema serve o vendedor no balcão (PC) e o operador no pátio (celular, sol forte), por isso o contraste é alto e o azul GA, que é claro demais para texto, só aparece como preenchimento ou traço; o texto azul é o azul profundo.\n\nEste mundo substitui deliberadamente a imitação de loja Apple anterior e recusa o painel SaaS cinza com um acento azul. A peça assinatura é a barra de corte desenhada sobre uma trena graduada. O modo escuro é a mesma usina em grafite mais profundo, não um tema invertido genérico.",
+    "keyCharacteristics": [
+      "Casca grafite (`shell-bg`) com filete azul GA de 3px, presa no topo; abas brancas com sublinhado azul GA na ativa.",
+      "Chão de aço frio (`chao`), painéis brancos (`painel`) com borda `linha` e cantos de 10px.",
+      "Azul GA como preenchimento de ação, sempre com texto grafite; azul profundo (`link`) para texto, foco e números em destaque.",
+      "Archivo expandida (largura 112–125%, pesos 700–800) para títulos e números grandes; JetBrains Mono tabular com zero cortado para todo dado do aço.",
+      "Vermelho reservado para baixa, erro e sucata.",
+      "Ícones SVG próprios, traço de 2px, pontas arredondadas, 18px."
+    ],
+    "rules": [
+      {
+        "name": "A Regra do Texto Grafite",
+        "body": "Preenchimento azul GA sempre leva texto grafite (`acao-ink`), nunca branco. Texto azul sobre fundo claro é sempre `link`, nunca `ga-azul`.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra do Vermelho de Baixa",
+        "body": "Vermelho só aparece para baixa, erro e sucata. Ação destrutiva repetida numa lista usa o contorno vermelho; o vermelho cheio fica para a confirmação.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra da Casca Grafite",
+        "body": "O grafite com filete azul GA pertence à casca e à tela de login. O conteúdo vive no chão de aço frio com painéis brancos.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra Expandida",
+        "body": "A largura expandida (112–125%) e os pesos 700–800 são para títulos e números grandes; o texto corrido fica em largura normal.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra do Dado em Mono",
+        "body": "ID, bitola, medida, peso e sobra sempre em JetBrains Mono com `tabular-nums slashed-zero`, para alinhar em coluna e não confundir 0 com O.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra da Faixa Dividida",
+        "body": "Indicadores formam uma faixa única dividida, não cartões soltos: a grade tem vão de 1px sobre fundo `linha`, de modo que as divisórias aparecem em qualquer quebra de coluna. Contagem ímpar no celular: o último ocupa a linha inteira.",
+        "section": "layout"
+      },
+      {
+        "name": "A Regra do Chão Plano",
+        "body": "Superfícies não flutuam em repouso. Sombra é sinal de \"está acima da página\" (modal, toast), nunca decoração.",
+        "section": "elevation"
+      },
+      {
+        "name": "A Regra do Vão de Corte",
+        "body": "A barra é proporcional e honesta: segmentos nunca têm largura fixa, e o vão de 2px é o único separador entre peças.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do usar azul GA (#3BADE8) como preenchimento com texto grafite (#171E26), e `link` (#0B6FA4) sempre que o azul for texto.",
+      "Do escrever todo dado do aço (ID, bitola, medida, sobra, peso) em JetBrains Mono com `tabular-nums slashed-zero`.",
+      "Do usar rótulos de dado em mono 11.5px, 600, caixa alta, 0.08em, como eco do \"INDÚSTRIA DE AÇO\" do logo.",
+      "Do manter alvos de toque de 44px (`--ctrl-h`), e subir controles menores para 44px em `pointer: coarse`.",
+      "Do desenhar medidas em escala sobre a trena quando uma barra for mostrada.",
+      "Do definir toda cor nova como token em `:root` e redefini-la em `:root[data-theme=\"dark\"]`.",
+      "Do usar ícones SVG próprios de 18px, traço de 2px, pontas arredondadas, cor herdada (`currentColor`)."
+    ],
+    "donts": [
+      "Don't pôr texto branco sobre azul GA, nem usar azul GA como cor de texto sobre fundo claro.",
+      "Don't usar vermelho fora de baixa, erro e sucata.",
+      "Don't dar sombra a painéis, cartões ou botões; sombra é só para modal e toast.",
+      "Don't espalhar indicadores em cartões soltos; use a faixa dividida.",
+      "Don't usar cantos de pílula em botões ou campos.",
+      "Don't redesenhar, recolorir ou recompor o logo Grande Aço; use os arquivos de `assets/`.",
+      "Don't usar cor nas etiquetas térmicas: elas saem em P&B.",
+      "Don't voltar à estética de loja Apple ou ao painel SaaS cinza com um acento azul que este sistema substituiu."
+    ]
+  }
+}
