@@ -32,7 +32,7 @@
     t.kgConsumidoPontas += (m.kgPecas || 0) + (m.kgSucata || 0) + (m.kgPerda || 0);
     t.kgVoltouPonta += m.kgSobra || 0;
     if (m.precoKg > 0) t.valorRecuperado += (m.kgPecas || 0) * m.precoKg;
-    else t.baixasSemPreco += 1;
+    else if (t.lotesSemPreco) t.lotesSemPreco.add(m.lote || m.mov || t.lotesSemPreco.size);
   }
 
   const fecharTaxa = (t) => { t.taxa = t.kgConsumidoPontas > 0 ? t.kgReaproveitado / t.kgConsumidoPontas : null; return t; };
@@ -40,6 +40,8 @@
   /** Resumo do período, geral e por bitola. */
   function resumir(movs) {
     const total = vazio();
+    // "Sem preço" conta pedidos: um lote com 3 barras é uma baixa só.
+    Object.defineProperty(total, "lotesSemPreco", { value: new Set(), enumerable: false });
     const porBitola = new Map();
     (movs || []).forEach((m) => {
       if (m.acao !== "baixa" || m.estornado) return;
@@ -48,6 +50,7 @@
       acumular(porBitola.get(m.bitola), m);
     });
     fecharTaxa(total);
+    total.baixasSemPreco = total.lotesSemPreco.size;
     total.porBitola = [...porBitola.entries()]
       .sort((a, b) => a[0] - b[0])
       .map(([bitola, t]) => {

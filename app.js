@@ -1,7 +1,7 @@
 /**
  * Controle de Pontas — Grande Aço (frontend)
  * Depende de: corte.js (otimizador), QRious, Html5Qrcode, SheetJS, jsPDF + autotable.
- * Toda leitura/escrita passa pelo Apps Script (Code.gs v2), autenticada por token.
+ * Toda leitura/escrita passa pelo Apps Script (Code.gs v3), autenticada por token.
  */
 "use strict";
 
@@ -42,17 +42,34 @@ const icon = (nome, classe = "") => `<svg class="icon ${classe}" aria-hidden="tr
 // ARMAZENAMENTO LOCAL (pode falhar em aba anônima / bloqueado)
 // ============================================================================
 const Armazenamento = {
+  // Cópia em memória: se o navegador bloquear o armazenamento, a sessão em curso
+  // continua funcionando (as reservas só se perdem ao fechar ou recarregar a página).
+  // A memória só é lida depois que o navegador recusar uma leitura ou gravação.
+  memoria: new Map(),
+  bloqueado: false,
+  falhou() {
+    if (this.bloqueado) return;
+    this.bloqueado = true;
+    setTimeout(() => UI.notificar("Este navegador não deixa guardar dados: as reservas feitas aqui somem se a página for fechada ou recarregada.", true), 0);
+  },
   ler(chave, padrao = null) {
-    try { const v = localStorage.getItem(chave); return v === null ? padrao : v; } catch (e) { return padrao; }
+    if (!this.bloqueado) {
+      try { const v = localStorage.getItem(chave); return v === null ? padrao : v; } catch (e) { this.falhou(); }
+    }
+    return this.memoria.has(chave) ? this.memoria.get(chave) : padrao;
   },
   lerJSON(chave) {
     try { return JSON.parse(this.ler(chave)); } catch (e) { return null; }
   },
   gravar(chave, valor) {
-    try { localStorage.setItem(chave, typeof valor === "string" ? valor : JSON.stringify(valor)); } catch (e) { /* ignora */ }
+    const texto = typeof valor === "string" ? valor : JSON.stringify(valor);
+    this.memoria.set(chave, texto);
+    if (this.bloqueado) return;
+    try { localStorage.setItem(chave, texto); } catch (e) { this.falhou(); }
   },
   remover(chave) {
-    try { localStorage.removeItem(chave); } catch (e) { /* ignora */ }
+    this.memoria.delete(chave);
+    try { localStorage.removeItem(chave); } catch (e) { /* bloqueado: a memória já foi limpa */ }
   }
 };
 
@@ -269,12 +286,12 @@ const API = {
 
     let json;
     try { json = await res.json(); } catch (e) {
-      throw new ErroAPI("Resposta inválida do servidor. Confira se o Apps Script v2 foi implantado.", "FORMATO");
+      throw new ErroAPI("Resposta inválida do servidor. Confira se o Apps Script v3 foi implantado.", "FORMATO");
     }
     const ok = json.sucesso !== undefined ? json.sucesso : json.success;
     if (!ok) {
       let msg = json.mensagem || json.message || "Operação não realizada.";
-      if (/^Ação desconhecida/.test(msg)) msg = "O Apps Script está desatualizado: implante o Code.gs v2 (nova versão).";
+      if (/^Ação desconhecida/.test(msg)) msg = "O Apps Script está desatualizado: implante o Code.gs v3 (nova versão).";
       if (json.codigo === "AUTH") Auth.sessaoExpirada();
       throw new ErroAPI(msg, json.codigo);
     }
@@ -478,6 +495,15 @@ const Reservas = {
     this.renderizar();
   },
 
+  /** Tira da tela as reservas que venceram, inclusive a faixa do plano aberto. */
+  verificarVencidas() {
+    this.renderizar();
+    if (state.reservaAtual && !this.doCodigo(state.reservaAtual)) {
+      state.reservaAtual = null;
+      if (state.plano && state.plano.reserva) { state.plano.reserva = null; Plano.renderizar(); }
+    }
+  },
+
   renderizar() {
     const area = $("minhasReservas");
     const lista = this.todas().sort((a, b) => a.expira - b.expira);
@@ -672,6 +698,9 @@ const Plano = {
     const novas = p.barras.filter((b) => b.nova).length;
     const temPontas = p.barras.length > novas;
     const reserva = p.reserva ? Reservas.doCodigo(p.reserva) : null;
+    const idsPontas = p.barras.filter((b) => !b.nova).map((b) => b.id);
+    const rotuloReservar = !reserva ? `Reservar por ${CONFIG.RESERVA_HORAS}h`
+      : ReservaLogica.mesmasBarras(idsPontas, reserva) ? `Renovar reserva (${CONFIG.RESERVA_HORAS}h)` : "Atualizar reserva";
     const qualidade = (p.completo
       ? (p.otimo ? "Melhor combinação possível" : "Combinação aproximada (pedido muito grande para verificar todas)")
       : "Plano parcial") + (novas ? ` · ${novas} barra(s) nova(s) de ${CONFIG.BARRA_NOVA_M} m` : "");
@@ -707,7 +736,7 @@ const Plano = {
         <div class="actions-row">
           <button type="button" class="btn-secondary" data-action="copiar-whatsapp">${icon("copy")}Copiar p/ WhatsApp</button>
           <button type="button" class="btn-secondary" data-action="imprimir-ordem">${icon("printer")}Imprimir ordem de corte</button>
-          ${temPontas ? `<button type="button" class="btn-secondary" data-action="reservar-plano">${icon("tag")}${reserva ? "Atualizar reserva" : `Reservar por ${CONFIG.RESERVA_HORAS}h`}</button>` : ""}
+          ${temPontas ? `<button type="button" class="btn-secondary" data-action="reservar-plano">${icon("tag")}${rotuloReservar}</button>` : ""}
           <button type="button" class="btn" data-action="confirmar-baixa-plano">${icon("check")}Confirmar baixa</button>
         </div>
         <p class="input-hint" style="margin-top:12px; text-align:right;">As etiquetas das sobras saem depois da confirmação, com os IDs definitivos da planilha.</p>
@@ -1806,7 +1835,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("buscaKerf").value = Armazenamento.ler("pontas_kerf_mm", "0");
   $("buscaBarraNova").checked = Armazenamento.ler("pontas_barra_nova", "1") !== "0";
   Reservas.renderizar();
-  setInterval(() => Reservas.renderizar(), 60000); // reservas vencidas saem da lista sozinhas
+  setInterval(() => Reservas.verificarVencidas(), 30000); // reservas vencidas saem da lista e da faixa do plano
   ligarEventos();
 
   Auth.carregar();

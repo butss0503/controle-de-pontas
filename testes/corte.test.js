@@ -184,3 +184,15 @@ test("pedido grande termina rápido", () => {
   assert.equal(r.completo, true);
   assert.ok(ms < 3000, `demorou ${ms} ms`);
 });
+
+test("com barra nova, o limite inferior prova o ótimo sem esgotar a busca", () => {
+  const casos = [
+    [[{ id: 1, medida: 6 }], Array(12).fill(3)],
+    [[], Array(10).fill(3.7).concat(Array(7).fill(2.2))]
+  ];
+  for (const [barras, pecas] of casos) {
+    const r = Corte.planejar(barras, pecas, { barraNova: { medida: 12 }, limiteNos: 20000 });
+    assert.equal(r.completo, true);
+    assert.equal(r.otimo, true, `pecas ${pecas.length}`);
+  }
+});

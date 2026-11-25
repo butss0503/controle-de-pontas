@@ -88,7 +88,7 @@ function criarAmbiente(linhasIniciais, opcoes = {}) {
 
   const post = (body) => ctx.doPost({ postData: { contents: JSON.stringify(body) } });
   const login = (role, senha) => post({ action: "login", role, senha }).token;
-  return { grade, gradeDe: (nome) => grades[nome], setAgora, post, login, ctx };
+  return { grade, gradeDe: (nome) => grades[nome], abas, planilha, setAgora, post, login, ctx };
 }
 
 const linha = (id, bitola, medida, situacao = "Em estoque", obs = "Em estoque") =>
@@ -485,4 +485,64 @@ test("bloqueia após muitas senhas erradas", () => {
   const env = criarAmbiente([]);
   for (let i = 0; i < 20; i++) env.post({ action: "login", role: "operador", senha: "errada" });
   assert.equal(env.post({ action: "login", role: "operador", senha: "opera123" }).codigo, "BLOQUEADO");
+});
+
+// ---------- Pendências da revisão ----------
+test("baixa recusa barra nova de bitola diferente das pontas do lote", () => {
+  const env = criarAmbiente([linha(1, 8, 3)], { agora: T0 });
+  const r = env.post({ action: "baixar", token: env.login("vendedor", "venda123"),
+    instrucoes: [{ id: 1, cortes: [1] }, { nova: true, bitola: 10, cortes: [4] }] });
+  assert.equal(r.sucesso, false);
+  assert.equal(r.codigo, "CONFLITO");
+  assert.match(r.mensagem, /bitola/i);
+  assert.equal(env.grade[1][6], "Em estoque");
+});
+
+test("estorno recusa quando a sobra gerada está reservada", () => {
+  const env = criarAmbiente([linha(1, 8, 5)], { agora: T0 });
+  const tv = env.login("vendedor", "venda123");
+  const b = env.post({ action: "baixar", token: tv, cliente: "Pedido 1", instrucoes: [{ id: 1, cortes: [1] }] });
+  const idSobra = b.sobras[0].id;
+  assert.equal(env.post({ action: "reservar", token: tv, ids: [idSobra], cliente: "Cliente Z" }).sucesso, true);
+  const r = env.post({ action: "estornar", token: env.login("operador", "opera123"), id: 1 });
+  assert.equal(r.sucesso, false);
+  assert.equal(r.codigo, "CONFLITO");
+  assert.match(r.mensagem, /reservada para Cliente Z/);
+  assert.equal(env.grade[1][6], "Vendido");
+  assert.equal(env.grade.find((row) => row[0] === idSobra)[6], "Em estoque");
+});
+
+test("estornarBarraNova recusa quando a sobra está reservada", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  const tv = env.login("vendedor", "venda123");
+  const b = env.post({ action: "baixar", token: tv, instrucoes: [{ nova: true, bitola: 8, cortes: [5] }] });
+  env.post({ action: "reservar", token: tv, ids: [b.sobras[0].id], cliente: "Cliente Z" });
+  const r = env.post({ action: "estornarBarraNova", token: env.login("operador", "opera123"), mov: b.lote + "-1" });
+  assert.equal(r.sucesso, false);
+  assert.match(r.mensagem, /reservada para Cliente Z/);
+});
+
+test("falha ao gravar Movimentos não desfaz a baixa e avisa", () => {
+  const env = criarAmbiente([linha(1, 8, 3)], { agora: T0 });
+  const mov = env.planilha.insertSheet("Movimentos");
+  const original = mov.getRange;
+  mov.getRange = (...args) => {
+    const rg = original(...args);
+    rg.setValues = () => { throw new Error("cota excedida"); };
+    return rg;
+  };
+  const r = env.post({ action: "baixar", token: env.login("vendedor", "venda123"), instrucoes: [{ id: 1, cortes: [1] }] });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.match(r.mensagem, /Movimentos/);
+  assert.equal(env.grade[1][6], "Vendido");
+});
+
+test("movimentos não lê a aba Pontas", () => {
+  const env = criarAmbiente([linha(1, 8, 3)], { agora: T0 });
+  const tv = env.login("vendedor", "venda123");
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: 1, cortes: [] }] });
+  env.abas.Pontas.getRange = () => { throw new Error("leu Pontas"); };
+  const r = env.post({ action: "movimentos", token: tv });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.equal(r.movimentos.length, 1);
 });

@@ -124,6 +124,9 @@
     let custo = 0;
     let nos = 0;
     let abortado = false;
+    const grupoNovo = grupos.find((g) => g.nova);
+    const medidaNova = grupoNovo ? grupoNovo.medida : 0;
+    const capPontasFechadas = () => grupos.reduce((s, g) => s + (g.nova ? 0 : g.medida * (g.barras.length - g.usados)), 0);
 
     function registrar() {
       const melhora = custo < melhorCusto - EPS || (Math.abs(custo - melhorCusto) <= EPS && bins.length < melhorQtd);
@@ -139,12 +142,28 @@
       if (++nos > limiteNos) { abortado = true; return; }
       if (i === n) { registrar(); return; }
 
-      // Limite inferior: o que falta encaixar além do espaço já aberto precisa de barra nova.
-      let capAberta = 0;
-      for (const bin of bins) capAberta += Math.max(0, livre(bin, kerf));
-      const limite = custo + Math.max(0, sufixo[i] - capAberta);
+      // Limite inferior (relaxação fracionária): o que falta encaixar vai, do mais barato ao mais caro,
+      // para o espaço livre das pontas abertas (custo 0), pontas ainda fechadas (≥ 1 por metro),
+      // espaço livre de barras novas abertas (PESO_NOVA_M por metro) e, por fim, barras novas a abrir.
+      let capPontaAberta = 0;
+      let capNovaAberta = 0;
+      for (const bin of bins) {
+        const l = Math.max(0, livre(bin, kerf));
+        if (bin.barra.nova) capNovaAberta += l; else capPontaAberta += l;
+      }
+      let resto = Math.max(0, sufixo[i] - capPontaAberta);
+      const emPontas = Math.min(resto, capPontasFechadas());
+      resto -= emPontas;
+      const emNovaAberta = Math.min(resto, capNovaAberta);
+      resto -= emNovaAberta;
+      let novasAAbrir = 0;
+      if (resto > EPS) {
+        if (!medidaNova) return;                                                // não há como completar
+        novasAAbrir = Math.ceil(resto / medidaNova - EPS);
+      }
+      const limite = custo + emPontas + PESO_NOVA_M * (emNovaAberta + resto) + PENALIDADE_NOVA * novasAAbrir;
       if (limite > melhorCusto + EPS) return;                                   // não melhora o custo
-      if (limite >= melhorCusto - EPS && bins.length >= melhorQtd) return;      // empata no custo sem usar menos barras
+      if (limite >= melhorCusto - EPS && bins.length + novasAAbrir >= melhorQtd) return; // empata sem usar menos barras
 
       const p = pecas[i];
 
