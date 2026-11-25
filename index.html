@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#171E26">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <title>Controle de Pontas — Grande Aço</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/icone-180.png">
 
-  <!-- Aplica o tema antes de desenhar a página (evita "piscar" claro → escuro) -->
+  <!-- Tema: claro por padrão (balcão e pátio ao sol); escuro só se a pessoa escolher -->
   <script>
     (function () {
       var t = null;
       try { t = localStorage.getItem("theme"); } catch (e) {}
-      if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
     })();
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
 
   <!-- Bibliotecas com versão fixa + verificação de integridade (SRI) -->
@@ -35,47 +35,61 @@
 </head>
 <body>
 
-  <!-- GLOBAL NAV -->
-  <header class="global-nav">
-    <div class="global-nav-inner">
-      <span class="brand-link">
-        <img src="image_1d6ea0.png" alt="" class="brand-logo" onerror="this.style.display='none'">
-        <span>Grande Aço</span>
-      </span>
-      <div class="global-nav-actions">
-        <button type="button" class="nav-util-link" data-action="abrir-login" title="Trocar perfil / sair">👤 <span id="profileRole">Entrar</span></button>
-        <button type="button" class="nav-util-link" data-action="abrir-modal" data-modal="modalImpressora" title="Impressora de etiquetas">🖨️ <span class="nav-label">Etiqueta USB</span></button>
-        <button type="button" class="nav-util-link" data-action="abrir-modal" data-modal="modalExportar" title="Relatórios">📊 <span class="nav-label">Relatórios</span></button>
-        <button type="button" class="nav-util-link" id="btnRecarregar" data-action="sincronizar" title="Sincronizar com a planilha">🔄 <span class="nav-label">Sincronizar</span></button>
-        <button type="button" class="nav-util-link" id="btnTheme" data-action="alternar-tema" title="Alternar aparência" aria-label="Alternar aparência">🌙</button>
+  <!-- ÍCONES (traço 2px, desenhados para este sistema) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"/></symbol>
+    <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></symbol>
+    <symbol id="i-report" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M6 17v-6"/><path d="M11 17V5"/><path d="M16 17v-9"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-14.6-4.5"/><path d="M4 3v5h5"/><path d="M4 12a8 8 0 0 0 14.6 4.5"/><path d="M20 21v-5h-5"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3L2 20h20z"/><path d="M12 10v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></symbol>
+    <symbol id="i-cut" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.2 8.2L20 20M8.2 15.8L20 4"/></symbol>
+  </svg>
+
+  <!-- CASCA: faixa grafite + filete azul GA + abas -->
+  <header class="shell">
+    <div class="shell-bar">
+      <div class="shell-inner">
+        <span class="shell-brand"><img src="assets/logo-negativo.png" alt="Grande Aço — Indústria de Aço" width="75" height="46"></span>
+        <span class="shell-divider" aria-hidden="true"></span>
+        <h1 class="shell-product" style="margin:0">Controle de Pontas</h1>
+        <div class="shell-actions">
+          <button type="button" class="shell-btn perfil" data-action="abrir-login" title="Trocar perfil ou sair"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg><span id="profileRole">Entrar</span></button>
+          <button type="button" class="shell-btn" data-action="abrir-modal" data-modal="modalImpressora" title="Impressora de etiquetas"><svg class="icon" aria-hidden="true"><use href="#i-printer"/></svg><span class="nav-label">Etiquetas</span></button>
+          <button type="button" class="shell-btn" data-action="abrir-modal" data-modal="modalExportar" title="Relatórios"><svg class="icon" aria-hidden="true"><use href="#i-report"/></svg><span class="nav-label">Relatórios</span></button>
+          <button type="button" class="shell-btn" id="btnRecarregar" data-action="sincronizar" title="Sincronizar com a planilha"><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span class="nav-label">Sincronizar</span></button>
+          <button type="button" class="shell-btn" id="btnTheme" data-action="alternar-tema" title="Alternar aparência" aria-label="Alternar aparência"><svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg></button>
+        </div>
       </div>
     </div>
-  </header>
-
-  <!-- SUB-NAV -->
-  <nav class="sub-nav-frosted">
-    <div class="sub-nav-inner">
-      <h1 class="sub-nav-title">Controle de Pontas</h1>
-      <div class="tabs" role="tablist">
+    <nav class="shell-tabs" aria-label="Seções">
+      <div class="shell-inner tabs" role="tablist">
         <button type="button" class="tab active" role="tab" aria-selected="true" aria-controls="consulta" data-target="consulta">Plano de Corte</button>
         <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="estoque" data-target="estoque">Estoque <span class="tab-badge" id="contadorEstoque">0</span></button>
         <button type="button" class="tab so-operador" role="tab" aria-selected="false" aria-controls="gerenciar" data-target="gerenciar">Cadastrar e Baixar</button>
         <button type="button" class="tab so-operador" role="tab" aria-selected="false" aria-controls="historico" data-target="historico">Histórico</button>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </header>
 
   <div class="container">
     <!-- ABA 1: PLANO DE CORTE -->
     <main id="consulta" class="tab-content active" role="tabpanel">
       <div class="page-header">
-        <h2>Plano de Corte Otimizado.</h2>
+        <h2>Plano de corte</h2>
         <p>Combine medidas e extraia o máximo rendimento das pontas em pátio.</p>
       </div>
 
       <section class="box">
         <div class="box-header">
-          <h3 class="box-title">Configurar Pedido</h3>
+          <h3 class="box-title">Configurar pedido</h3>
           <span class="box-subtitle">Adicione várias medidas ou calcule diretamente</span>
         </div>
 
@@ -85,32 +99,32 @@
             <select id="buscaBitola" class="mono"><option value="">Carregando...</option></select>
           </div>
           <div class="form-group">
-            <label for="buscaMedida">Medida do Corte (m)</label>
+            <label for="buscaMedida">Medida do corte (m)</label>
             <input type="number" id="buscaMedida" class="mono" step="0.01" min="0.05" inputmode="decimal" placeholder="Ex: 1.50">
           </div>
           <div class="form-group">
-            <label for="buscaQtde">Quantidade de Peças</label>
+            <label for="buscaQtde">Quantidade de peças</label>
             <input type="number" id="buscaQtde" class="mono" min="1" max="500" value="1" inputmode="numeric">
           </div>
           <div class="form-group">
-            <label for="buscaPrecoKg">Preço R$/kg (Opcional)</label>
-            <input type="number" id="buscaPrecoKg" class="mono" step="0.01" min="0" inputmode="decimal" placeholder="Ex: 7.50">
+            <label for="buscaPrecoKg">Preço R$/kg</label>
+            <input type="number" id="buscaPrecoKg" class="mono" step="0.01" min="0" inputmode="decimal" placeholder="Opcional">
           </div>
           <div class="form-group">
-            <label for="buscaKerf">Perda por Corte (mm)</label>
+            <label for="buscaKerf">Perda por corte (mm)</label>
             <input type="number" id="buscaKerf" class="mono" step="0.5" min="0" max="20" value="0" inputmode="decimal">
             <span class="input-hint">0 para tesoura/guilhotina · ~3 para serra</span>
           </div>
         </div>
 
         <div id="areaCarrinhoCortes" hidden>
-          <span class="box-subtitle">Medidas adicionadas ao pedido:</span>
+          <span class="data-label" style="color:var(--ink-3)">Medidas do pedido</span>
           <div class="cart-list" id="listaCarrinhoCortes"></div>
         </div>
 
         <div class="actions-row">
-          <button type="button" class="btn-secondary" data-action="adicionar-carrinho">Adicionar Medida</button>
-          <button type="button" class="btn" data-action="calcular-plano">Calcular Aproveitamento</button>
+          <button type="button" class="btn-secondary" data-action="adicionar-carrinho"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar medida</button>
+          <button type="button" class="btn" data-action="calcular-plano"><svg class="icon" aria-hidden="true"><use href="#i-cut"/></svg>Calcular aproveitamento</button>
         </div>
       </section>
 
@@ -120,18 +134,18 @@
     <!-- ABA 2: ESTOQUE -->
     <section id="estoque" class="tab-content" role="tabpanel">
       <div class="page-header">
-        <h2>Inventário de Pátio.</h2>
+        <h2>Estoque de pontas</h2>
         <p>Visão em tempo real das pontas disponíveis e impressão de etiquetas térmicas.</p>
       </div>
 
       <div class="box">
         <div class="box-header">
-          <h3 class="box-title">Resumo por Bitola</h3>
+          <h3 class="box-title">Resumo por bitola</h3>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button type="button" class="btn-secondary btn-sm" id="btnImprimirSelecionadas" hidden data-action="imprimir-selecionadas">
               Imprimir Selecionadas (<span id="countSelecionadas">0</span>)
             </button>
-            <button type="button" class="btn btn-sm" data-action="imprimir-visiveis">Imprimir Todas Visíveis</button>
+            <button type="button" class="btn btn-sm" data-action="imprimir-visiveis"><svg class="icon" aria-hidden="true"><use href="#i-tag"/></svg>Imprimir todas visíveis</button>
           </div>
         </div>
 
@@ -150,7 +164,7 @@
         </div>
 
         <div class="table-container">
-          <table>
+          <table class="tabela-estoque">
             <thead>
               <tr>
                 <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkTodasEstoque" aria-label="Selecionar todas as visíveis"></th>
@@ -174,25 +188,25 @@
     <!-- ABA 3: CADASTRAR E BAIXAR -->
     <section id="gerenciar" class="tab-content" role="tabpanel">
       <div class="page-header">
-        <h2>Movimentação de Estoque.</h2>
+        <h2>Cadastrar e baixar</h2>
         <p>Entrada de novas pontas ou baixa manual via ID e leitor de QR Code.</p>
       </div>
 
       <div class="box">
         <div class="box-header">
-          <h3 class="box-title">Cadastrar Nova Ponta</h3>
+          <h3 class="box-title">Cadastrar nova ponta</h3>
         </div>
         <div class="form-grid">
           <div class="form-group">
-            <label for="cadBitolaSelect">Bitola Comercial (mm)</label>
+            <label for="cadBitolaSelect">Bitola comercial (mm)</label>
             <select id="cadBitolaSelect" class="mono"></select>
           </div>
           <div class="form-group" id="grupoBitolaCustom" hidden>
-            <label for="cadBitolaCustom">Bitola Personalizada (mm)</label>
+            <label for="cadBitolaCustom">Bitola personalizada (mm)</label>
             <input type="number" id="cadBitolaCustom" class="mono" step="0.01" min="1" inputmode="decimal" placeholder="Ex: 9.50">
           </div>
           <div class="form-group">
-            <label for="cadMedida">Medida da Barra (m)</label>
+            <label for="cadMedida">Medida da barra (m)</label>
             <input type="number" id="cadMedida" class="mono" step="0.01" min="0.05" inputmode="decimal" placeholder="Ex: 5.50">
           </div>
           <div class="form-group">
@@ -205,13 +219,13 @@
           </div>
         </div>
         <div id="previewPesoCadastro" class="box-subtitle" style="margin-bottom: 16px;"></div>
-        <button type="button" class="btn" id="btnCadastrar" data-action="cadastrar">Confirmar Cadastro</button>
+        <button type="button" class="btn" id="btnCadastrar" data-action="cadastrar"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Confirmar cadastro</button>
         <div id="resultadoCadastro"></div>
       </div>
 
       <div class="box">
         <div class="box-header">
-          <h3 class="box-title">Baixa Manual por ID</h3>
+          <h3 class="box-title">Baixa manual por ID</h3>
           <span class="box-subtitle">Venda da barra inteira, sem gerar sobra</span>
         </div>
         <div class="form-grid">
@@ -219,7 +233,7 @@
             <label for="baixaId">ID da Ponta</label>
             <div class="input-with-btn">
               <input type="number" id="baixaId" class="mono" inputmode="numeric" placeholder="Ex: 342">
-              <button type="button" class="btn-pearl" data-action="abrir-scanner">📷 Ler QR</button>
+              <button type="button" class="btn-pearl" data-action="abrir-scanner"><svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg>Ler QR</button>
             </div>
           </div>
           <div class="form-group">
@@ -228,14 +242,14 @@
           </div>
         </div>
         <div id="previewBaixa" style="margin-bottom: 16px;"></div>
-        <button type="button" class="btn-danger" id="btnBaixar" data-action="baixar-manual" hidden>Confirmar Baixa (Vendido)</button>
+        <button type="button" class="btn-danger" id="btnBaixar" data-action="baixar-manual" hidden>Confirmar baixa (vendido)</button>
       </div>
     </section>
 
     <!-- ABA 4: HISTÓRICO -->
     <section id="historico" class="tab-content" role="tabpanel">
       <div class="page-header">
-        <h2>Histórico de Saídas.</h2>
+        <h2>Histórico de saídas</h2>
         <p>Barras vendidas ou cortadas, com opção de estorno.</p>
       </div>
 
@@ -247,7 +261,7 @@
           </div>
         </div>
         <div class="table-container">
-          <table>
+          <table class="tabela-historico">
             <thead>
               <tr>
                 <th>ID</th>
@@ -284,8 +298,9 @@
 
   <!-- MODAL: LOGIN / PERFIL -->
   <div class="modal-overlay" id="modalLogin" role="dialog" aria-modal="true" aria-labelledby="tituloLogin">
+    <img class="login-logo" src="assets/logo-negativo.png" alt="Grande Aço — Indústria de Aço" width="300" height="183">
     <div class="modal-box">
-      <h2 id="tituloLogin">Perfil de Acesso</h2>
+      <h2 id="tituloLogin">Entrar no Controle de Pontas</h2>
       <p class="subtitle" id="loginSubtitulo">Selecione o perfil e informe a senha</p>
       <div class="role-tabs" role="radiogroup" aria-label="Perfil">
         <button type="button" class="role-tab active" role="radio" aria-checked="true" data-role="vendedor">Vendedor</button>
@@ -307,10 +322,10 @@
   <!-- MODAL: IMPRESSORA -->
   <div class="modal-overlay" id="modalImpressora" role="dialog" aria-modal="true" aria-labelledby="tituloImpressora">
     <div class="modal-box">
-      <h2 id="tituloImpressora">Impressora Térmica USB</h2>
+      <h2 id="tituloImpressora">Impressora de etiquetas</h2>
       <p class="subtitle">Configure o formato da etiqueta instalada na máquina</p>
       <div class="form-group" style="margin-bottom: 18px;">
-        <label for="printerPaperSize">Dimensão da Etiqueta</label>
+        <label for="printerPaperSize">Tamanho da etiqueta</label>
         <select id="printerPaperSize" class="mono">
           <option value="100x50">100mm x 50mm (Padrão Pátio)</option>
           <option value="80x40">80mm x 40mm</option>
@@ -326,7 +341,7 @@
   <!-- MODAL: EXPORTAÇÃO -->
   <div class="modal-overlay" id="modalExportar" role="dialog" aria-modal="true" aria-labelledby="tituloExportar">
     <div class="modal-box">
-      <h2 id="tituloExportar">Exportar Relatório</h2>
+      <h2 id="tituloExportar">Exportar relatório</h2>
       <p class="subtitle">Estoque atual completo + vendas do período escolhido</p>
       <div class="export-date-range">
         <div class="form-group"><label for="exportDateFrom">Vendas desde</label><input type="date" id="exportDateFrom"></div>

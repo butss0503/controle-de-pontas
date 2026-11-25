@@ -1,0 +1,182 @@
+// Testa o Code.gs em Node, simulando os serviços do Apps Script.  node --test testes/
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+const crypto = require("node:crypto");
+
+function criarAmbiente(linhasIniciais) {
+  const grade = [["Nº", "Data", "Nº de Pontas", "Bitola (mm)", "Medida (m)", "Peso Estimado", "Situação", "Cliente"], ...linhasIniciais];
+  let maxCols = 8;
+  const largura = () => { grade.forEach((r) => { while (r.length < maxCols) r.push(""); }); };
+  largura();
+
+  const range = (r, c, nr, nc) => ({
+    getValues: () => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => (grade[r - 1 + i] || [])[c - 1 + j] ?? "")),
+    setValues: (v) => {
+      v.forEach((linha, i) => {
+        while (grade.length < r + i) grade.push(new Array(maxCols).fill(""));
+        linha.forEach((val, j) => { grade[r - 1 + i][c - 1 + j] = val; });
+      });
+      return range(r, c, nr, nc);
+    },
+    setFontWeight: () => range(r, c, nr, nc)
+  });
+  const sheet = {
+    getRange: range,
+    getLastRow: () => grade.length,
+    getMaxColumns: () => maxCols,
+    insertColumnsAfter: (_, n) => { maxCols += n; largura(); },
+    setFrozenRows: () => {}
+  };
+  const props = {};
+  const cache = {};
+  const b64 = (bytes) => Buffer.from(bytes).toString("base64");
+  const b64ws = (x) => Buffer.from(typeof x === "string" ? Buffer.from(x, "utf8") : x).toString("base64").replace(/\+/g, "-").replace(/\//g, "_");
+
+  const ctx = {
+    SpreadsheetApp: { openById: () => ({ getSheetByName: () => sheet, insertSheet: () => sheet }), flush: () => {} },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null, setProperties: (o) => Object.assign(props, o) }) },
+    CacheService: { getScriptCache: () => ({ get: (k) => cache[k] ?? null, put: (k, v) => { cache[k] = v; }, remove: (k) => { delete cache[k]; } }) },
+    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
+    ContentService: { MimeType: { JSON: "json" }, createTextOutput: (s) => ({ setMimeType: () => JSON.parse(s) }) },
+    Utilities: {
+      Charset: { UTF_8: "utf8" },
+      DigestAlgorithm: { SHA_256: "sha256" },
+      computeDigest: (_, s) => [...crypto.createHash("sha256").update(s, "utf8").digest()],
+      computeHmacSha256Signature: (v, k) => [...crypto.createHmac("sha256", k).update(v).digest()],
+      base64Encode: b64,
+      base64EncodeWebSafe: b64ws,
+      base64DecodeWebSafe: (s) => [...Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64")],
+      newBlob: (bytes) => ({ getDataAsString: () => Buffer.from(bytes).toString("utf8") }),
+      formatDate: () => "23/11/2026",
+      getUuid: () => crypto.randomUUID(),
+      sleep: () => {}
+    },
+    Logger: { log: () => {} }
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "Code.gs"), "utf8"), ctx);
+
+  // Equivale a executar configurarSenhas() com senhas de teste
+  const salt = "sal";
+  Object.assign(props, {
+    SALT: salt,
+    HASH_VENDEDOR: ctx.hashSenha("venda123", salt),
+    HASH_OPERADOR: ctx.hashSenha("opera123", salt),
+    TOKEN_SECRET: "segredo-de-teste"
+  });
+
+  const post = (body) => ctx.doPost({ postData: { contents: JSON.stringify(body) } });
+  const login = (role, senha) => post({ action: "login", role, senha }).token;
+  return { grade, post, login, ctx };
+}
+
+const linha = (id, bitola, medida, situacao = "Em estoque", obs = "Em estoque") =>
+  [id, "01/11/2026", 1, String(bitola).replace(".", ","), String(medida).replace(".", ","), "", situacao, obs];
+
+test("login: senha errada é recusada, certa devolve token com o perfil", () => {
+  const env = criarAmbiente([]);
+  assert.equal(env.post({ action: "login", role: "operador", senha: "x" }).sucesso, false);
+  const r = env.post({ action: "login", role: "vendedor", senha: "venda123" });
+  assert.equal(r.sucesso, true);
+  assert.equal(r.role, "vendedor");
+  assert.equal(env.ctx.validarToken(r.token), "vendedor");
+});
+
+test("token adulterado ou ausente é recusado com código AUTH", () => {
+  const env = criarAmbiente([]);
+  const t = env.login("vendedor", "venda123");
+  const [payload, sig] = t.split(".");
+  const falso = Buffer.from(JSON.stringify({ r: "operador", e: Date.now() + 1e9 })).toString("base64url") + "." + sig;
+  assert.equal(env.post({ action: "listar", token: falso }).codigo, "AUTH");
+  assert.equal(env.post({ action: "listar" }).codigo, "AUTH");
+  assert.equal(env.post({ action: "listar", token: payload + "." + sig }).sucesso, true);
+});
+
+test("vendedor não pode cadastrar nem estornar", () => {
+  const env = criarAmbiente([linha(1, 8, 3)]);
+  const t = env.login("vendedor", "venda123");
+  assert.equal(env.post({ action: "cadastrar", token: t, bitola: 8, medida: 2, qtde: 1 }).codigo, "PERMISSAO");
+  assert.equal(env.post({ action: "estornar", token: t, id: 1 }).codigo, "PERMISSAO");
+});
+
+test("cadastrar cria IDs sequenciais e devolve os itens", () => {
+  const env = criarAmbiente([linha(10, 8, 3)]);
+  const t = env.login("operador", "opera123");
+  const r = env.post({ action: "cadastrar", token: t, bitola: 10, medida: 2.5, qtde: 3, obs: "Obra X" });
+  assert.equal(r.sucesso, true);
+  assert.deepEqual(r.itens.map((i) => i.id), [11, 12, 13]);
+  assert.equal(env.grade.length, 5);
+  assert.equal(env.grade[4][9], ""); // sem ID de origem
+});
+
+test("baixar recalcula a sobra no servidor e cria a nova ponta com ID e origem", () => {
+  const env = criarAmbiente([linha(1, 8, 3), linha(2, 8, 5)]);
+  const t = env.login("vendedor", "venda123");
+  const r = env.post({ action: "baixar", token: t, cliente: "Pedido 9", kerf: 0.003, instrucoes: [{ id: 2, cortes: [1.5, 1.5], sobra: 999 }] });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.equal(r.sobras.length, 1);
+  assert.equal(r.sobras[0].id, 3);
+  assert.equal(r.sobras[0].medida, 1.994); // 5 - 3 - 2*0.003 (ignora a "sobra: 999" do cliente)
+  assert.equal(env.grade[2][6], "Vendido");
+  assert.equal(env.grade[2][7], "Vendido: Pedido 9");
+  assert.equal(env.grade[2][8], "23/11/2026");
+  assert.equal(env.grade[3][9], 2); // ID origem
+});
+
+test("baixar é tudo-ou-nada: um ID já vendido impede a operação inteira", () => {
+  const env = criarAmbiente([linha(1, 8, 3), linha(2, 8, 5, "Vendido", "Vendido: X")]);
+  const t = env.login("vendedor", "venda123");
+  const r = env.post({ action: "baixar", token: t, instrucoes: [{ id: 1, cortes: [] }, { id: 2, cortes: [] }] });
+  assert.equal(r.sucesso, false);
+  assert.equal(r.codigo, "CONFLITO");
+  assert.equal(env.grade[1][6], "Em estoque");
+});
+
+test("baixar recusa cortes que não cabem na barra", () => {
+  const env = criarAmbiente([linha(1, 8, 3)]);
+  const t = env.login("vendedor", "venda123");
+  const r = env.post({ action: "baixar", token: t, instrucoes: [{ id: 1, cortes: [2, 1.5] }] });
+  assert.equal(r.sucesso, false);
+  assert.equal(env.grade[1][6], "Em estoque");
+});
+
+test("estornar devolve a barra e cancela a sobra que ainda está em estoque", () => {
+  const env = criarAmbiente([linha(1, 8, 5)]);
+  const tv = env.login("vendedor", "venda123");
+  const to = env.login("operador", "opera123");
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: 1, cortes: [3] }] });
+  const r = env.post({ action: "estornar", token: to, id: 1 });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.deepEqual(r.cancelados, [2]);
+  assert.equal(env.grade[1][6], "Em estoque");
+  assert.equal(env.grade[2][6], "Cancelado");
+  const lista = env.post({ action: "listar", token: to }).itens;
+  assert.deepEqual(lista.map((i) => [i.id, i.status]), [[1, "estoque"]]);
+});
+
+test("estornar é recusado se a sobra gerada já foi vendida", () => {
+  const env = criarAmbiente([linha(1, 8, 5)]);
+  const tv = env.login("vendedor", "venda123");
+  const to = env.login("operador", "opera123");
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: 1, cortes: [3] }] });
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: 2, cortes: [] }] });
+  const r = env.post({ action: "estornar", token: to, id: 1 });
+  assert.equal(r.sucesso, false);
+  assert.match(r.mensagem, /#2/);
+});
+
+test("sobras antigas (origem só no texto) mantêm a origem ao serem vendidas", () => {
+  const env = criarAmbiente([linha(1, 8, 5, "Vendido", "Vendido: A"), linha(7, 8, 2, "Em estoque", "Sobra do ID #1 (A)")]);
+  const tv = env.login("vendedor", "venda123");
+  env.post({ action: "baixar", token: tv, cliente: "B", instrucoes: [{ id: 7, cortes: [] }] });
+  assert.equal(env.grade[2][9], 1);
+});
+
+test("bloqueia após muitas senhas erradas", () => {
+  const env = criarAmbiente([]);
+  for (let i = 0; i < 20; i++) env.post({ action: "login", role: "operador", senha: "errada" });
+  assert.equal(env.post({ action: "login", role: "operador", senha: "opera123" }).codigo, "BLOQUEADO");
+});

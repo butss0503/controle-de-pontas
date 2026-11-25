@@ -1,0 +1,10 @@
+# Cópia do sistema antigo (contém as senhas antigas em texto) — fica só nesta máquina
+backup/
+
+# Material de trabalho do processo de design (capturas e rascunhos)
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/config.local.json
+
+node_modules/
+*.log

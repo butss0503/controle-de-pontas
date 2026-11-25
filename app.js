@@ -32,6 +32,9 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
+/** Ícone do conjunto SVG do index.html (traço 2px). */
+const icon = (nome, classe = "") => `<svg class="icon ${classe}" aria-hidden="true"><use href="#i-${nome}"/></svg>`;
+
 // ============================================================================
 // ARMAZENAMENTO LOCAL (pode falhar em aba anônima / bloqueado)
 // ============================================================================
@@ -134,6 +137,8 @@ const UI = {
       t.setAttribute("aria-selected", ativo ? "true" : "false");
     });
     document.querySelectorAll(".tab-content").forEach((c) => c.classList.toggle("active", c.id === id));
+    // No celular a barra de abas rola: garante que a aba ativa fique à vista
+    if (tab.scrollIntoView) tab.scrollIntoView({ block: "nearest", inline: "nearest" });
   },
 
   alternarTema() {
@@ -144,7 +149,9 @@ const UI = {
   },
 
   atualizarIconeTema() {
-    $("btnTheme").textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "☀️" : "🌙";
+    const escuro = document.documentElement.getAttribute("data-theme") === "dark";
+    $("btnTheme").innerHTML = icon(escuro ? "sun" : "moon");
+    $("btnTheme").title = escuro ? "Usar tema claro" : "Usar tema escuro";
   },
 
   /** Diálogo de confirmação. Retorna Promise<boolean>. */
@@ -313,6 +320,7 @@ const Auth = {
       : "Selecione o perfil e informe a senha");
     $("btnSair").hidden = !state.sessao;
     $("btnCancelarLogin").hidden = obrigatorio || !state.sessao;
+    $("modalLogin").classList.toggle("is-gate", obrigatorio || !state.sessao);
     Modal.abrir("modalLogin", { podeFechar: !obrigatorio && !!state.sessao, foco: $("authPassword") });
   },
 
@@ -373,7 +381,7 @@ const Dados = {
 
   async _carregar({ silencioso = false } = {}) {
     const btn = $("btnRecarregar");
-    if (!silencioso) btn.innerHTML = '⏳ <span class="nav-label">Sincronizando…</span>';
+    if (!silencioso) { btn.disabled = true; btn.innerHTML = `${icon("sync", "is-spinning")}<span class="nav-label">Sincronizando…</span>`; }
     try {
       const r = await API.chamar("listar");
       if (r.role && r.role !== Auth.role()) { state.sessao.role = r.role; Armazenamento.gravar("pontas_sessao", state.sessao); Auth.aplicarUI(); }
@@ -404,7 +412,8 @@ const Dados = {
     } catch (e) {
       if (e.codigo !== "AUTH") UI.notificar("Erro ao sincronizar: " + e.message, true);
     } finally {
-      btn.innerHTML = '🔄 <span class="nav-label">Sincronizar</span>';
+      btn.disabled = false;
+      btn.innerHTML = `${icon("sync")}<span class="nav-label">Sincronizar</span>`;
     }
   },
 
@@ -467,7 +476,7 @@ const Plano = {
     $("listaCarrinhoCortes").innerHTML = state.carrinho.map((item, idx) => `
       <div class="cart-chip mono">
         <span><strong>${item.qtde}x</strong> de <strong>${Utils.fmt(item.medida)}m</strong></span>
-        <button type="button" data-action="remover-carrinho" data-idx="${idx}" aria-label="Remover ${item.qtde}x ${Utils.fmt(item.medida)}m">✕</button>
+        <button type="button" data-action="remover-carrinho" data-idx="${idx}" aria-label="Remover ${item.qtde}x ${Utils.fmt(item.medida)}m">${icon("x")}</button>
       </div>`).join("");
   },
 
@@ -475,7 +484,7 @@ const Plano = {
   invalidar(motivo = 'O pedido mudou. Clique em "Calcular Aproveitamento" para refazer o plano.') {
     if (!state.plano) return;
     state.plano = null;
-    $("areaResultados").innerHTML = `<div class="notice warning">${Utils.escapeHTML(motivo)}</div>`;
+    $("areaResultados").innerHTML = `<div class="notice warning">${icon("alert")}<span>${Utils.escapeHTML(motivo)}</span></div>`;
   },
 
   validarContraEstoque(idsEstoque) {
@@ -539,9 +548,9 @@ const Plano = {
     let aviso = "";
     if (!p.completo) {
       const falt = Utils.descreverCortes(p.faltantes);
-      aviso = `<div class="notice danger">❌ Estoque insuficiente na bitola Ø ${Utils.fmt(p.bitola)} mm: faltaram <strong>${p.faltantes.length}</strong> peça(s) (${falt}).
+      aviso = `<div class="notice danger">${icon("alert")}<span>Estoque insuficiente na bitola Ø ${Utils.fmt(p.bitola)} mm: faltaram <strong>${p.faltantes.length}</strong> peça(s) (${falt}).
         ${p.otimo ? "Todas as combinações foram verificadas." : "A busca atingiu o limite de tentativas; pode haver combinação melhor."}
-        ${p.barras.length ? "Abaixo, o que é possível atender com o estoque atual." : ""}</div>`;
+        ${p.barras.length ? "Abaixo, o que é possível atender com o estoque atual." : ""}</span></div>`;
       if (!p.barras.length) { area.innerHTML = aviso; return; }
     }
 
@@ -550,52 +559,81 @@ const Plano = {
     const pRetorno = p.barras.reduce((s, b) => s + (b.geraSobra ? Utils.peso(b.bitola, b.sobra) : 0), 0);
     const pPerda = Math.max(0, pBruto - pPecas - pRetorno);
     const qualidade = p.completo
-      ? (p.otimo ? "✓ Melhor combinação possível (menor sobra total)" : "Combinação aproximada (pedido muito grande para verificar todas)")
+      ? (p.otimo ? "Melhor combinação possível (menor sobra total)" : "Combinação aproximada (pedido muito grande para verificar todas)")
       : "Plano parcial";
 
     area.innerHTML = `
       <div class="box">
         <div class="box-header">
-          <h3 class="box-title">Plano de Corte Sugerido</h3>
+          <h3 class="box-title">Plano sugerido · Ø ${Utils.fmt(p.bitola)} mm</h3>
           <span class="box-subtitle">${qualidade}${p.kerf ? ` · perda de ${Utils.fmt(p.kerf * 1000, 1)} mm por corte` : ""}</span>
         </div>
         ${aviso}
         <div class="summary-grid">
-          <div class="kpi-card"><div class="kpi-label">Barras Físicas</div><div class="kpi-value">${p.barras.length} un</div></div>
-          <div class="kpi-card"><div class="kpi-label">Peso Bruto</div><div class="kpi-value">${Utils.fmt(pBruto)} kg</div></div>
-          <div class="kpi-card"><div class="kpi-label">Peso das Peças</div><div class="kpi-value" style="color:var(--primary)">${Utils.fmt(pPecas)} kg</div></div>
-          <div class="kpi-card"><div class="kpi-label">Retorno ao Estoque</div><div class="kpi-value">${Utils.fmt(pRetorno)} kg</div></div>
-          <div class="kpi-card"><div class="kpi-label">Perda (corte + sucata)</div><div class="kpi-value">${Utils.fmt(pPerda)} kg</div><div class="kpi-sub">sobras &lt; ${Utils.fmt(CONFIG.SOBRA_MINIMA)} m</div></div>
-          ${p.precoKg > 0 ? `<div class="kpi-card"><div class="kpi-label">Valor das Peças</div><div class="kpi-value" style="color:var(--primary)">${Utils.moeda(pPecas * p.precoKg)}</div></div>` : ""}
+          <div class="kpi-card"><div class="kpi-label">Barras usadas</div><div class="kpi-value">${p.barras.length}</div></div>
+          <div class="kpi-card"><div class="kpi-label">Peso bruto</div><div class="kpi-value">${Utils.fmt(pBruto)} kg</div></div>
+          <div class="kpi-card"><div class="kpi-label">Peso das peças</div><div class="kpi-value destaque">${Utils.fmt(pPecas)} kg</div></div>
+          <div class="kpi-card"><div class="kpi-label">Volta ao estoque</div><div class="kpi-value">${Utils.fmt(pRetorno)} kg</div></div>
+          <div class="kpi-card"><div class="kpi-label">Perda</div><div class="kpi-value">${Utils.fmt(pPerda)} kg</div><div class="kpi-sub">corte + sucata &lt; ${Utils.fmt(CONFIG.SOBRA_MINIMA)} m</div></div>
+          ${p.precoKg > 0 ? `<div class="kpi-card"><div class="kpi-label">Valor das peças</div><div class="kpi-value destaque">${Utils.moeda(pPecas * p.precoKg)}</div></div>` : ""}
         </div>
-        ${p.barras.map((b) => `
-          <div class="result-card">
-            <div class="result-header">
-              <div class="result-info">
-                <h3><span class="badge">ID #${b.id}</span> Barra Original de <strong class="mono">${Utils.fmt(b.medidaOriginal)}m</strong></h3>
-                <p>Cortar: <strong class="mono">${b.descricao}</strong> • Peso Total: <strong class="mono">${Utils.fmt(b.pesoTotal)} kg</strong></p>
-              </div>
-              <div class="sobra-box">
-                <p class="sobra-label">${b.geraSobra ? "Sobra → nova ponta" : b.sobra > 0 ? "Sucata" : "Sem sobra"}</p>
-                <div class="sobra-val">${Utils.fmt(b.sobra)}m</div>
-              </div>
-            </div>
-            <div class="cut-bar-visual" aria-hidden="true">
-              ${b.cortes.map((c) => `<div class="cut-segment" style="width:${(c / b.medidaOriginal) * 100}%">${Utils.fmt(c)}m</div>`).join("")}
-              ${b.sobra > 0.01 ? `<div class="cut-leftover" style="width:${(b.sobra / b.medidaOriginal) * 100}%">${b.sobra >= 0.3 ? Utils.fmt(b.sobra) + "m" : ""}</div>` : ""}
-            </div>
-          </div>`).join("")}
-        <div class="form-group" style="margin-top:16px;">
-          <label for="inputClienteCorte">Cliente / Nº do Pedido</label>
+        ${p.barras.map((b) => this.htmlBarra(b)).join("")}
+        <div class="form-group" style="margin-top:20px;">
+          <label for="inputClienteCorte">Cliente / Nº do pedido</label>
           <input type="text" id="inputClienteCorte" maxlength="100" placeholder="Ex: João / Pedido 4510" value="${Utils.escapeHTML(clienteAnterior)}">
         </div>
         <div class="actions-row">
-          <button type="button" class="btn-secondary" data-action="copiar-whatsapp">Copiar p/ WhatsApp</button>
-          <button type="button" class="btn-secondary" data-action="imprimir-ordem">Imprimir Ordem de Corte</button>
-          <button type="button" class="btn" data-action="confirmar-baixa-plano">Confirmar Baixa</button>
+          <button type="button" class="btn-secondary" data-action="copiar-whatsapp">${icon("copy")}Copiar p/ WhatsApp</button>
+          <button type="button" class="btn-secondary" data-action="imprimir-ordem">${icon("printer")}Imprimir ordem de corte</button>
+          <button type="button" class="btn" data-action="confirmar-baixa-plano">${icon("check")}Confirmar baixa</button>
         </div>
-        <p class="input-hint" style="margin-top:10px;">As etiquetas das sobras são liberadas após a confirmação, com os IDs definitivos gerados pela planilha.</p>
+        <p class="input-hint" style="margin-top:12px; text-align:right;">As etiquetas das sobras saem depois da confirmação, com os IDs definitivos da planilha.</p>
       </div>`;
+  },
+
+  /** Uma barra do plano: cabeçalho + a barra de aço cortada sobre a trena. */
+  htmlBarra(b) {
+    const L = b.medidaOriginal;
+    const sucata = b.sobra > 0 && !b.geraSobra;
+    const rotuloSobra = b.geraSobra ? "Sobra · nova ponta" : sucata ? "Sucata" : "Sem sobra";
+    const segmentos = b.cortes.map((c) => {
+      const largo = c / L >= 0.09;
+      return `<div class="cut-segment" style="flex:${c} 1 0" title="${Utils.fmt(c)} m">${largo ? Utils.fmt(c) : ""}</div>`;
+    }).join("");
+    const resto = b.sobra > 0.005
+      ? `<div class="cut-leftover${sucata ? " sucata" : ""}" style="flex:${b.sobra} 1 0" title="${rotuloSobra}: ${Utils.fmt(b.sobra)} m">${b.sobra / L >= 0.09 ? Utils.fmt(b.sobra) : ""}</div>`
+      : "";
+    return `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-info">
+            <h3><span class="badge">#${b.id}</span> Barra de <strong class="mono">${Utils.fmt(L)} m</strong></h3>
+            <p>Cortar <strong class="mono">${b.descricao}</strong> · <span class="mono">${Utils.fmt(b.pesoTotal)} kg</span></p>
+          </div>
+          <div class="sobra-box">
+            <p class="sobra-label">${rotuloSobra}</p>
+            <div class="sobra-val ${b.geraSobra ? "reaproveita" : sucata ? "sucata" : ""}">${Utils.fmt(b.sobra)} m</div>
+          </div>
+        </div>
+        <div class="barra-corte" role="img" aria-label="Barra de ${Utils.fmt(L)} metros: ${b.descricao}; sobra de ${Utils.fmt(b.sobra)} metros">
+          <div class="cut-bar-visual">${segmentos}${resto}</div>
+          ${this.htmlTrena(L)}
+        </div>
+      </div>`;
+  },
+
+  /** Trena graduada: marcas a cada 0,5 m (1 m em barras longas), números espaçados para não encavalar. */
+  htmlTrena(L) {
+    const passo = L > 6 ? 1 : 0.5;
+    const passoRotulo = L > 6 ? 2 : 1;
+    const marcas = [];
+    for (let t = 0; t <= L + 1e-9; t = Utils.arred(t + passo)) {
+      const inteiro = Math.abs(t - Math.round(t)) < 1e-9;
+      const rotular = inteiro && Math.round(t) % passoRotulo === 0 && (t === 0 || L - t >= passoRotulo * 0.6);
+      marcas.push(`<span class="trena-tick${inteiro ? " major" : ""}${t === 0 ? " inicio" : ""}" style="left:${(t / L) * 100}%">${rotular ? `<span>${t}</span>` : ""}</span>`);
+    }
+    marcas.push(`<span class="trena-tick major fim" style="left:100%"><span>${Utils.fmt(L)} m</span></span>`);
+    return `<div class="trena" aria-hidden="true">${marcas.join("")}</div>`;
   },
 
   cliente() {
@@ -624,7 +662,7 @@ const Plano = {
     if (!p || !p.barras.length) return;
     const c = Utils.escapeHTML(this.cliente() || "Balcão");
     Impressao.imprimir(`
-      <div class="print-section-title">ORDEM DE CORTE - ${c} (${Utils.hojeBR()}) - Ø ${Utils.fmt(p.bitola)} mm</div>
+      <div class="print-section-title"><img src="assets/logo-preto.png" alt="Grande Aço">ORDEM DE CORTE - ${c} (${Utils.hojeBR()}) - Ø ${Utils.fmt(p.bitola)} mm</div>
       ${p.barras.map((b) => `<div class="print-order-item"><strong>ID #${b.id}</strong> (${Utils.fmt(b.medidaOriginal)}m) ➔ Cortar: <strong>${b.descricao}</strong> | Sobra: <strong>${Utils.fmt(b.sobra)}m</strong>${b.geraSobra ? " (volta ao estoque)" : ""}</div>`).join("")}
       ${!p.completo ? `<div class="print-order-item"><strong>ATENÇÃO:</strong> faltaram ${p.faltantes.length} peça(s): ${Utils.descreverCortes(p.faltantes)}</div>` : ""}`);
   },
@@ -660,11 +698,11 @@ const Plano = {
       $("buscaQtde").value = "1";
       $("areaResultados").innerHTML = `
         <div class="result-panel">
-          <h4>✓ Baixa registrada</h4>
+          <h4>${icon("check")}Baixa registrada</h4>
           <p>${Utils.escapeHTML(r.mensagem)}</p>
           ${state.ultimasSobras.length ? `
             <p>Novas pontas: ${state.ultimasSobras.map((s) => `<strong class="mono">#${s.id}</strong> (${Utils.fmt(s.medida)}m, da #${s.idOrigem})`).join(" · ")}</p>
-            <button type="button" class="btn" data-action="imprimir-sobras">🏷️ Imprimir Etiquetas das Sobras</button>` : ""}
+            <button type="button" class="btn" data-action="imprimir-sobras">${icon("tag")}Imprimir etiquetas das sobras</button>` : ""}
         </div>`;
       await Dados.carregar({ silencioso: true });
     });
@@ -702,7 +740,7 @@ const Impressao = {
     return `
       <div class="thermal-label">
         <div class="thermal-label-info">
-          <div class="tl-header">GRANDE AÇO • PONTA</div>
+          <div class="tl-header"><img class="tl-mark" src="assets/monograma-preto.png" alt="">GRANDE AÇO · PONTA</div>
           <div class="tl-id-box">ID #${Number(barra.id)}</div>
           <div class="tl-specs">
             <div class="tl-row">
@@ -734,6 +772,9 @@ const Impressao = {
     $("printArea").innerHTML = html;
     qrs.forEach((q) => new QRious({ element: $(q.canvasId), value: String(q.valor), size: this.qrSize(), level: "M" }));
     try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) { /* ignora */ }
+    // Monograma e logo precisam estar carregados antes de abrir a impressão
+    await Promise.all([...$("printArea").querySelectorAll("img")].map((img) =>
+      img.complete ? Promise.resolve() : new Promise((r) => { img.onload = img.onerror = r; })));
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     window.print();
   },
@@ -823,7 +864,7 @@ const Estoque = {
     $("kpisEstoque").innerHTML = `
       <div class="kpi-card"><div class="kpi-label">Total de Pontas</div><div class="kpi-value">${est.length} un</div></div>
       <div class="kpi-card"><div class="kpi-label">Metragem Linear</div><div class="kpi-value">${est.reduce((s, i) => s + i.medida, 0).toFixed(1)} m</div></div>
-      <div class="kpi-card"><div class="kpi-label">Peso Total</div><div class="kpi-value" style="color:var(--primary)">${est.reduce((s, i) => s + i.peso, 0).toFixed(1)} kg</div></div>`;
+      <div class="kpi-card"><div class="kpi-label">Peso total</div><div class="kpi-value destaque">${est.reduce((s, i) => s + i.peso, 0).toFixed(1)} kg</div></div>`;
 
     const mapa = new Map();
     est.forEach((i) => {
@@ -874,20 +915,20 @@ const Estoque = {
 
     if (!lista.length) {
       const msg = !Auth.token() ? "Entre com seu perfil para carregar o estoque." : "Nenhuma ponta encontrada.";
-      corpo.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--ink-muted-48)">${msg}</td></tr>`;
+      corpo.innerHTML = `<tr><td colspan="8" class="td-dim" style="text-align:center; padding:28px;">${msg}</td></tr>`;
     } else {
       corpo.innerHTML = lista.map((b) => `
         <tr>
           <td style="text-align:center;"><input type="checkbox" class="check-item-estoque" data-id="${b.id}" aria-label="Selecionar #${b.id}" ${state.selecionados.has(b.id) ? "checked" : ""}></td>
           <td><span class="badge">#${b.id}</span></td>
-          <td class="mono" style="font-size:13px; color:var(--ink-muted-48)">${Utils.escapeHTML(b.data)}</td>
+          <td class="mono td-dim">${Utils.escapeHTML(b.data)}</td>
           <td class="mono"><strong>Ø ${Utils.fmt(b.bitola)} mm</strong></td>
-          <td class="mono" style="color:var(--primary)"><strong>${Utils.fmt(b.medida)} m</strong></td>
+          <td class="mono td-medida">${Utils.fmt(b.medida)} m</td>
           <td class="mono">${Utils.fmt(b.peso)} kg</td>
-          <td style="font-size:13px; color:var(--ink-muted-48)">${Utils.escapeHTML(b.obs)}</td>
-          <td><div style="display:flex; gap:6px;">
-            <button type="button" class="btn-pearl btn-sm" data-action="imprimir-etiqueta" data-id="${b.id}" title="Imprimir etiqueta" aria-label="Imprimir etiqueta #${b.id}">🏷️</button>
-            <button type="button" class="btn-danger btn-sm so-operador" data-action="ir-baixa" data-id="${b.id}">Baixar</button>
+          <td class="td-dim">${Utils.escapeHTML(b.obs)}</td>
+          <td><div class="td-acoes">
+            <button type="button" class="btn-pearl btn-sm btn-icon" data-action="imprimir-etiqueta" data-id="${b.id}" title="Imprimir etiqueta" aria-label="Imprimir etiqueta #${b.id}">${icon("tag")}</button>
+            <button type="button" class="btn-danger contorno btn-sm so-operador" data-action="ir-baixa" data-id="${b.id}">Baixar</button>
           </div></td>
         </tr>`).join("");
     }
@@ -985,8 +1026,8 @@ const Cadastro = {
       this.atualizarPreview();
       $("resultadoCadastro").innerHTML = state.ultimosCadastrados.length ? `
         <div class="result-panel">
-          <h4>✓ ${Utils.escapeHTML(r.mensagem)}</h4>
-          <button type="button" class="btn" data-action="imprimir-cadastrados">🏷️ Imprimir Etiquetas (${state.ultimosCadastrados.length})</button>
+          <h4>${icon("check")}${Utils.escapeHTML(r.mensagem)}</h4>
+          <button type="button" class="btn" data-action="imprimir-cadastrados">${icon("tag")}Imprimir etiquetas (${state.ultimosCadastrados.length})</button>
         </div>` : "";
       await Dados.carregar({ silencioso: true });
     });
@@ -1011,9 +1052,9 @@ const BaixaManual = {
       return;
     }
     const v = state.vendidos.find((i) => i.id === id);
-    prev.innerHTML = `<div style="color:var(--danger); font-size:14px;">${v
+    prev.innerHTML = `<div class="notice danger">${icon("alert")}<span>${v
       ? `ID #${id} já foi vendido${v.dataSaida ? " em " + Utils.escapeHTML(v.dataSaida) : ""} (${Utils.escapeHTML(v.obs)}).`
-      : `ID #${Utils.escapeHTML(valor)} não encontrado no estoque.`}</div>`;
+      : `ID #${Utils.escapeHTML(valor)} não encontrado no estoque.`}</span></div>`;
   },
 
   irPara(id) {
@@ -1073,7 +1114,7 @@ const Historico = {
     $("historicoRodape").hidden = lista.length <= visiveis.length;
     const corpo = $("tabelaHistoricoBody");
     if (!visiveis.length) {
-      corpo.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--ink-muted-48)">${termo ? "Nada encontrado." : "Nenhuma saída registrada."}</td></tr>`;
+      corpo.innerHTML = `<tr><td colspan="7" class="td-dim" style="text-align:center; padding:28px;">${termo ? "Nada encontrado." : "Nenhuma saída registrada."}</td></tr>`;
       return;
     }
     corpo.innerHTML = visiveis.map((b) => `
@@ -1162,8 +1203,29 @@ const Exportacao = {
     $("exportDateTo").value = Utils.dataISO(hoje);
   },
 
-  gerar() {
+  /** Logo positivo como data URL para o PDF (null se não der para carregar, ex.: aberto via file://). */
+  carregarLogo() {
+    if (this._logo !== undefined) return Promise.resolve(this._logo);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          c.getContext("2d").drawImage(img, 0, 0);
+          this._logo = { url: c.toDataURL("image/png"), proporcao: img.naturalWidth / img.naturalHeight };
+        } catch (e) { this._logo = null; }
+        resolve(this._logo);
+      };
+      img.onerror = () => { this._logo = null; resolve(null); };
+      img.src = "assets/logo-positivo.png";
+    });
+  },
+
+  async gerar() {
     const formato = document.querySelector('input[name="exportFormat"]:checked').value;
+    const logo = formato === "pdf" ? await this.carregarLogo() : null;
     const de = $("exportDateFrom").value;
     const ate = $("exportDateTo").value;
     if (de && ate && de > ate) return UI.notificar("A data inicial é depois da final.", true);
@@ -1196,28 +1258,44 @@ const Exportacao = {
       } else {
         if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("A biblioteca de PDF não carregou.");
         const doc = new window.jspdf.jsPDF();
+        // Cabeçalho da marca: logo, título, linha azul GA
         const cabecalho = (titulo, sub) => {
-          doc.setFontSize(16);
-          doc.text(titulo, 14, 18);
-          doc.setFontSize(10);
-          doc.text(sub, 14, 25);
+          let x = 14;
+          if (logo) {
+            const h = 16;
+            doc.addImage(logo.url, "PNG", 14, 9, h * logo.proporcao, h);
+            x = 14 + h * logo.proporcao + 6;
+          }
+          doc.setTextColor(23, 30, 38);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(15);
+          doc.text(titulo, x, 16);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9.5);
+          doc.setTextColor(91, 104, 116);
+          doc.text(sub, x, 22.5);
+          doc.setDrawColor(59, 173, 232);
+          doc.setLineWidth(0.9);
+          doc.line(14, 29, 196, 29);
         };
-        cabecalho("GRANDE AÇO - Estoque de Pontas", `Gerado em ${Utils.hojeBR()} | ${estoque.length} pontas | ${estoque.reduce((s, b) => s + b.peso, 0).toFixed(1)} kg`);
+        const estiloTabela = {
+          startY: 35,
+          headStyles: { fillColor: [23, 30, 38], textColor: [255, 255, 255], fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 247, 249] },
+          styles: { fontSize: 8, textColor: [23, 30, 38], lineColor: [211, 218, 225] }
+        };
+        cabecalho("Estoque de pontas", `Gerado em ${Utils.hojeBR()} | ${estoque.length} pontas | ${estoque.reduce((s, b) => s + b.peso, 0).toFixed(1)} kg`);
         doc.autoTable({
-          startY: 32,
+          ...estiloTabela,
           head: [["ID", "Entrada", "Bitola", "Medida", "Peso", "Observação"]],
-          body: estoque.map((b) => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
-          headStyles: { fillColor: [0, 102, 204] },
-          styles: { fontSize: 8 }
+          body: estoque.map((b) => [`#${b.id}`, b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs])
         });
         doc.addPage();
-        cabecalho("GRANDE AÇO - Vendas de Pontas", `Período: ${periodoTxt} | ${vendas.length} saídas | ${vendas.reduce((s, b) => s + b.peso, 0).toFixed(1)} kg`);
+        cabecalho("Vendas de pontas", `Período: ${periodoTxt} | ${vendas.length} saídas | ${vendas.reduce((s, b) => s + b.peso, 0).toFixed(1)} kg`);
         doc.autoTable({
-          startY: 32,
+          ...estiloTabela,
           head: [["ID", "Saída", "Bitola", "Medida", "Peso", "Cliente / Pedido"]],
-          body: vendas.map((b) => [`#${b.id}`, b.dataSaida || b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs]),
-          headStyles: { fillColor: [217, 48, 37] },
-          styles: { fontSize: 8 }
+          body: vendas.map((b) => [`#${b.id}`, b.dataSaida || b.data, `Ø ${b.bitola.toFixed(2)}`, `${b.medida.toFixed(2)}m`, `${b.peso.toFixed(2)}kg`, b.obs])
         });
         doc.save(nomeArquivo + ".pdf");
       }
@@ -1270,6 +1348,8 @@ function ligarEventos() {
   });
 
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => UI.alternarAba(t.dataset.target)));
+  const barraAbas = document.querySelector(".tabs");
+  barraAbas.addEventListener("scroll", () => barraAbas.classList.toggle("rolou", barraAbas.scrollLeft > 4), { passive: true });
   document.querySelectorAll(".role-tab").forEach((b) => b.addEventListener("click", () => Auth.selecionarRole(b.dataset.role)));
   $("authForm").addEventListener("submit", (e) => { e.preventDefault(); Auth.entrar(); });
 
