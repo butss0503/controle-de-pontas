@@ -31,6 +31,8 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js" integrity="sha384-b8MpgG2ZzWN6OPAtiB1JiBmDr9MpTt3NKK6KQf61hC/L7X4wJrvoTeVmMFPgp3nL" crossorigin="anonymous"></script>
 
   <script defer src="corte.js"></script>
+  <script defer src="painel.js"></script>
+  <script defer src="reserva.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -73,6 +75,7 @@
       <div class="shell-inner tabs" role="tablist">
         <button type="button" class="tab active" role="tab" aria-selected="true" aria-controls="consulta" data-target="consulta">Plano de Corte</button>
         <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="estoque" data-target="estoque">Estoque <span class="tab-badge" id="contadorEstoque">0</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="painel" data-target="painel">Painel</button>
         <button type="button" class="tab so-operador" role="tab" aria-selected="false" aria-controls="gerenciar" data-target="gerenciar">Cadastrar e Baixar</button>
         <button type="button" class="tab so-operador" role="tab" aria-selected="false" aria-controls="historico" data-target="historico">Histórico</button>
       </div>
@@ -87,6 +90,8 @@
         <p>Combine medidas e extraia o máximo rendimento das pontas em pátio.</p>
       </div>
 
+      <section class="box" id="minhasReservas" hidden aria-live="polite"></section>
+
       <section class="box">
         <div class="box-header">
           <h3 class="box-title">Configurar pedido</h3>
@@ -95,7 +100,7 @@
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="buscaBitola">Bitola (mm)</label>
+            <label for="buscaBitola">Bitola (pontas livres)</label>
             <select id="buscaBitola" class="mono"><option value="">Carregando...</option></select>
           </div>
           <div class="form-group">
@@ -114,6 +119,10 @@
             <label for="buscaKerf">Perda por corte (mm)</label>
             <input type="number" id="buscaKerf" class="mono" step="0.5" min="0" max="20" value="0" inputmode="decimal">
             <span class="input-hint">0 para tesoura/guilhotina · ~3 para serra</span>
+          </div>
+          <div class="form-group">
+            <span class="data-label" style="color:var(--ink-2)">Se faltar ponta</span>
+            <label class="check-linha" for="buscaBarraNova"><input type="checkbox" id="buscaBarraNova" checked>Completar com barra nova de 12 m</label>
           </div>
         </div>
 
@@ -182,6 +191,47 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- ABA: PAINEL DE APROVEITAMENTO -->
+    <section id="painel" class="tab-content" role="tabpanel">
+      <div class="page-header">
+        <h2>Painel de aproveitamento</h2>
+        <p>Quanto aço das pontas voltou a virar venda, e o que está parado no pátio.</p>
+      </div>
+
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Resultado do período</h3>
+          <div class="painel-periodo">
+            <label for="painelPeriodo" class="visually-hidden">Período</label>
+            <select id="painelPeriodo">
+              <option value="mes">Este mês</option>
+              <option value="mesPassado">Mês passado</option>
+              <option value="30dias">Últimos 30 dias</option>
+              <option value="custom">Personalizado</option>
+            </select>
+            <span id="painelDatas" class="painel-datas" hidden>
+              <input type="date" id="painelDe" aria-label="De">
+              <input type="date" id="painelAte" aria-label="Até">
+            </span>
+          </div>
+        </div>
+        <div id="painelResumo" aria-live="polite"></div>
+      </div>
+
+      <div class="box" id="painelBitolasBox" hidden>
+        <div class="box-header"><h3 class="box-title">Por bitola</h3></div>
+        <div id="painelBitolas"></div>
+      </div>
+
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Pontas paradas</h3>
+          <span class="box-subtitle" id="painelParadasResumo">60 dias ou mais no pátio</span>
+        </div>
+        <div id="painelParadas"></div>
       </div>
     </section>
 
@@ -282,6 +332,8 @@
           </div>
         </div>
       </div>
+
+      <div class="box" id="historicoBarraNova" hidden></div>
     </section>
   </div>
 

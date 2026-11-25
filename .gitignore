@@ -6,5 +6,8 @@ backup/
 .impeccable/mocks/
 .impeccable/config.local.json
 
+# Registro de execução de planos (rascunho local)
+.superpowers/
+
 node_modules/
 *.log

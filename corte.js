@@ -30,11 +30,26 @@
   const cabe = (bin, p, kerf) => p <= livre(bin, kerf) + EPS;
   const sobraDe = (bin, kerf) => Math.max(0, arred(bin.L - bin.soma - kerf * bin.cortes.length));
 
+  /**
+   * Custo lexicográfico (o primeiro critério sempre domina o seguinte):
+   *   1) menos barras novas            → PENALIDADE_NOVA por barra nova aberta
+   *   2) menos metros cortados de barra nova (o que couber vai para as pontas) → PESO_NOVA_M por metro
+   *   3) menor comprimento de pontas consumidas (= menor sobra) → 1 por metro
+   */
+  const PENALIDADE_NOVA = 1e7;
+  const PESO_NOVA_M = 1e4;
+
   function novoBin(barra) {
     return { barra, L: barra.medida, soma: 0, cortes: [] };
   }
 
-  function agruparEstoque(barras) {
+  /** Custo de uma barra já montada (ver critérios acima). */
+  const custoBin = (b) => (b.barra.nova ? PENALIDADE_NOVA + PESO_NOVA_M * b.soma : b.L);
+  /** Quanto custa colocar a peça p numa barra já aberta. */
+  const custoEncaixe = (b, p) => (b.barra.nova ? PESO_NOVA_M * p : 0);
+
+  /** Grupos de pontas por medida (crescente) e, por último, o grupo ilimitado de barra nova. */
+  function agruparEstoque(barras, barraNova) {
     const mapa = new Map();
     barras.forEach((b) => {
       const k = arred(b.medida);
@@ -43,11 +58,25 @@
     });
     const grupos = [...mapa.values()].sort((a, b) => a.medida - b.medida);
     grupos.forEach((g) => g.barras.sort((a, b) => a.id - b.id));
+    if (barraNova && barraNova.medida > 0) grupos.push({ medida: arred(barraNova.medida), barras: [], usados: 0, nova: true });
     return grupos;
   }
 
+  const disponivel = (g) => g.nova || g.usados < g.barras.length;
+  /** Custo de abrir uma barra do grupo g com a peça p dentro. */
+  const custoAbrir = (g, p) => (g.nova ? PENALIDADE_NOVA + PESO_NOVA_M * p : g.medida);
+
+  function abrir(g) {
+    if (g.nova) return novoBin({ id: null, nova: true, medida: g.medida });
+    return novoBin(g.barras[g.usados++]);
+  }
+
+  function fechar(g) {
+    if (!g.nova) g.usados--;
+  }
+
   function custoDe(bins) {
-    return bins.reduce((s, b) => s + b.L, 0);
+    return bins.reduce((s, b) => s + custoBin(b), 0);
   }
 
   function copiarBins(bins) {
@@ -65,9 +94,9 @@
         if (cabe(bin, p, kerf) && (!melhor || livre(bin, kerf) < livre(melhor, kerf))) melhor = bin;
       }
       if (!melhor) {
-        const g = grupos.find((gr) => gr.usados < gr.barras.length && p <= gr.medida + EPS);
+        const g = grupos.find((gr) => disponivel(gr) && p <= gr.medida + EPS);
         if (g) {
-          melhor = novoBin(g.barras[g.usados++]);
+          melhor = abrir(g);
           bins.push(melhor);
         }
       }
@@ -126,27 +155,32 @@
         const chave = arred(livre(bin, kerf));
         if (vistos.has(chave)) continue;
         vistos.add(chave);
+        const extra = custoEncaixe(bin, p);
         bin.soma += p;
         bin.cortes.push(p);
+        custo += extra;
         dfs(i + 1);
+        custo -= extra;
         bin.cortes.pop();
         bin.soma -= p;
         if (abortado) return;
       }
 
-      // 2) Abrir uma barra nova do estoque (uma tentativa por medida distinta, da menor para a maior).
+      // 2) Abrir outra barra (uma tentativa por medida distinta, da mais barata para a mais cara;
+      //    a barra nova é o último grupo e a mais cara de todas).
       for (const g of grupos) {
-        if (g.usados >= g.barras.length || p > g.medida + EPS) continue;
-        if (custo + g.medida > melhorCusto + EPS) break; // grupos estão em ordem crescente
-        const bin = novoBin(g.barras[g.usados++]);
+        if (!disponivel(g) || p > g.medida + EPS) continue;
+        const c = custoAbrir(g, p);
+        if (custo + c > melhorCusto + EPS) break; // grupos estão em ordem crescente de custo
+        const bin = abrir(g);
         bin.soma = p;
         bin.cortes.push(p);
         bins.push(bin);
-        custo += bin.L;
+        custo += c;
         dfs(i + 1);
-        custo -= bin.L;
+        custo -= c;
         bins.pop();
-        g.usados--;
+        fechar(g);
         if (abortado) return;
       }
     }
@@ -158,7 +192,8 @@
   /**
    * @param {Array<{id:number, medida:number}>} barras  estoque da bitola escolhida
    * @param {number[]} pecas  medidas das peças (uma entrada por peça)
-   * @param {{kerf?:number, limiteNos?:number}} [opcoes]
+   * @param {{kerf?:number, limiteNos?:number, barraNova?:{medida:number}|null}} [opcoes]
+   *        barraNova: completa o pedido com barras novas (ilimitadas) só quando as pontas não bastam.
    * @returns {{
    *   completo: boolean,          // todas as peças foram atendidas
    *   otimo: boolean,             // a solução foi provada ótima (ou a falta foi provada)
@@ -172,25 +207,32 @@
     const ps = pecas.filter((p) => p > 0).slice().sort((a, b) => b - a);
     if (!ps.length) return { completo: true, otimo: true, barras: [], faltantes: [] };
 
+    const barraNova = opcoes && opcoes.barraNova && opcoes.barraNova.medida > 0 ? opcoes.barraNova : null;
     const menor = ps[ps.length - 1];
-    const grupos = agruparEstoque(barras.filter((b) => b.medida + EPS >= menor));
+    const grupos = agruparEstoque(barras.filter((b) => b.medida + EPS >= menor), barraNova);
     const formatar = (bins) => bins
       .map((b) => ({ barra: b.barra, cortes: b.cortes.slice(), sobra: sobraDe(b, kerf) }))
-      .sort((a, b) => a.barra.id - b.barra.id);
+      .sort((a, b) => (a.barra.nova ? 1 : 0) - (b.barra.nova ? 1 : 0) || (a.barra.id || 0) - (b.barra.id || 0));
 
-    const g = guloso(grupos, ps, kerf);
+    // Peças maiores que qualquer barra nunca serão atendidas: saem já como faltantes.
+    const maiorBarra = grupos.reduce((m, gr) => Math.max(m, gr.medida), 0);
+    const impossiveis = ps.filter((p) => p > maiorBarra + EPS);
+    const atendiveis = ps.filter((p) => p <= maiorBarra + EPS);
+    if (!atendiveis.length) return { completo: false, otimo: true, barras: [], faltantes: impossiveis };
 
-    // Impossível de cara: peça maior que a maior barra, ou material total insuficiente.
-    const maiorBarra = grupos.length ? grupos[grupos.length - 1].medida : 0;
-    const totalEstoque = grupos.reduce((s, gr) => s + gr.medida * gr.barras.length, 0);
-    const totalPecas = ps.reduce((s, p) => s + p, 0);
-    if (ps[0] > maiorBarra + EPS || totalPecas > totalEstoque + EPS) {
-      return { completo: false, otimo: true, barras: formatar(g.bins), faltantes: g.faltantes };
+    const g = guloso(grupos, atendiveis, kerf);
+    const parcial = (otimo) => ({ completo: false, otimo, barras: formatar(g.bins), faltantes: impossiveis.concat(g.faltantes) });
+
+    // Material total insuficiente (sem barra nova, o estoque é finito).
+    const totalEstoque = barraNova ? Infinity : grupos.reduce((s, gr) => s + gr.medida * gr.barras.length, 0);
+    const totalPecas = atendiveis.reduce((s, p) => s + p, 0);
+    if (totalPecas > totalEstoque + EPS) return parcial(true);
+
+    const r = buscar(grupos, atendiveis, kerf, g.faltantes.length ? null : g.bins, limiteNos);
+    if (r.bins) {
+      return { completo: !impossiveis.length, otimo: r.provado, barras: formatar(r.bins), faltantes: impossiveis };
     }
-
-    const r = buscar(grupos, ps, kerf, g.faltantes.length ? null : g.bins, limiteNos);
-    if (r.bins) return { completo: true, otimo: r.provado, barras: formatar(r.bins), faltantes: [] };
-    return { completo: false, otimo: r.provado, barras: formatar(g.bins), faltantes: g.faltantes };
+    return parcial(r.provado);
   }
 
   const Corte = { planejar, _interno: { guloso, buscar, agruparEstoque } };

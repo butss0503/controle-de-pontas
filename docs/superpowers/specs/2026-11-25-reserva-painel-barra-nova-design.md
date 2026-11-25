@@ -67,6 +67,7 @@ Sucesso = nenhum conflito de "barra já usada" no balcão, um número claro de k
 - **O código da reserva é secreto.** O `listar` só devolve o código para o Operador; o Vendedor recebe só "reservada para X até HH:MM". Quem reservou guarda o código no navegador. Cancelar ou baixar barra reservada exige esse código, ou o perfil Operador (que cancela pelo ID da barra). Com login por perfil, o código é a única prova de quem reservou.
 - **A baixa com barra nova pode ser estornada.** Cada baixa ganha um **número de lote** em Movimentos. O Histórico mostra também as baixas de barra nova, e o estorno delas marca o movimento como estornado e cancela a sobra criada, se ela ainda estiver em estoque. Sobra já vendida bloqueia o estorno, como já acontece com as pontas.
 - **Bitolas sem ponta livre aparecem no plano.** O seletor de bitola junta as bitolas com pontas às bitolas comerciais (`CONFIG.BITOLAS_COMERCIAIS`), porque a barra nova pode atender sozinha.
+- **Uma reserva é de um cliente só** *(acrescentado na revisão final)*. O servidor recusa baixar ou atualizar uma reserva para um cliente diferente do que está gravado nela (sem diferenciar maiúsculas e espaços). Na tela, a faixa da reserva ganhou o botão "Novo pedido", e esvaziar a lista de medidas também solta a reserva do pedido em tela. Assim a reserva de A nunca vira venda para B.
 - **"Atualizar reserva" renova as 2 h.** Depois de uma baixa com código, as barras da reserva que não foram usadas são liberadas.
 
 ## Design
@@ -93,7 +94,7 @@ Sucesso = nenhum conflito de "barra já usada" no balcão, um número claro de k
 
 **Aba nova "Movimentos"**, criada automaticamente, uma linha por barra afetada:
 
-`Data/hora | Lote | Ação | Perfil | Cliente | ID barra | Origem | Bitola | Medida original | Cortes | Kg peças | Sobra (m) | ID sobra | Kg sobra | Sucata (m) | Kg sucata | Kg perda corte | Preço R$/kg | Estornado`
+`Data/hora | Lote | Mov | Ação | Perfil | Cliente | ID barra | Origem | Bitola | Medida original | Cortes | Kg peças | Sobra (m) | ID sobra | Kg sobra | Sucata (m) | Kg sucata | Kg perda corte | Preço R$/kg | Estornado`
 
 - **Ação:** `baixa`, `estorno` ou `cadastro`. Reserva não gera linha.
 - **Origem:** `ponta` ou `barra nova`.
@@ -111,7 +112,7 @@ Sucesso = nenhum conflito de "barra já usada" no balcão, um número claro de k
 - **Período:** este mês (padrão), mês passado, últimos 30 dias ou personalizado.
 - **Faixa de indicadores:**
   - **kg reaproveitado de pontas:** peças cortadas de pontas + pontas vendidas inteiras. É o número principal.
-  - **taxa de aproveitamento das pontas:** kg reaproveitado ÷ kg bruto das pontas consumidas.
+  - **taxa de aproveitamento das pontas:** kg reaproveitado ÷ kg consumido das pontas (peças + sucata + perda de corte). A sobra que volta ao estoque não entra no denominador, senão o mesmo aço contaria duas vezes quando for cortado de novo. *(Corrigido na revisão final.)*
   - **valor recuperado:** kg reaproveitado × preço, só nas baixas de ponta com preço. Quando alguma baixa não tem preço, o texto diz "N baixas sem preço".
   - **kg que voltaram como nova ponta:** inclui as sobras de barra nova, mostradas em separado.
   - **kg de sucata + perda.**
@@ -123,7 +124,7 @@ Sucesso = nenhum conflito de "barra já usada" no balcão, um número claro de k
 
 ### 4. Barra nova de 12 m
 
-- `corte.js`: nova opção `barraNova: { medida: 12 }`. Entra na busca como um grupo ilimitado com **custo penalizado** (medida + 1000), de modo que qualquer solução com menos barras novas vence. Entre soluções com o mesmo número de barras novas, vale o critério atual (menor sobra total). A solução gulosa e o limite inferior consideram a barra nova da mesma forma.
+- `corte.js`: nova opção `barraNova: { medida: 12 }`. Entra na busca como um grupo ilimitado. O custo segue três critérios, nesta ordem: 1) menos barras novas; 2) menos metros cortados de barra nova, ou seja, tudo o que couber vai para as pontas; 3) menor comprimento de pontas consumidas. *(Corrigido na execução: com o critério antigo, "medida + 1000 e depois a menor sobra", o otimizador preferia cortar tudo da barra nova e deixar as pontas paradas.)* A solução gulosa e o limite inferior consideram a barra nova da mesma forma.
 - Saída: barras novas vêm com `barra: { id: null, nova: true, medida: 12, bitola }`.
 - Interface: opção **"Completar com barra nova de 12 m"**, ligada por padrão e guardada no navegador. O cartão da barra nova mostra o selo "BARRA NOVA 12 m" no lugar do #ID, com a mesma barra sobre trena.
 - Servidor (`baixar`): instruções com `{nova: true, bitola, cortes}` não alteram nenhuma linha. Valida que os cortes cabem em 12 m (constante `BARRA_NOVA_M` no servidor), cria a sobra como ponta nova com obs "Sobra de barra nova 12 m" (sem ID de origem) e grava o movimento com origem `barra nova`.

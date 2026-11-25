@@ -11,6 +11,8 @@ const CONFIG = {
   SOBRA_MINIMA: 0.05,           // m — mesma regra do servidor
   BITOLAS_COMERCIAIS: [4.2, 5, 6.3, 8, 10, 12.5, 16, 20, 25, 32],
   BITOLA_PADRAO: 8,
+  BARRA_NOVA_M: 12,             // barra inteira do estoque principal (mesmo valor do Code.gs)
+  RESERVA_HORAS: 2,             // validade da reserva (mesmo valor do Code.gs)
   HISTORICO_PAGINA: 50,
   TIMEOUT_MS: 45000,
   MAX_PECAS_PEDIDO: 500,
@@ -27,6 +29,7 @@ const state = {
   listaFiltrada: [],
   historicoLimite: CONFIG.HISTORICO_PAGINA,
   ultimasSobras: [],
+  reservaAtual: null,    // código da reserva ligada ao pedido em tela
   ultimosCadastrados: []
 };
 
@@ -137,6 +140,9 @@ const UI = {
       t.setAttribute("aria-selected", ativo ? "true" : "false");
     });
     document.querySelectorAll(".tab-content").forEach((c) => c.classList.toggle("active", c.id === id));
+    // Abas que buscam dados próprios ao abrir
+    if (id === "painel") PainelUI.carregar();
+    if (id === "historico") Historico.carregarMovimentos();
     // No celular a barra de abas rola: garante que a aba ativa fique à vista
     if (tab.scrollIntoView) tab.scrollIntoView({ block: "nearest", inline: "nearest" });
   },
@@ -395,6 +401,7 @@ const Dados = {
         obs: i.obs || "",
         dataSaida: i.dataSaida || "",
         idOrigem: i.idOrigem ? Number(i.idOrigem) : null,
+        reserva: i.reserva ? { ate: Number(i.reserva.ate), para: i.reserva.para || "", codigo: i.reserva.codigo || null } : null,
         ordem: Number(i.ordem) || 0
       }));
       state.estoque = itens.filter((i) => i.status === "estoque");
@@ -408,7 +415,9 @@ const Dados = {
       Estoque.renderizar();
       Historico.renderizar();
       BaixaManual.prever();
+      Reservas.sincronizar(state.estoque);
       Plano.validarContraEstoque(idsEstoque);
+      if ($("painel").classList.contains("active")) PainelUI.renderizarParadas();
     } catch (e) {
       if (e.codigo !== "AUTH") UI.notificar("Erro ao sincronizar: " + e.message, true);
     } finally {
@@ -433,14 +442,101 @@ const Dados = {
 // ============================================================================
 // PLANO DE CORTE
 // ============================================================================
+// ============================================================================
+// RESERVAS (guardadas neste navegador; o código é a prova de quem reservou)
+// ============================================================================
+const Reservas = {
+  CHAVE: "pontas_reservas",
+
+  /** Reservas ativas deste computador. As vencidas saem da lista com aviso. */
+  todas() {
+    const lista = Armazenamento.lerJSON(this.CHAVE) || [];
+    const desvio = this.desvio();
+    const vale = (r) => r && r.codigo && ReservaLogica.ativa(r, Date.now(), desvio); // relógio do servidor
+    const ativas = lista.filter(vale);
+    if (ativas.length !== lista.length) {
+      this.gravar(ativas);
+      lista.filter((r) => r && !vale(r)).forEach((r) => UI.notificar(`A reserva de ${r.cliente} expirou.`));
+    }
+    return ativas;
+  },
+  /** Diferença (servidor − este PC), medida na última reserva feita. */
+  desvio() { return Number(Armazenamento.ler("pontas_relogio_desvio", "0")) || 0; },
+  gravar(lista) { Armazenamento.gravar(this.CHAVE, lista); },
+  salvar(r) { this.gravar(this.todas().filter((x) => x.codigo !== r.codigo).concat([r])); },
+  remover(codigo) { this.gravar(this.todas().filter((x) => x.codigo !== codigo)); },
+  doCodigo(codigo) { return this.todas().find((x) => x.codigo === codigo); },
+  hora(ms) { return new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); },
+
+  /** Depois de sincronizar: reserva cujas barras não estão mais reservadas foi encerrada em outro lugar. */
+  sincronizar(estoque) {
+    const porId = new Map(estoque.map((b) => [b.id, b]));
+    this.todas().forEach((r) => {
+      const viva = r.ids.some((id) => ReservaLogica.pertence(porId.get(id), r));
+      if (!viva) { this.remover(r.codigo); UI.notificar(`A reserva de ${r.cliente} foi encerrada.`); }
+    });
+    this.renderizar();
+  },
+
+  renderizar() {
+    const area = $("minhasReservas");
+    const lista = this.todas().sort((a, b) => a.expira - b.expira);
+    area.hidden = lista.length === 0;
+    area.innerHTML = `
+      <div class="box-header">
+        <h3 class="box-title">Minhas reservas</h3>
+        <span class="box-subtitle">Feitas neste computador · valem ${CONFIG.RESERVA_HORAS} h</span>
+      </div>
+      ${lista.map((r) => `
+        <div class="reserva-item${r.codigo === state.reservaAtual ? " atual" : ""}">
+          <span class="badge">Ø ${Utils.fmt(r.bitola)}</span>
+          <strong class="reserva-cliente">${Utils.escapeHTML(r.cliente)}</strong>
+          <span class="mono td-dim">${r.ids.length} ponta(s) · até ${this.hora(r.expira)}</span>
+          <span class="reserva-acoes">
+            <button type="button" class="btn-pearl btn-sm" data-action="abrir-reserva" data-codigo="${r.codigo}">Abrir</button>
+            <button type="button" class="btn-pearl btn-sm" data-action="cancelar-reserva" data-codigo="${r.codigo}">Cancelar</button>
+          </span>
+        </div>`).join("")}`;
+  }
+};
+
 const Plano = {
+  /** Barra pode entrar no cálculo: livre, ou reservada pela reserva deste pedido. */
+  livre(b) {
+    if (!b.reserva) return true;
+    const minha = state.reservaAtual && Reservas.doCodigo(state.reservaAtual);
+    return ReservaLogica.pertence(b, minha);
+  },
+
+  /** A reserva do pedido em tela só vale para o cliente dela. Devolve false (e avisa) se o cliente for outro. */
+  conferirClienteDaReserva(cliente) {
+    const reserva = state.plano && state.plano.reserva && Reservas.doCodigo(state.plano.reserva);
+    if (!reserva || ReservaLogica.clienteConfere(cliente, reserva)) return true;
+    UI.notificar(`Este pedido está ligado à reserva de ${reserva.cliente}. Para outro cliente, clique em "Novo pedido".`, true);
+    return false;
+  },
+
+  /** Começa um pedido do zero, soltando a reserva que estava aberta (ela continua valendo na lista). */
+  novoPedido() {
+    state.reservaAtual = null;
+    state.plano = null;
+    state.carrinho = [];
+    this.renderizarCarrinho();
+    $("buscaMedida").value = "";
+    $("buscaQtde").value = "1";
+    $("areaResultados").innerHTML = "";
+    Reservas.renderizar();
+    $("buscaMedida").focus();
+  },
+
   entradas() {
     return {
       bitola: Utils.num($("buscaBitola").value),
       medida: Utils.num($("buscaMedida").value),
       qtde: parseInt($("buscaQtde").value, 10) || 1,
       precoKg: Utils.num($("buscaPrecoKg").value) || 0,
-      kerfMm: Math.min(20, Math.max(0, Utils.num($("buscaKerf").value) || 0))
+      kerfMm: Math.min(20, Math.max(0, Utils.num($("buscaKerf").value) || 0)),
+      barraNova: $("buscaBarraNova").checked
     };
   },
 
@@ -467,6 +563,8 @@ const Plano = {
 
   remover(idx) {
     state.carrinho.splice(idx, 1);
+    // Esvaziar o pedido = começar outro; a reserva aberta deixa de ser a do pedido em tela.
+    if (!state.carrinho.length && state.reservaAtual) { state.reservaAtual = null; Reservas.renderizar(); }
     this.renderizarCarrinho();
     this.invalidar();
   },
@@ -488,9 +586,13 @@ const Plano = {
   },
 
   validarContraEstoque(idsEstoque) {
-    if (state.plano && state.plano.barras.some((b) => !idsEstoque.has(b.id))) {
-      this.invalidar("O estoque mudou e alguma barra do plano não está mais disponível. Recalcule o plano.");
-    }
+    if (!state.plano) return;
+    const perdida = state.plano.barras.some((b) => {
+      if (b.nova) return false;
+      const item = idsEstoque.has(b.id) && state.estoque.find((i) => i.id === b.id);
+      return !item || !this.livre(item);
+    });
+    if (perdida) this.invalidar("O estoque mudou e alguma barra do plano não está mais disponível (vendida ou reservada). Recalcule o plano.");
   },
 
   calcular() {
@@ -510,13 +612,16 @@ const Plano = {
     if (pecas.length > CONFIG.MAX_PECAS_PEDIDO) return UI.notificar(`Máximo de ${CONFIG.MAX_PECAS_PEDIDO} peças por pedido.`, true);
 
     const kerf = e.kerfMm / 1000;
-    const barras = state.estoque.filter((b) => b.bitola === e.bitola);
-    const r = Corte.planejar(barras, pecas, { kerf });
+    // Barras reservadas para outros pedidos ficam de fora.
+    const barras = state.estoque.filter((b) => b.bitola === e.bitola && this.livre(b));
+    const r = Corte.planejar(barras, pecas, { kerf, barraNova: e.barraNova ? { medida: CONFIG.BARRA_NOVA_M } : null });
 
     state.plano = {
       bitola: e.bitola,
       kerf,
       precoKg: e.precoKg,
+      pedido: lista,
+      reserva: state.reservaAtual,
       completo: r.completo,
       otimo: r.otimo,
       faltantes: r.faltantes,
@@ -525,18 +630,24 @@ const Plano = {
         const somaCortes = x.cortes.reduce((s, c) => s + c, 0);
         return {
           id: x.barra.id,
-          bitola: x.barra.bitola,
+          nova: !!x.barra.nova,
+          bitola: e.bitola,
           medidaOriginal: x.barra.medida,
           cortes: x.cortes,
           descricao: Utils.descreverCortes(x.cortes),
           sobra: x.sobra,
           geraSobra: x.sobra >= CONFIG.SOBRA_MINIMA,
-          pesoTotal: Utils.peso(x.barra.bitola, x.barra.medida),
-          pesoPecas: Utils.peso(x.barra.bitola, somaCortes)
+          pesoTotal: Utils.peso(e.bitola, x.barra.medida),
+          pesoPecas: Utils.peso(e.bitola, somaCortes)
         };
       })
     };
     this.renderizar();
+  },
+
+  /** Rótulo curto da barra: "#123" ou "Barra nova 12 m". */
+  rotulo(b) {
+    return b.nova ? `Barra nova ${Utils.fmt(b.medidaOriginal, 0)} m` : `#${b.id}`;
   },
 
   renderizar() {
@@ -558,9 +669,12 @@ const Plano = {
     const pPecas = p.barras.reduce((s, b) => s + b.pesoPecas, 0);
     const pRetorno = p.barras.reduce((s, b) => s + (b.geraSobra ? Utils.peso(b.bitola, b.sobra) : 0), 0);
     const pPerda = Math.max(0, pBruto - pPecas - pRetorno);
-    const qualidade = p.completo
-      ? (p.otimo ? "Melhor combinação possível (menor sobra total)" : "Combinação aproximada (pedido muito grande para verificar todas)")
-      : "Plano parcial";
+    const novas = p.barras.filter((b) => b.nova).length;
+    const temPontas = p.barras.length > novas;
+    const reserva = p.reserva ? Reservas.doCodigo(p.reserva) : null;
+    const qualidade = (p.completo
+      ? (p.otimo ? "Melhor combinação possível" : "Combinação aproximada (pedido muito grande para verificar todas)")
+      : "Plano parcial") + (novas ? ` · ${novas} barra(s) nova(s) de ${CONFIG.BARRA_NOVA_M} m` : "");
 
     area.innerHTML = `
       <div class="box">
@@ -580,11 +694,20 @@ const Plano = {
         ${p.barras.map((b) => this.htmlBarra(b)).join("")}
         <div class="form-group" style="margin-top:20px;">
           <label for="inputClienteCorte">Cliente / Nº do pedido</label>
-          <input type="text" id="inputClienteCorte" maxlength="100" placeholder="Ex: João / Pedido 4510" value="${Utils.escapeHTML(clienteAnterior)}">
+          <input type="text" id="inputClienteCorte" maxlength="100" placeholder="Ex: João / Pedido 4510" value="${Utils.escapeHTML(clienteAnterior || (reserva ? reserva.cliente : ""))}">
         </div>
+        ${reserva ? `
+        <div class="reserva-faixa" role="status">
+          ${icon("tag")}<span>Reservado para <strong>${Utils.escapeHTML(reserva.cliente)}</strong> até <strong class="mono">${Reservas.hora(reserva.expira)}</strong></span>
+          <span class="reserva-acoes">
+            <button type="button" class="btn-pearl btn-sm" data-action="novo-pedido" title="Atender outro cliente; esta reserva continua valendo">${icon("plus")}Novo pedido</button>
+            <button type="button" class="btn-pearl btn-sm" data-action="cancelar-reserva" data-codigo="${reserva.codigo}">${icon("x")}Cancelar reserva</button>
+          </span>
+        </div>` : ""}
         <div class="actions-row">
           <button type="button" class="btn-secondary" data-action="copiar-whatsapp">${icon("copy")}Copiar p/ WhatsApp</button>
           <button type="button" class="btn-secondary" data-action="imprimir-ordem">${icon("printer")}Imprimir ordem de corte</button>
+          ${temPontas ? `<button type="button" class="btn-secondary" data-action="reservar-plano">${icon("tag")}${reserva ? "Atualizar reserva" : `Reservar por ${CONFIG.RESERVA_HORAS}h`}</button>` : ""}
           <button type="button" class="btn" data-action="confirmar-baixa-plano">${icon("check")}Confirmar baixa</button>
         </div>
         <p class="input-hint" style="margin-top:12px; text-align:right;">As etiquetas das sobras saem depois da confirmação, com os IDs definitivos da planilha.</p>
@@ -607,7 +730,7 @@ const Plano = {
       <div class="result-card">
         <div class="result-header">
           <div class="result-info">
-            <h3><span class="badge">#${b.id}</span> Barra de <strong class="mono">${Utils.fmt(L)} m</strong></h3>
+            <h3>${b.nova ? `<span class="badge nova">BARRA NOVA</span>` : `<span class="badge">#${b.id}</span>`} Barra de <strong class="mono">${Utils.fmt(L)} m</strong></h3>
             <p>Cortar <strong class="mono">${b.descricao}</strong> · <span class="mono">${Utils.fmt(b.pesoTotal)} kg</span></p>
           </div>
           <div class="sobra-box">
@@ -647,7 +770,7 @@ const Plano = {
     const linhas = [`✂️ *ORDEM DE CORTE - GRANDE AÇO*`, `Bitola: Ø ${Utils.fmt(p.bitola)} mm`];
     if (c) linhas.push(`👤 *Cliente:* ${c}`);
     linhas.push("------------------");
-    p.barras.forEach((b) => linhas.push(`▪ *ID #${b.id}* (${Utils.fmt(b.medidaOriginal)}m) ↳ ${b.descricao} | Sobra: ${Utils.fmt(b.sobra)}m`));
+    p.barras.forEach((b) => linhas.push(`▪ *${b.nova ? "BARRA NOVA" : "ID #" + b.id}* (${Utils.fmt(b.medidaOriginal)}m) ↳ ${b.descricao} | Sobra: ${Utils.fmt(b.sobra)}m`));
     if (!p.completo) linhas.push(`⚠️ Faltaram ${p.faltantes.length} peça(s): ${Utils.descreverCortes(p.faltantes)}`);
     try {
       await Utils.copiarTexto(linhas.join("\n"));
@@ -663,7 +786,7 @@ const Plano = {
     const c = Utils.escapeHTML(this.cliente() || "Balcão");
     Impressao.imprimir(`
       <div class="print-section-title"><img src="assets/logo-preto.png" alt="Grande Aço">ORDEM DE CORTE - ${c} (${Utils.hojeBR()}) - Ø ${Utils.fmt(p.bitola)} mm</div>
-      ${p.barras.map((b) => `<div class="print-order-item"><strong>ID #${b.id}</strong> (${Utils.fmt(b.medidaOriginal)}m) ➔ Cortar: <strong>${b.descricao}</strong> | Sobra: <strong>${Utils.fmt(b.sobra)}m</strong>${b.geraSobra ? " (volta ao estoque)" : ""}</div>`).join("")}
+      ${p.barras.map((b) => `<div class="print-order-item"><strong>${b.nova ? "BARRA NOVA" : "ID #" + b.id}</strong> (${Utils.fmt(b.medidaOriginal)}m) ➔ Cortar: <strong>${b.descricao}</strong> | Sobra: <strong>${Utils.fmt(b.sobra)}m</strong>${b.geraSobra ? " (volta ao estoque)" : ""}</div>`).join("")}
       ${!p.completo ? `<div class="print-order-item"><strong>ATENÇÃO:</strong> faltaram ${p.faltantes.length} peça(s): ${Utils.descreverCortes(p.faltantes)}</div>` : ""}`);
   },
 
@@ -671,12 +794,13 @@ const Plano = {
     const p = state.plano;
     if (!p || !p.barras.length) return;
     const cliente = this.cliente();
+    if (!this.conferirClienteDaReserva(cliente)) return;
     const sobras = p.barras.filter((b) => b.geraSobra).length;
     const ok = await UI.confirmar({
       titulo: "Confirmar baixa",
       html: `${!p.completo ? '<div class="notice warning">Plano parcial: nem todas as peças do pedido serão atendidas.</div>' : ""}
         <p>${p.barras.length} barra(s) serão marcadas como <strong>vendidas</strong>${cliente ? ` para <strong>${Utils.escapeHTML(cliente)}</strong>` : ""}:</p>
-        <ul>${p.barras.map((b) => `<li class="mono">#${b.id} — ${Utils.fmt(b.medidaOriginal)}m → ${b.descricao}</li>`).join("")}</ul>
+        <ul>${p.barras.map((b) => `<li class="mono">${this.rotulo(b)} — ${Utils.fmt(b.medidaOriginal)}m → ${b.descricao}</li>`).join("")}</ul>
         <p>${sobras ? `${sobras} sobra(s) voltarão ao estoque com novo ID.` : "Nenhuma sobra voltará ao estoque."}</p>`,
       ok: "Confirmar Baixa",
       perigo: true
@@ -687,9 +811,16 @@ const Plano = {
       const r = await API.chamar("baixar", {
         cliente,
         kerf: p.kerf,
-        instrucoes: p.barras.map((b) => ({ id: b.id, cortes: b.cortes }))
+        precoKg: p.precoKg || undefined,
+        reserva: p.reserva || undefined,
+        instrucoes: p.barras.map((b) => (b.nova
+          ? { nova: true, bitola: b.bitola, cortes: b.cortes }
+          : { id: b.id, cortes: b.cortes }))
       });
       UI.notificar(r.mensagem);
+      if (p.reserva) Reservas.remover(p.reserva);
+      state.reservaAtual = null;
+      Reservas.renderizar();
       state.plano = null;
       state.carrinho = [];
       state.ultimasSobras = r.sobras || [];
@@ -701,11 +832,82 @@ const Plano = {
           <h4>${icon("check")}Baixa registrada</h4>
           <p>${Utils.escapeHTML(r.mensagem)}</p>
           ${state.ultimasSobras.length ? `
-            <p>Novas pontas: ${state.ultimasSobras.map((s) => `<strong class="mono">#${s.id}</strong> (${Utils.fmt(s.medida)}m, da #${s.idOrigem})`).join(" · ")}</p>
+            <p>Novas pontas: ${state.ultimasSobras.map((s) => `<strong class="mono">#${s.id}</strong> (${Utils.fmt(s.medida)}m, ${s.idOrigem ? "da #" + s.idOrigem : "de barra nova"})`).join(" · ")}</p>
             <button type="button" class="btn" data-action="imprimir-sobras">${icon("tag")}Imprimir etiquetas das sobras</button>` : ""}
         </div>`;
       await Dados.carregar({ silencioso: true });
     });
+  },
+
+  /** Reserva (ou atualiza a reserva de) as pontas do plano por RESERVA_HORAS. */
+  async reservar(btn) {
+    const p = state.plano;
+    if (!p) return;
+    const ids = p.barras.filter((b) => !b.nova).map((b) => b.id);
+    if (!ids.length) return UI.notificar("Este plano usa só barra nova: não há pontas para reservar.", true);
+    const cliente = this.cliente();
+    if (!cliente) {
+      UI.notificar("Informe o cliente ou o nº do pedido para reservar.", true);
+      $("inputClienteCorte").focus();
+      return;
+    }
+    if (!this.conferirClienteDaReserva(cliente)) return;
+    await executar(btn, "Reservando...", async () => {
+      const r = await API.chamar("reservar", { ids, cliente, codigo: p.reserva || undefined });
+      Armazenamento.gravar("pontas_relogio_desvio", String(ReservaLogica.desvioRelogio(r.expira, CONFIG.RESERVA_HORAS, Date.now())));
+      Reservas.salvar({
+        codigo: r.codigo, cliente, bitola: p.bitola, kerfMm: p.kerf * 1000, precoKg: p.precoKg,
+        barraNova: $("buscaBarraNova").checked, carrinho: p.pedido, ids: r.ids, expira: r.expira
+      });
+      state.reservaAtual = r.codigo;
+      p.reserva = r.codigo;
+      UI.notificar(r.mensagem);
+      Reservas.renderizar();
+      this.renderizar();
+      await Dados.carregar({ silencioso: true });
+    });
+  },
+
+  async cancelarReserva(codigo, btn) {
+    const r = Reservas.doCodigo(codigo);
+    const ok = await UI.confirmar({
+      titulo: "Cancelar reserva",
+      html: `<p>Liberar as pontas reservadas${r ? ` para <strong>${Utils.escapeHTML(r.cliente)}</strong>` : ""}? Outros vendedores voltam a poder usá-las.</p>`,
+      ok: "Cancelar reserva",
+      perigo: true
+    });
+    if (!ok) return;
+    await executar(btn, "Cancelando...", async () => {
+      const res = await API.chamar("cancelarReserva", { codigo });
+      Reservas.remover(codigo);
+      if (state.reservaAtual === codigo) {
+        state.reservaAtual = null;
+        if (state.plano) { state.plano.reserva = null; this.renderizar(); }
+      }
+      UI.notificar(res.mensagem);
+      Reservas.renderizar();
+      await Dados.carregar({ silencioso: true });
+    });
+  },
+
+  /** Recarrega o pedido de uma reserva e refaz o plano para confirmar a baixa. */
+  abrirReserva(codigo) {
+    const r = Reservas.doCodigo(codigo);
+    if (!r) return UI.notificar("Essa reserva já não está ativa.", true);
+    state.reservaAtual = codigo;
+    $("buscaBitola").value = String(r.bitola);
+    $("buscaKerf").value = String(r.kerfMm || 0);
+    $("buscaPrecoKg").value = r.precoKg ? String(r.precoKg) : "";
+    $("buscaBarraNova").checked = r.barraNova !== false;
+    $("buscaMedida").value = "";
+    $("buscaQtde").value = "1";
+    state.carrinho = (r.carrinho || []).map((i) => ({ medida: i.medida, qtde: i.qtde }));
+    this.renderizarCarrinho();
+    if ($("inputClienteCorte")) $("inputClienteCorte").value = "";
+    this.calcular();
+    if ($("inputClienteCorte")) $("inputClienteCorte").value = r.cliente;
+    Reservas.renderizar();
+    $("areaResultados").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 };
 
@@ -848,10 +1050,17 @@ const Estoque = {
     const bitolas = [...new Set(state.estoque.map((i) => i.bitola))].filter((b) => b > 0).sort((a, b) => a - b);
     const opcoes = bitolas.map((b) => `<option value="${b}">Ø ${Utils.fmt(b)} mm</option>`).join("");
 
+    // Plano de corte: bitolas com pontas + comerciais (a barra nova atende mesmo sem ponta livre).
+    const livres = new Map();
+    state.estoque.forEach((i) => { if (Plano.livre(i)) livres.set(i.bitola, (livres.get(i.bitola) || 0) + 1); });
+    const todas = [...new Set(bitolas.concat(CONFIG.BITOLAS_COMERCIAIS))].sort((a, b) => a - b);
     const sel = $("buscaBitola");
     const atual = sel.value;
-    sel.innerHTML = `<option value="">${bitolas.length ? "Selecione..." : "Sem estoque"}</option>` + opcoes;
-    if (atual && bitolas.includes(Number(atual))) sel.value = atual;
+    sel.innerHTML = `<option value="">Selecione...</option>` + todas.map((b) => {
+      const n = livres.get(b) || 0;
+      return `<option value="${b}" title="${n} ponta(s) livre(s)">Ø ${Utils.fmt(b)} mm (${n})</option>`;
+    }).join("");
+    if (atual && todas.includes(Number(atual))) sel.value = atual;
 
     const filtro = $("filtroTabelaBitola");
     const filtroAtual = filtro.value;
@@ -925,10 +1134,12 @@ const Estoque = {
           <td class="mono"><strong>Ø ${Utils.fmt(b.bitola)} mm</strong></td>
           <td class="mono td-medida">${Utils.fmt(b.medida)} m</td>
           <td class="mono">${Utils.fmt(b.peso)} kg</td>
-          <td class="td-dim">${Utils.escapeHTML(b.obs)}</td>
+          <td class="td-dim">${b.reserva ? `<span class="selo-reserva">Reservada · ${Utils.escapeHTML(b.reserva.para)} · até ${Reservas.hora(b.reserva.ate)}</span> ` : ""}${Utils.escapeHTML(b.obs)}</td>
           <td><div class="td-acoes">
             <button type="button" class="btn-pearl btn-sm btn-icon" data-action="imprimir-etiqueta" data-id="${b.id}" title="Imprimir etiqueta" aria-label="Imprimir etiqueta #${b.id}">${icon("tag")}</button>
-            <button type="button" class="btn-danger contorno btn-sm so-operador" data-action="ir-baixa" data-id="${b.id}">Baixar</button>
+            ${b.reserva
+              ? `<button type="button" class="btn-pearl btn-sm so-operador" data-action="cancelar-reserva-id" data-id="${b.id}" title="Liberar esta ponta da reserva">${icon("x")}Liberar</button>`
+              : `<button type="button" class="btn-danger contorno btn-sm so-operador" data-action="ir-baixa" data-id="${b.id}">Baixar</button>`}
           </div></td>
         </tr>`).join("");
     }
@@ -967,6 +1178,24 @@ const Estoque = {
 
   imprimirVisiveis() {
     Impressao.imprimirEtiquetas(state.listaFiltrada);
+  },
+
+  /** Operador libera uma ponta reservada (pelo ID, sem o código). */
+  async cancelarReservaId(id, btn) {
+    const b = state.estoque.find((i) => i.id === id);
+    if (!b || !b.reserva) return;
+    const ok = await UI.confirmar({
+      titulo: "Liberar ponta reservada",
+      html: `<p>Liberar <strong class="mono">#${b.id}</strong>, reservada para <strong>${Utils.escapeHTML(b.reserva.para)}</strong> até ${Reservas.hora(b.reserva.ate)}?</p>`,
+      ok: "Liberar",
+      perigo: true
+    });
+    if (!ok) return;
+    await executar(btn, "Liberando...", async () => {
+      const r = await API.chamar("cancelarReserva", { id });
+      UI.notificar(r.mensagem);
+      await Dados.carregar({ silencioso: true });
+    });
   },
 
   imprimirUma(id) {
@@ -1035,6 +1264,102 @@ const Cadastro = {
 };
 
 // ============================================================================
+// PAINEL DE APROVEITAMENTO
+// ============================================================================
+const PainelUI = {
+  movs: [],
+
+  periodoEscolhido() {
+    const sel = $("painelPeriodo").value;
+    $("painelDatas").hidden = sel !== "custom";
+    if (sel !== "custom") return Painel.periodo(sel, new Date());
+    const de = $("painelDe").value, ate = $("painelAte").value;
+    if (!de || !ate) return null;
+    if (de > ate) { UI.notificar("A data inicial é depois da final.", true); return null; }
+    return { de, ate };
+  },
+
+  async carregar() {
+    if (!Auth.token()) return;
+    this.renderizarParadas();
+    const p = this.periodoEscolhido();
+    if (!p) return;
+    $("painelResumo").innerHTML = `<p class="td-dim">Carregando…</p>`;
+    try {
+      const r = await API.chamar("movimentos", p);
+      this.movs = r.movimentos || [];
+      this.renderizar(p);
+    } catch (e) {
+      if (e.codigo !== "AUTH") $("painelResumo").innerHTML = `<div class="notice danger">${icon("alert")}<span>${Utils.escapeHTML(e.message)}</span></div>`;
+    }
+  },
+
+  renderizar(p) {
+    const r = Painel.resumir(this.movs);
+    const kg = (v) => `${Utils.fmt(v, 1)} kg`;
+    const pct = (t) => (t === null ? "—" : `${Math.round(t * 100)}%`);
+    const dataBR = (iso) => iso.split("-").reverse().join("/");
+    const temBaixa = this.movs.some((m) => m.acao === "baixa" && !m.estornado);
+    $("painelBitolasBox").hidden = !temBaixa;
+    if (!temBaixa) {
+      $("painelResumo").innerHTML = `<div class="painel-vazio">Sem baixas de ${dataBR(p.de)} a ${dataBR(p.ate)}.</div>`;
+      return;
+    }
+    $("painelResumo").innerHTML = `
+      <p class="box-subtitle" style="margin:-8px 0 14px">${dataBR(p.de)} a ${dataBR(p.ate)}</p>
+      <div class="summary-grid">
+        <div class="kpi-card"><div class="kpi-label">Reaproveitado de pontas</div><div class="kpi-value destaque">${kg(r.kgReaproveitado)}</div><div class="kpi-sub">peças + pontas vendidas inteiras</div></div>
+        <div class="kpi-card"><div class="kpi-label">Aproveitamento</div><div class="kpi-value">${pct(r.taxa)}</div><div class="kpi-sub">das pontas usadas virou peça</div></div>
+        <div class="kpi-card"><div class="kpi-label">Valor recuperado</div><div class="kpi-value destaque">${Utils.moeda(r.valorRecuperado)}</div><div class="kpi-sub">${r.baixasSemPreco ? `${r.baixasSemPreco} baixa(s) sem preço` : "pelo preço informado"}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Voltou ao estoque</div><div class="kpi-value">${kg(r.kgVoltouPonta + r.kgVoltouDeBarraNova)}</div><div class="kpi-sub">${r.kgVoltouDeBarraNova ? `${kg(r.kgVoltouDeBarraNova)} de barra nova` : "como novas pontas"}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Sucata + perda</div><div class="kpi-value">${kg(r.kgSucataPerda)}</div><div class="kpi-sub">sobras &lt; ${Utils.fmt(CONFIG.SOBRA_MINIMA)} m e cortes</div></div>
+        <div class="kpi-card"><div class="kpi-label">Barra nova</div><div class="kpi-value">${r.barrasNovas}</div><div class="kpi-sub">${kg(r.kgBarraNova)} cortados (fora do aproveitamento)</div></div>
+      </div>`;
+    $("painelBitolas").innerHTML = `
+      <div class="table-container"><table class="tabela-blocos">
+        <thead><tr><th>Bitola</th><th>Reaproveitado</th><th>Aproveitamento</th><th>Sucata + perda</th><th>Barra nova</th></tr></thead>
+        <tbody>${r.porBitola.map((b) => `
+          <tr>
+            <td class="mono"><strong>Ø ${Utils.fmt(b.bitola)} mm</strong></td>
+            <td class="mono td-medida" data-rot="Reaproveitado">${kg(b.kgReaproveitado)}</td>
+            <td class="mono" data-rot="Aproveit.">${pct(b.taxa)}</td>
+            <td class="mono" data-rot="Sucata">${kg(b.kgSucataPerda)}</td>
+            <td class="mono" data-rot="Barra nova">${b.barrasNovas ? `${b.barrasNovas} · ${kg(b.kgBarraNova)}` : "—"}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>`;
+  },
+
+  renderizarParadas() {
+    const lista = Painel.pontasParadas(state.estoque, new Date(), 60);
+    const kgTotal = lista.reduce((s, x) => s + x.item.peso, 0);
+    const n90 = lista.filter((x) => x.dias >= 90).length;
+    $("painelParadasResumo").textContent = lista.length
+      ? `${lista.length} ponta(s) · ${Utils.fmt(kgTotal, 1)} kg · ${n90} com 90 dias ou mais`
+      : "60 dias ou mais no pátio";
+    if (!lista.length) {
+      $("painelParadas").innerHTML = `<div class="painel-vazio">Nenhuma ponta parada há 60 dias ou mais.</div>`;
+      return;
+    }
+    $("painelParadas").innerHTML = `
+      <div class="table-container"><table class="tabela-blocos">
+        <thead><tr><th>ID</th><th>Parada há</th><th>Bitola</th><th>Medida</th><th>Peso</th><th>Ações</th></tr></thead>
+        <tbody>${lista.map(({ item: b, dias }) => `
+          <tr class="${dias >= 90 ? "parada-90" : ""}">
+            <td><span class="badge">#${b.id}</span></td>
+            <td class="mono" data-rot="Parada há">${dias >= 90 ? `<span class="selo-reserva">${dias} dias</span>` : `${dias} dias`}</td>
+            <td class="mono" data-rot="Bitola">Ø ${Utils.fmt(b.bitola)} mm</td>
+            <td class="mono td-medida" data-rot="Medida">${Utils.fmt(b.medida)} m</td>
+            <td class="mono" data-rot="Peso">${Utils.fmt(b.peso)} kg</td>
+            <td class="acoes"><div class="td-acoes">
+              <button type="button" class="btn-pearl btn-sm btn-icon" data-action="imprimir-etiqueta" data-id="${b.id}" title="Imprimir etiqueta" aria-label="Imprimir etiqueta #${b.id}">${icon("tag")}</button>
+              ${b.reserva ? "" : `<button type="button" class="btn-danger contorno btn-sm so-operador" data-action="ir-baixa" data-id="${b.id}">Baixar</button>`}
+            </div></td>
+          </tr>`).join("")}</tbody>
+      </table></div>`;
+  }
+};
+
+// ============================================================================
 // BAIXA MANUAL
 // ============================================================================
 const BaixaManual = {
@@ -1046,6 +1371,10 @@ const BaixaManual = {
     if (!valor) { prev.innerHTML = ""; return; }
     const id = Number(valor);
     const b = state.estoque.find((i) => i.id === id);
+    if (b && b.reserva) {
+      prev.innerHTML = `<div class="notice warning">${icon("alert")}<span>ID #${b.id} está reservada para <strong>${Utils.escapeHTML(b.reserva.para)}</strong> até ${Reservas.hora(b.reserva.ate)}. Cancele a reserva (botão "Liberar" no Estoque) antes de baixar.</span></div>`;
+      return;
+    }
     if (b) {
       prev.innerHTML = `<div class="result-card danger-border"><div class="result-info"><h3><span class="badge danger-bg">ID #${b.id}</span></h3><p>Ø ${Utils.fmt(b.bitola)} mm • ${Utils.fmt(b.medida)} m • ${Utils.fmt(b.peso)} kg • ${Utils.escapeHTML(b.obs)}</p></div></div>`;
       btn.hidden = false;
@@ -1132,6 +1461,68 @@ const Historico = {
   mostrarMais() {
     state.historicoLimite += CONFIG.HISTORICO_PAGINA;
     this.renderizar();
+  },
+
+  movsBarraNova: [],
+
+  /** Baixas com barra nova dos últimos 90 dias (não têm linha em "Pontas"; vêm de Movimentos). */
+  async carregarMovimentos() {
+    if (!Auth.token()) return;
+    const hoje = new Date();
+    const de = Utils.dataISO(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 90));
+    try {
+      const r = await API.chamar("movimentos", { de });
+      this.movsBarraNova = (r.movimentos || []).filter((m) => m.acao === "baixa" && m.origem === "barra nova")
+        .sort((a, b) => (b.dataHora > a.dataHora ? 1 : -1));
+    } catch (e) {
+      this.movsBarraNova = [];
+    }
+    this.renderizarBarraNova();
+  },
+
+  renderizarBarraNova() {
+    const area = $("historicoBarraNova");
+    const lista = this.movsBarraNova;
+    area.hidden = lista.length === 0;
+    if (!lista.length) { area.innerHTML = ""; return; }
+    area.innerHTML = `
+      <div class="box-header">
+        <h3 class="box-title">Barras novas usadas</h3>
+        <span class="box-subtitle">Últimos 90 dias</span>
+      </div>
+      <div class="table-container"><table class="tabela-blocos">
+        <thead><tr><th>Origem</th><th>Data</th><th>Bitola</th><th>Cortes</th><th>Cliente / Pedido</th><th>Ação</th></tr></thead>
+        <tbody>${lista.map((m) => `
+          <tr>
+            <td><span class="badge nova">BARRA NOVA</span></td>
+            <td class="mono td-dim" data-rot="Data">${new Date(m.dataHora).toLocaleDateString("pt-BR")}</td>
+            <td class="mono" data-rot="Bitola">Ø ${Utils.fmt(m.bitola)} mm</td>
+            <td class="mono" data-rot="Cortes">${Utils.descreverCortes(m.cortes)}${m.idSobra ? ` · sobra #${m.idSobra}` : ""}</td>
+            <td style="font-size:13px" data-rot="Cliente">${Utils.escapeHTML(m.cliente || "—")}</td>
+            <td class="acoes">${m.estornado
+              ? `<span class="selo-reserva">Estornada</span>`
+              : `<button type="button" class="btn-pearl btn-sm so-operador" data-action="estornar-barra-nova" data-mov="${Utils.escapeHTML(m.mov)}">Estornar</button>`}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>`;
+  },
+
+  async estornarBarraNova(btn, mov) {
+    const m = this.movsBarraNova.find((x) => x.mov === mov);
+    if (!m) return;
+    const ok = await UI.confirmar({
+      titulo: "Estornar barra nova",
+      html: `<p>Desfazer o uso da barra nova de <strong class="mono">Ø ${Utils.fmt(m.bitola)} mm</strong> (${Utils.descreverCortes(m.cortes)})?</p>
+        ${m.idSobra ? `<p>A sobra <strong class="mono">#${m.idSobra}</strong> gerada dela será <strong>cancelada</strong>, se ainda estiver no estoque.</p>` : ""}`,
+      ok: "Estornar",
+      perigo: true
+    });
+    if (!ok) return;
+    await executar(btn, "Estornando...", async () => {
+      const r = await API.chamar("estornarBarraNova", { mov });
+      UI.notificar(r.mensagem);
+      await Dados.carregar({ silencioso: true });
+      await this.carregarMovimentos();
+    });
   },
 
   async estornar(btn, id) {
@@ -1323,6 +1714,12 @@ const ACOES = {
   "copiar-whatsapp": () => Plano.copiarWhatsApp(),
   "imprimir-ordem": () => Plano.imprimirOrdem(),
   "confirmar-baixa-plano": (el) => Plano.confirmarBaixa(el),
+  "reservar-plano": (el) => Plano.reservar(el),
+  "cancelar-reserva": (el) => Plano.cancelarReserva(el.dataset.codigo, el),
+  "abrir-reserva": (el) => Plano.abrirReserva(el.dataset.codigo),
+  "novo-pedido": () => Plano.novoPedido(),
+  "cancelar-reserva-id": (el) => Estoque.cancelarReservaId(Number(el.dataset.id), el),
+  "estornar-barra-nova": (el) => Historico.estornarBarraNova(el, el.dataset.mov),
   "imprimir-sobras": () => Impressao.imprimirEtiquetas(state.ultimasSobras),
   "imprimir-cadastrados": () => Impressao.imprimirEtiquetas(state.ultimosCadastrados),
   "imprimir-selecionadas": () => Estoque.imprimirSelecionadas(),
@@ -1356,6 +1753,15 @@ function ligarEventos() {
   // Plano: qualquer mudança no pedido invalida o plano já calculado
   ["buscaBitola", "buscaMedida", "buscaQtde", "buscaKerf"].forEach((id) => $(id).addEventListener("input", () => Plano.invalidar()));
   $("buscaKerf").addEventListener("change", () => Armazenamento.gravar("pontas_kerf_mm", $("buscaKerf").value));
+  $("buscaBarraNova").addEventListener("change", () => {
+    Armazenamento.gravar("pontas_barra_nova", $("buscaBarraNova").checked ? "1" : "0");
+    Plano.invalidar();
+  });
+  // Painel: período
+  ["painelPeriodo", "painelDe", "painelAte"].forEach((id) => $(id).addEventListener("change", () => PainelUI.carregar()));
+
+  // Trocar a bitola começa outro pedido: a reserva aberta deixa de ser a do pedido em tela.
+  $("buscaBitola").addEventListener("change", () => { state.reservaAtual = null; Reservas.renderizar(); });
   $("buscaPrecoKg").addEventListener("input", () => {
     if (!state.plano) return;
     state.plano.precoKg = Utils.num($("buscaPrecoKg").value) || 0;
@@ -1398,6 +1804,9 @@ document.addEventListener("DOMContentLoaded", () => {
   Impressao.init();
   Exportacao.init();
   $("buscaKerf").value = Armazenamento.ler("pontas_kerf_mm", "0");
+  $("buscaBarraNova").checked = Armazenamento.ler("pontas_barra_nova", "1") !== "0";
+  Reservas.renderizar();
+  setInterval(() => Reservas.renderizar(), 60000); // reservas vencidas saem da lista sozinhas
   ligarEventos();
 
   Auth.carregar();

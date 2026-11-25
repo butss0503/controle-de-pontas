@@ -352,6 +352,20 @@ Cada barra do plano é desenhada em escala: uma faixa grafite de 34px com 2px de
 
 **A Regra do Vão de Corte.** A barra é proporcional e honesta: segmentos nunca têm largura fixa, e o vão de 2px é o único separador entre peças.
 
+### Reserva de pontas
+- **Faixa de reserva** (no plano, acima das ações): borda 1.5px azul GA sobre `acao-tint`, cantos de 6px, ícone de etiqueta e "Reservado para *cliente* até *HH:MM*" com a hora em mono. "Cancelar reserva" (perolado pequeno) vai alinhado à direita.
+- **Minhas reservas:** painel padrão no topo do Plano de corte, que só aparece quando há reservas. Cada linha leva o badge da bitola, o cliente em 600, "N ponta(s) · até HH:MM" em mono `ink-3`, e Abrir e Cancelar à direita. A reserva aberta tem o cliente em `link`.
+- **Selo de reserva / alerta:** mono 700 11.5px em caixa alta, `aviso-texto` sobre `aviso-tint`, cantos de 4px. Usado em "Reservada · cliente · até HH:MM" (estoque), "N dias" (pontas paradas há 90 dias ou mais) e "Estornada".
+- **Badge de barra nova:** como o badge padrão, mas com azul GA e texto grafite ("BARRA NOVA"), no lugar do #ID.
+
+### Painel de aproveitamento
+- Indicadores na mesma faixa dividida do plano (6 células; 2 colunas no celular). O número principal ("Reaproveitado de pontas") e o "Valor recuperado" ficam em `link`. A célula da barra nova diz explicitamente "fora do aproveitamento".
+- **Estado vazio:** caixa com borda tracejada 1.5px `linha-forte`, texto `ink-3` centralizado, citando o período.
+- **Linhas de pontas paradas há 90 dias ou mais:** fundo `aviso-tint` na linha inteira.
+
+### Tabelas em blocos (celular)
+Abaixo de 735px, as tabelas `tabela-blocos` escondem o cabeçalho e cada linha vira um bloco que quebra em várias linhas. Cada célula com `data-rot` ganha o próprio rótulo em mono 10.5px caixa alta `ink-3`. A célula de ações vai para a direita. Use esse padrão em toda tabela nova: rolagem lateral esconde ações e dados.
+
 ### Etiqueta térmica
 A única peça que chega ao cliente, sempre em preto e branco: borda preta de 2.5px, monograma GA no cabeçalho em Archivo 800 caixa alta, ID em caixa de 28px peso 900, especificações em mono 700 13.5px com ícones de traço preto, QR à direita em caixa própria.
 
