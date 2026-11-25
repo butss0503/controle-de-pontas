@@ -492,6 +492,12 @@ function formatHora(ms) {
   return Utilities.formatDate(new Date(ms), TIMEZONE, 'HH:mm');
 }
 
+/** Compara nomes de cliente sem diferenciar maiúsculas e espaços. */
+function mesmoCliente(a, b) {
+  const n = function (s) { return String(s || '').trim().toLowerCase().replace(/\s+/g, ' '); };
+  return n(a) === n(b);
+}
+
 function textoReservada(item) {
   return 'ID #' + item.id + ' reservada para ' + (item.reserva.para || 'outro cliente') + ' até ' + formatHora(item.reserva.ate);
 }
@@ -517,6 +523,12 @@ function acaoReservar(ctx, params) {
   if (!ids.length) return erro('Nenhuma barra para reservar.');
   const informado = String(params.codigo || '').toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 8);
   const codigo = informado.length === 8 ? informado : gerarCodigo();
+
+  // Uma reserva existente só é atualizada para o MESMO cliente; outro cliente = outra reserva.
+  const daReserva = ctx.itens.filter(function (it) { return it.reserva && it.reserva.codigo === codigo; });
+  if (daReserva.length && !mesmoCliente(daReserva[0].reserva.para, cliente)) {
+    return erro('Esta reserva é de ' + daReserva[0].reserva.para + '. Para ' + cliente + ', faça uma reserva nova.', 'CONFLITO');
+  }
 
   const problemas = [];
   ids.forEach(function (id) {
@@ -616,6 +628,11 @@ function acaoBaixar(ctx, params, role) {
     vistos[id] = true;
     if (item.status !== 'estoque') { problemas.push('ID #' + id + ' já está ' + (item.status === 'vendido' ? 'vendido' : 'cancelado')); return; }
     if (item.reserva && item.reserva.codigo !== codigoReserva) { problemas.push(textoReservada(item)); return; }
+    // O código prova a reserva, mas a venda tem de ser para o cliente dela (evita vender a reserva de A para B).
+    if (item.reserva && !mesmoCliente(item.reserva.para, cliente)) {
+      problemas.push('ID #' + id + ' está reservada para ' + item.reserva.para + ': confirme com esse mesmo cliente');
+      return;
+    }
 
     const cortes = lerCortes(inst);
     if (cortes.some(function (c) { return !(c > 0); })) { problemas.push('ID #' + id + ': medida de corte inválida'); return; }

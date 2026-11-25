@@ -288,7 +288,7 @@ test("baixa de barra reservada sem código é recusada; com o código passa e li
   assert.equal(sem.sucesso, false);
   assert.equal(sem.codigo, "CONFLITO");
   assert.equal(env.grade[1][6], "Em estoque");
-  const com = env.post({ action: "baixar", token: env.tv, reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  const com = env.post({ action: "baixar", token: env.tv, cliente: "Pedido 9", reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
   assert.equal(com.sucesso, true, com.mensagem);
   assert.equal(env.grade[1][6], "Vendido");
   assert.equal(env.cod(1), "");
@@ -297,7 +297,7 @@ test("baixa de barra reservada sem código é recusada; com o código passa e li
 test("baixa com código libera as barras não usadas da reserva", () => {
   const env = ambienteReserva();
   const c = env.reservar([1, 2], "Pedido 9").codigo;
-  const r = env.post({ action: "baixar", token: env.tv, reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  const r = env.post({ action: "baixar", token: env.tv, cliente: "Pedido 9", reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
   assert.equal(r.sucesso, true, r.mensagem);
   assert.equal(env.cod(2), "");
 });
@@ -308,6 +308,30 @@ test("reserva vencida não bloqueia a baixa", () => {
   env.setAgora(T0 + HORAS2 + 1);
   const r = env.post({ action: "baixar", token: env.tv, instrucoes: [{ id: 1, cortes: [] }] });
   assert.equal(r.sucesso, true, r.mensagem);
+});
+
+test("baixa com código de reserva exige o mesmo cliente da reserva", () => {
+  const env = ambienteReserva();
+  const c = env.reservar([1], "Cliente A").codigo;
+  const outro = env.post({ action: "baixar", token: env.tv, cliente: "Cliente B", reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(outro.sucesso, false);
+  assert.equal(outro.codigo, "CONFLITO");
+  assert.match(outro.mensagem, /Cliente A/);
+  assert.equal(env.grade[1][6], "Em estoque");
+  const vazio = env.post({ action: "baixar", token: env.tv, reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(vazio.sucesso, false);
+  const mesmo = env.post({ action: "baixar", token: env.tv, cliente: "  cliente a ", reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(mesmo.sucesso, true, mesmo.mensagem);
+});
+
+test("atualizar reserva com outro cliente é recusado e não libera as barras", () => {
+  const env = ambienteReserva();
+  const c = env.reservar([1, 2], "Cliente A").codigo;
+  const r = env.reservar([2], "Cliente B", c);
+  assert.equal(r.sucesso, false);
+  assert.equal(r.codigo, "CONFLITO");
+  assert.equal(env.cod(1), c);
+  assert.equal(env.grade[1][11], "Cliente A");
 });
 
 test("vendedor cancela pelo código; só operador cancela pelo id", () => {

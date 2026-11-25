@@ -636,7 +636,7 @@ select:focus, input:focus {
   background: var(--acao-tint);
   font-size: 14.5px;
 }
-.reserva-faixa .btn-pearl { margin-left: auto; }
+.reserva-faixa .reserva-acoes { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
 
 .reserva-item {
   display: flex;

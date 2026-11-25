@@ -15,8 +15,8 @@ test("resumo conta só pontas no aproveitamento", () => {
     mov({ origem: "barra nova", medidaOriginal: 12, kgPecas: 3, kgSobra: 1.5 })
   ]);
   assert.equal(r.kgReaproveitado, 1.9);
-  assert.ok(Math.abs(r.kgBrutoPontas - peso(8, 5)) < 1e-9);
-  assert.ok(Math.abs(r.taxa - 1.9 / peso(8, 5)) < 1e-9);
+  assert.ok(Math.abs(r.kgConsumidoPontas - 1.912) < 1e-9); // peças + sucata + perda (sem a sobra)
+  assert.ok(Math.abs(r.taxa - 1.9 / 1.912) < 1e-9);
   assert.ok(Math.abs(r.valorRecuperado - 14.82) < 1e-9);
   assert.equal(r.baixasSemPreco, 0);
   assert.equal(r.kgVoltouPonta, 0.1);
@@ -24,6 +24,12 @@ test("resumo conta só pontas no aproveitamento", () => {
   assert.ok(Math.abs(r.kgSucataPerda - 0.012) < 1e-9);
   assert.equal(r.barrasNovas, 1);
   assert.equal(r.kgBarraNova, 3);
+});
+
+test("sobra que volta ao estoque não derruba o aproveitamento", () => {
+  // ponta de 6 m: corta 1 m, 5 m voltam como ponta nova; nada foi perdido
+  const r = Painel.resumir([mov({ medidaOriginal: 6, kgPecas: peso(8, 1), kgSobra: peso(8, 5) })]);
+  assert.ok(Math.abs(r.taxa - 1) < 1e-9, `taxa ${r.taxa}`);
 });
 
 test("baixa sem preço conta em baixasSemPreco e não entra no valor", () => {
@@ -45,12 +51,12 @@ test("estornados e não-baixas são ignorados", () => {
     mov({ acao: "cadastro", kgPecas: 9 })
   ]);
   assert.equal(r.kgReaproveitado, 0);
-  assert.equal(r.kgBrutoPontas, 0);
+  assert.equal(r.kgConsumidoPontas, 0);
 });
 
 test("período sem movimentos dá zeros e taxa null", () => {
   const r = Painel.resumir([]);
-  for (const k of ["kgReaproveitado", "kgBrutoPontas", "valorRecuperado", "baixasSemPreco", "kgVoltouPonta",
+  for (const k of ["kgReaproveitado", "kgConsumidoPontas", "valorRecuperado", "baixasSemPreco", "kgVoltouPonta",
     "kgVoltouDeBarraNova", "kgSucataPerda", "barrasNovas", "kgBarraNova"]) {
     assert.equal(r[k], 0, k);
   }

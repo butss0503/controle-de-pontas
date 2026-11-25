@@ -11,12 +11,9 @@
 (function (raiz) {
   "use strict";
 
-  const FATOR_PESO_ACO = 162;
-  const peso = (bitola, medida) => (bitola && medida ? (bitola * bitola / FATOR_PESO_ACO) * medida : 0);
-
   function vazio() {
     return {
-      kgReaproveitado: 0, kgBrutoPontas: 0, taxa: null, valorRecuperado: 0, baixasSemPreco: 0,
+      kgReaproveitado: 0, kgConsumidoPontas: 0, taxa: null, valorRecuperado: 0, baixasSemPreco: 0,
       kgVoltouPonta: 0, kgVoltouDeBarraNova: 0, kgSucataPerda: 0, barrasNovas: 0, kgBarraNova: 0
     };
   }
@@ -30,13 +27,15 @@
       return;
     }
     t.kgReaproveitado += m.kgPecas || 0;
-    t.kgBrutoPontas += peso(m.bitola, m.medidaOriginal);
+    // Consumido = o que saiu de vez das pontas (peças + sucata + perda de corte).
+    // A sobra que voltou ao estoque não entra: senão o mesmo aço contaria duas vezes.
+    t.kgConsumidoPontas += (m.kgPecas || 0) + (m.kgSucata || 0) + (m.kgPerda || 0);
     t.kgVoltouPonta += m.kgSobra || 0;
     if (m.precoKg > 0) t.valorRecuperado += (m.kgPecas || 0) * m.precoKg;
     else t.baixasSemPreco += 1;
   }
 
-  const fecharTaxa = (t) => { t.taxa = t.kgBrutoPontas > 0 ? t.kgReaproveitado / t.kgBrutoPontas : null; return t; };
+  const fecharTaxa = (t) => { t.taxa = t.kgConsumidoPontas > 0 ? t.kgReaproveitado / t.kgConsumidoPontas : null; return t; };
 
   /** Resumo do período, geral e por bitola. */
   function resumir(movs) {
@@ -53,7 +52,7 @@
       .sort((a, b) => a[0] - b[0])
       .map(([bitola, t]) => {
         fecharTaxa(t);
-        return { bitola, kgReaproveitado: t.kgReaproveitado, kgBrutoPontas: t.kgBrutoPontas, taxa: t.taxa,
+        return { bitola, kgReaproveitado: t.kgReaproveitado, kgConsumidoPontas: t.kgConsumidoPontas, taxa: t.taxa,
           kgSucataPerda: t.kgSucataPerda, kgBarraNova: t.kgBarraNova, barrasNovas: t.barrasNovas };
       });
     return total;

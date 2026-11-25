@@ -451,14 +451,17 @@ const Reservas = {
   /** Reservas ativas deste computador. As vencidas saem da lista com aviso. */
   todas() {
     const lista = Armazenamento.lerJSON(this.CHAVE) || [];
-    const agora = Date.now();
-    const ativas = lista.filter((r) => r && r.codigo && r.expira > agora);
+    const desvio = this.desvio();
+    const vale = (r) => r && r.codigo && ReservaLogica.ativa(r, Date.now(), desvio); // relógio do servidor
+    const ativas = lista.filter(vale);
     if (ativas.length !== lista.length) {
       this.gravar(ativas);
-      lista.filter((r) => r && r.expira <= agora).forEach((r) => UI.notificar(`A reserva de ${r.cliente} expirou.`));
+      lista.filter((r) => r && !vale(r)).forEach((r) => UI.notificar(`A reserva de ${r.cliente} expirou.`));
     }
     return ativas;
   },
+  /** Diferença (servidor − este PC), medida na última reserva feita. */
+  desvio() { return Number(Armazenamento.ler("pontas_relogio_desvio", "0")) || 0; },
   gravar(lista) { Armazenamento.gravar(this.CHAVE, lista); },
   salvar(r) { this.gravar(this.todas().filter((x) => x.codigo !== r.codigo).concat([r])); },
   remover(codigo) { this.gravar(this.todas().filter((x) => x.codigo !== codigo)); },
@@ -469,7 +472,7 @@ const Reservas = {
   sincronizar(estoque) {
     const porId = new Map(estoque.map((b) => [b.id, b]));
     this.todas().forEach((r) => {
-      const viva = r.ids.some((id) => { const b = porId.get(id); return b && b.reserva && Math.abs(b.reserva.ate - r.expira) < 60000; });
+      const viva = r.ids.some((id) => ReservaLogica.pertence(porId.get(id), r));
       if (!viva) { this.remover(r.codigo); UI.notificar(`A reserva de ${r.cliente} foi encerrada.`); }
     });
     this.renderizar();
@@ -502,7 +505,28 @@ const Plano = {
   livre(b) {
     if (!b.reserva) return true;
     const minha = state.reservaAtual && Reservas.doCodigo(state.reservaAtual);
-    return !!(minha && minha.ids.includes(b.id));
+    return ReservaLogica.pertence(b, minha);
+  },
+
+  /** A reserva do pedido em tela só vale para o cliente dela. Devolve false (e avisa) se o cliente for outro. */
+  conferirClienteDaReserva(cliente) {
+    const reserva = state.plano && state.plano.reserva && Reservas.doCodigo(state.plano.reserva);
+    if (!reserva || ReservaLogica.clienteConfere(cliente, reserva)) return true;
+    UI.notificar(`Este pedido está ligado à reserva de ${reserva.cliente}. Para outro cliente, clique em "Novo pedido".`, true);
+    return false;
+  },
+
+  /** Começa um pedido do zero, soltando a reserva que estava aberta (ela continua valendo na lista). */
+  novoPedido() {
+    state.reservaAtual = null;
+    state.plano = null;
+    state.carrinho = [];
+    this.renderizarCarrinho();
+    $("buscaMedida").value = "";
+    $("buscaQtde").value = "1";
+    $("areaResultados").innerHTML = "";
+    Reservas.renderizar();
+    $("buscaMedida").focus();
   },
 
   entradas() {
@@ -539,6 +563,8 @@ const Plano = {
 
   remover(idx) {
     state.carrinho.splice(idx, 1);
+    // Esvaziar o pedido = começar outro; a reserva aberta deixa de ser a do pedido em tela.
+    if (!state.carrinho.length && state.reservaAtual) { state.reservaAtual = null; Reservas.renderizar(); }
     this.renderizarCarrinho();
     this.invalidar();
   },
@@ -673,7 +699,10 @@ const Plano = {
         ${reserva ? `
         <div class="reserva-faixa" role="status">
           ${icon("tag")}<span>Reservado para <strong>${Utils.escapeHTML(reserva.cliente)}</strong> até <strong class="mono">${Reservas.hora(reserva.expira)}</strong></span>
-          <button type="button" class="btn-pearl btn-sm" data-action="cancelar-reserva" data-codigo="${reserva.codigo}">${icon("x")}Cancelar reserva</button>
+          <span class="reserva-acoes">
+            <button type="button" class="btn-pearl btn-sm" data-action="novo-pedido" title="Atender outro cliente; esta reserva continua valendo">${icon("plus")}Novo pedido</button>
+            <button type="button" class="btn-pearl btn-sm" data-action="cancelar-reserva" data-codigo="${reserva.codigo}">${icon("x")}Cancelar reserva</button>
+          </span>
         </div>` : ""}
         <div class="actions-row">
           <button type="button" class="btn-secondary" data-action="copiar-whatsapp">${icon("copy")}Copiar p/ WhatsApp</button>
@@ -765,6 +794,7 @@ const Plano = {
     const p = state.plano;
     if (!p || !p.barras.length) return;
     const cliente = this.cliente();
+    if (!this.conferirClienteDaReserva(cliente)) return;
     const sobras = p.barras.filter((b) => b.geraSobra).length;
     const ok = await UI.confirmar({
       titulo: "Confirmar baixa",
@@ -821,8 +851,10 @@ const Plano = {
       $("inputClienteCorte").focus();
       return;
     }
+    if (!this.conferirClienteDaReserva(cliente)) return;
     await executar(btn, "Reservando...", async () => {
       const r = await API.chamar("reservar", { ids, cliente, codigo: p.reserva || undefined });
+      Armazenamento.gravar("pontas_relogio_desvio", String(ReservaLogica.desvioRelogio(r.expira, CONFIG.RESERVA_HORAS, Date.now())));
       Reservas.salvar({
         codigo: r.codigo, cliente, bitola: p.bitola, kerfMm: p.kerf * 1000, precoKg: p.precoKg,
         barraNova: $("buscaBarraNova").checked, carrinho: p.pedido, ids: r.ids, expira: r.expira
@@ -1685,6 +1717,7 @@ const ACOES = {
   "reservar-plano": (el) => Plano.reservar(el),
   "cancelar-reserva": (el) => Plano.cancelarReserva(el.dataset.codigo, el),
   "abrir-reserva": (el) => Plano.abrirReserva(el.dataset.codigo),
+  "novo-pedido": () => Plano.novoPedido(),
   "cancelar-reserva-id": (el) => Estoque.cancelarReservaId(Number(el.dataset.id), el),
   "estornar-barra-nova": (el) => Historico.estornarBarraNova(el, el.dataset.mov),
   "imprimir-sobras": () => Impressao.imprimirEtiquetas(state.ultimasSobras),
