@@ -87,6 +87,8 @@
         <p>Combine medidas e extraia o máximo rendimento das pontas em pátio.</p>
       </div>
 
+      <section class="box" id="minhasReservas" hidden aria-live="polite"></section>
+
       <section class="box">
         <div class="box-header">
           <h3 class="box-title">Configurar pedido</h3>
@@ -95,7 +97,7 @@
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="buscaBitola">Bitola (mm)</label>
+            <label for="buscaBitola">Bitola (pontas livres)</label>
             <select id="buscaBitola" class="mono"><option value="">Carregando...</option></select>
           </div>
           <div class="form-group">
@@ -114,6 +116,10 @@
             <label for="buscaKerf">Perda por corte (mm)</label>
             <input type="number" id="buscaKerf" class="mono" step="0.5" min="0" max="20" value="0" inputmode="decimal">
             <span class="input-hint">0 para tesoura/guilhotina · ~3 para serra</span>
+          </div>
+          <div class="form-group">
+            <span class="data-label" style="color:var(--ink-2)">Se faltar ponta</span>
+            <label class="check-linha" for="buscaBarraNova"><input type="checkbox" id="buscaBarraNova" checked>Completar com barra nova de 12 m</label>
           </div>
         </div>
 
