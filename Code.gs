@@ -51,6 +51,8 @@ const MC = {}; MOV_CAB.forEach(function (n, i) { MC[n] = i; });
 const PERMISSOES = {
   listar: ['vendedor', 'operador'],
   baixar: ['vendedor', 'operador'],
+  reservar: ['vendedor', 'operador'],
+  cancelarReserva: ['vendedor', 'operador'], // por código: qualquer perfil; pelo ID da barra: só operador
   cadastrar: ['operador'],
   estornar: ['operador']
 };
@@ -315,6 +317,8 @@ function doPost(e) {
       const ctx = lerPlanilha();
       if (action === 'cadastrar') return acaoCadastrar(ctx, params);
       if (action === 'baixar') return acaoBaixar(ctx, params);
+      if (action === 'reservar') return acaoReservar(ctx, params);
+      if (action === 'cancelarReserva') return acaoCancelarReserva(ctx, params, role);
       if (action === 'estornar') return acaoEstornar(ctx, params);
     } finally {
       lock.releaseLock();
@@ -403,6 +407,88 @@ function acaoCadastrar(ctx, params) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// RESERVAS
+// ---------------------------------------------------------------------------
+function formatHora(ms) {
+  return Utilities.formatDate(new Date(ms), TIMEZONE, 'HH:mm');
+}
+
+function textoReservada(item) {
+  return 'ID #' + item.id + ' reservada para ' + (item.reserva.para || 'outro cliente') + ' até ' + formatHora(item.reserva.ate);
+}
+
+function gravarReserva(sheet, item, ateMs, para, codigo) {
+  sheet.getRange(item.linha, COL.RESERVA_ATE + 1, 1, 3).setValues([[new Date(ateMs), para, codigo]]);
+}
+
+function limparReserva(sheet, item) {
+  sheet.getRange(item.linha, COL.RESERVA_ATE + 1, 1, 3).setValues([['', '', '']]);
+}
+
+/**
+ * Reserva barras por RESERVA_HORAS. Tudo-ou-nada. Com um código já existente,
+ * substitui o conjunto (libera o que saiu, renova o prazo do que ficou).
+ */
+function acaoReservar(ctx, params) {
+  const cliente = limparTexto(params.cliente, 100);
+  if (!cliente) return erro('Informe o cliente ou o nº do pedido para reservar.');
+  const ids = (Array.isArray(params.ids) ? params.ids : [])
+    .map(function (n) { return parseInt(n, 10); })
+    .filter(function (n, i, a) { return n > 0 && a.indexOf(n) === i; });
+  if (!ids.length) return erro('Nenhuma barra para reservar.');
+  const informado = String(params.codigo || '').toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 8);
+  const codigo = informado.length === 8 ? informado : gerarCodigo();
+
+  const problemas = [];
+  ids.forEach(function (id) {
+    const it = ctx.porId[id];
+    if (!it) { problemas.push('ID #' + id + ' não existe'); return; }
+    if (it.status !== 'estoque') { problemas.push('ID #' + id + ' já está ' + (it.status === 'vendido' ? 'vendido' : 'cancelado')); return; }
+    if (it.reserva && it.reserva.codigo !== codigo) problemas.push(textoReservada(it));
+  });
+  if (problemas.length) return erro('Nada foi reservado. ' + problemas.join('; ') + '.', 'CONFLITO');
+
+  const ate = Date.now() + RESERVA_HORAS * 3600000;
+  ctx.itens.forEach(function (it) {
+    if (it.reserva && it.reserva.codigo === codigo && ids.indexOf(it.id) === -1) limparReserva(ctx.sheet, it);
+  });
+  ids.forEach(function (id) { gravarReserva(ctx.sheet, ctx.porId[id], ate, cliente, codigo); });
+  SpreadsheetApp.flush();
+
+  return resposta({
+    sucesso: true,
+    mensagem: ids.length + ' barra(s) reservada(s) para ' + cliente + ' até ' + formatHora(ate) + '.',
+    codigo: codigo,
+    expira: ate,
+    ids: ids
+  });
+}
+
+/** Cancela uma reserva pelo código (qualquer perfil) ou libera uma barra pelo ID (só operador). */
+function acaoCancelarReserva(ctx, params, role) {
+  const liberados = [];
+  if (params.id !== undefined && params.id !== null && params.id !== '') {
+    if (role !== 'operador') return erro('Só o Operador pode cancelar uma reserva pelo ID da barra.', 'PERMISSAO');
+    const it = ctx.porId[parseInt(params.id, 10)];
+    if (!it || !it.reserva) return erro('ID #' + params.id + ' não tem reserva ativa.');
+    limparReserva(ctx.sheet, it);
+    liberados.push(it.id);
+  } else {
+    const codigo = String(params.codigo || '');
+    if (!codigo) return erro('Informe o código da reserva.');
+    ctx.itens.forEach(function (it) {
+      if (it.reserva && it.reserva.codigo === codigo) { limparReserva(ctx.sheet, it); liberados.push(it.id); }
+    });
+  }
+  SpreadsheetApp.flush();
+  return resposta({
+    sucesso: true,
+    mensagem: liberados.length ? 'Reserva cancelada: ' + liberados.length + ' barra(s) liberada(s).' : 'A reserva já não estava ativa.',
+    liberados: liberados
+  });
+}
+
 /**
  * Baixa barras. Cada instrução: { id, cortes: [m, m, ...] }.
  * - cortes vazio = venda da barra inteira (sem sobra).
@@ -416,6 +502,7 @@ function acaoBaixar(ctx, params) {
 
   const kerf = Math.min(KERF_MAXIMO, Math.max(0, parseBRNumber(params.kerf)));
   const cliente = limparTexto(params.cliente, 100);
+  const codigoReserva = params.reserva ? String(params.reserva) : '';
   const dataStr = formatDateBR(new Date());
   const problemas = [];
   const vistos = {};
@@ -428,6 +515,7 @@ function acaoBaixar(ctx, params) {
     if (vistos[id]) { problemas.push('ID #' + id + ' repetido'); return; }
     vistos[id] = true;
     if (item.status !== 'estoque') { problemas.push('ID #' + id + ' já está ' + (item.status === 'vendido' ? 'vendido' : 'cancelado')); return; }
+    if (item.reserva && item.reserva.codigo !== codigoReserva) { problemas.push(textoReservada(item)); return; }
 
     const cortes = Array.isArray(inst.cortes) ? inst.cortes.map(parseBRNumber) : [];
     if (cortes.some(function (c) { return !(c > 0); })) { problemas.push('ID #' + id + ': medida de corte inválida'); return; }
@@ -452,8 +540,8 @@ function acaoBaixar(ctx, params) {
 
   planos.forEach(function (p) {
     const it = p.item;
-    // G Situação | H Obs | I Data Saída | J ID Origem (preserva a origem de sobras antigas)
-    ctx.sheet.getRange(it.linha, COL.SITUACAO + 1, 1, 4).setValues([['Vendido', obsVenda, dataStr, it.idOrigem || '']]);
+    // G Situação | H Obs | I Data Saída | J ID Origem (preserva a origem de sobras antigas) | K-M reserva limpa
+    ctx.sheet.getRange(it.linha, COL.SITUACAO + 1, 1, 7).setValues([['Vendido', obsVenda, dataStr, it.idOrigem || '', '', '', '']]);
 
     if (p.sobra >= SOBRA_MINIMA) {
       const id = proximoId++;
@@ -465,6 +553,12 @@ function acaoBaixar(ctx, params) {
 
   if (novasLinhas.length) {
     ctx.sheet.getRange(ctx.sheet.getLastRow() + 1, 1, novasLinhas.length, NUM_COLS).setValues(novasLinhas);
+  }
+  // A reserva cumpriu o papel: barras dela que ficaram fora da baixa voltam a ser livres.
+  if (codigoReserva) {
+    ctx.itens.forEach(function (it) {
+      if (it.reserva && it.reserva.codigo === codigoReserva && !vistos[it.id]) limparReserva(ctx.sheet, it);
+    });
   }
   SpreadsheetApp.flush();
 

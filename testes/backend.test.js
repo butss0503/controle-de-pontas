@@ -224,6 +224,101 @@ test("aba Movimentos é criada com o cabeçalho", () => {
   assert.match(env.ctx.gerarCodigo(), /^[0-9A-F]{8}$/);
 });
 
+// ---------- Etapa 3: reservas ----------
+const HORAS2 = 2 * 3600000;
+function ambienteReserva() {
+  const env = criarAmbiente([linha(1, 8, 3), linha(2, 8, 4), linha(3, 8, 5)], { agora: T0 });
+  env.tv = env.login("vendedor", "venda123");
+  env.to = env.login("operador", "opera123");
+  env.reservar = (ids, cliente, codigo) => env.post({ action: "reservar", token: env.tv, ids, cliente, codigo });
+  env.cod = (n) => env.grade[n][12];
+  return env;
+}
+
+test("reservar grava K/L/M e devolve código", () => {
+  const env = ambienteReserva();
+  const r = env.reservar([1, 2], "Pedido 9");
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.match(r.codigo, /^[0-9A-F]{8}$/);
+  assert.equal(r.expira, T0 + HORAS2);
+  assert.equal(env.cod(1), r.codigo);
+  assert.equal(env.grade[2][11], "Pedido 9");
+  assert.equal(env.ctx.lerMs(env.grade[1][10]), T0 + HORAS2);
+  assert.equal(env.cod(3), "");
+});
+
+test("reserva sem cliente é recusada", () => {
+  const env = ambienteReserva();
+  assert.equal(env.reservar([1], "  ").sucesso, false);
+  assert.equal(env.cod(1), "");
+});
+
+test("segunda reserva sobre a mesma barra falha inteira", () => {
+  const env = ambienteReserva();
+  env.reservar([1], "Cliente A");
+  const r = env.reservar([1, 2], "Cliente B");
+  assert.equal(r.sucesso, false);
+  assert.equal(r.codigo, "CONFLITO");
+  assert.match(r.mensagem, /#1/);
+  assert.equal(env.cod(2), "");
+});
+
+test("atualizar reserva troca o conjunto e renova o prazo", () => {
+  const env = ambienteReserva();
+  const c = env.reservar([1, 2], "Pedido 9").codigo;
+  env.setAgora(T0 + 3600000);
+  const r = env.reservar([2, 3], "Pedido 9", c);
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.equal(r.codigo, c);
+  assert.equal(env.cod(1), "");
+  assert.equal(env.cod(3), c);
+  assert.equal(env.ctx.lerMs(env.grade[2][10]), T0 + 3600000 + HORAS2);
+});
+
+test("baixa de barra reservada sem código é recusada; com o código passa e limpa a reserva", () => {
+  const env = ambienteReserva();
+  const c = env.reservar([1], "Pedido 9").codigo;
+  const sem = env.post({ action: "baixar", token: env.tv, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(sem.sucesso, false);
+  assert.equal(sem.codigo, "CONFLITO");
+  assert.equal(env.grade[1][6], "Em estoque");
+  const com = env.post({ action: "baixar", token: env.tv, reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(com.sucesso, true, com.mensagem);
+  assert.equal(env.grade[1][6], "Vendido");
+  assert.equal(env.cod(1), "");
+});
+
+test("baixa com código libera as barras não usadas da reserva", () => {
+  const env = ambienteReserva();
+  const c = env.reservar([1, 2], "Pedido 9").codigo;
+  const r = env.post({ action: "baixar", token: env.tv, reserva: c, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.equal(env.cod(2), "");
+});
+
+test("reserva vencida não bloqueia a baixa", () => {
+  const env = ambienteReserva();
+  env.reservar([1], "Pedido 9");
+  env.setAgora(T0 + HORAS2 + 1);
+  const r = env.post({ action: "baixar", token: env.tv, instrucoes: [{ id: 1, cortes: [] }] });
+  assert.equal(r.sucesso, true, r.mensagem);
+});
+
+test("vendedor cancela pelo código; só operador cancela pelo id", () => {
+  const env = ambienteReserva();
+  const c = env.reservar([1], "Pedido 9").codigo;
+  const r = env.post({ action: "cancelarReserva", token: env.tv, codigo: c });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.deepEqual(r.liberados, [1]);
+  assert.equal(env.cod(1), "");
+
+  env.reservar([2], "Pedido 10");
+  assert.equal(env.post({ action: "cancelarReserva", token: env.tv, id: 2 }).codigo, "PERMISSAO");
+  const o = env.post({ action: "cancelarReserva", token: env.to, id: 2 });
+  assert.equal(o.sucesso, true, o.mensagem);
+  assert.equal(env.cod(2), "");
+});
+
 test("bloqueia após muitas senhas erradas", () => {
   const env = criarAmbiente([]);
   for (let i = 0; i < 20; i++) env.post({ action: "login", role: "operador", senha: "errada" });
