@@ -94,6 +94,85 @@ test("bate com a força bruta em 400 instâncias aleatórias", () => {
   }
 });
 
+// ---------- Barra nova ----------
+const NOVA12 = { barraNova: { medida: 12 } };
+const novas = (r) => r.barras.filter((b) => b.barra.nova);
+
+test("barra nova só entra quando as pontas não bastam", () => {
+  const a = Corte.planejar(barras(3.0), [2.5], NOVA12);
+  assert.equal(a.barras.length, 1);
+  assert.equal(a.barras[0].barra.id, 1);
+  assert.equal(a.barras[0].barra.nova, undefined);
+
+  const b = Corte.planejar(barras(3.0), [2.5, 2.5], NOVA12);
+  assert.equal(b.completo, true);
+  assert.equal(novas(b).length, 1);
+  assert.equal(novas(b)[0].barra.id, null);
+  assert.equal(novas(b)[0].barra.medida, 12);
+  assert.equal(novas(b)[0].sobra, 9.5);
+});
+
+test("prefere qualquer combinação de pontas a uma barra nova", () => {
+  const r = Corte.planejar(barras(3.0, 3.5), [2, 1.5, 1.5, 1.5], NOVA12);
+  assert.equal(r.completo, true);
+  assert.equal(novas(r).length, 0);
+});
+
+test("peça maior que 12 m continua faltante", () => {
+  const r = Corte.planejar([], [13], NOVA12);
+  assert.equal(r.completo, false);
+  assert.deepEqual(r.faltantes, [13]);
+});
+
+test("pontas vêm antes das barras novas no resultado", () => {
+  const r = Corte.planejar(barras(2.0), [1.9, 5, 5], NOVA12);
+  assert.equal(r.completo, true);
+  assert.equal(r.barras[0].barra.id, 1);
+  assert.ok(r.barras.slice(1).every((b) => b.barra.nova));
+});
+
+// Força bruta com barras novas: menor número de barras novas para atender tudo.
+function minNovasForcaBruta(estoque, pecas, L, kerf) {
+  const bins = [...estoque.map((b) => b.medida), ...pecas.map(() => L)];
+  const nPontas = estoque.length;
+  let melhor = Infinity;
+  const total = Math.pow(bins.length, pecas.length);
+  for (let c = 0; c < total; c++) {
+    let x = c;
+    const soma = new Array(bins.length).fill(0);
+    const qtd = new Array(bins.length).fill(0);
+    for (let i = 0; i < pecas.length; i++) { const b = x % bins.length; x = Math.floor(x / bins.length); soma[b] += pecas[i]; qtd[b]++; }
+    let ok = true, nov = 0;
+    for (let b = 0; b < bins.length; b++) {
+      if (!qtd[b]) continue;
+      if (soma[b] + kerf * (qtd[b] - 1) > bins[b] + 1e-6) { ok = false; break; }
+      if (b >= nPontas) nov++;
+    }
+    if (ok && nov < melhor) melhor = nov;
+  }
+  return melhor;
+}
+
+test("barra nova: número mínimo de barras novas bate com a força bruta (200 instâncias)", () => {
+  let semente = 99;
+  const rnd = () => ((semente = (semente * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const m = (a, b) => Math.round((a + rnd() * (b - a)) * 20) / 20;
+  for (let t = 0; t < 200; t++) {
+    const estoque = Array.from({ length: Math.floor(rnd() * 4) }, (_, i) => ({ id: i + 1, medida: m(0.5, 5) }));
+    const pecas = Array.from({ length: 1 + Math.floor(rnd() * 4) }, () => m(0.3, 6));
+    const kerf = rnd() < 0.5 ? 0 : 0.005;
+    const r = Corte.planejar(estoque, pecas, { kerf, barraNova: { medida: 6 } });
+    const ctx = JSON.stringify({ estoque, pecas, kerf });
+    assert.equal(r.completo, true, ctx);
+    assert.equal(novas(r).length, minNovasForcaBruta(estoque, pecas, 6, kerf), ctx);
+    r.barras.forEach((b) => {
+      const soma = b.cortes.reduce((s, c) => s + c, 0);
+      assert.ok(soma + kerf * (b.cortes.length - 1) <= b.barra.medida + 1e-6, ctx);
+    });
+    assert.equal(r.barras.reduce((s, b) => s + b.cortes.length, 0), pecas.length, ctx);
+  }
+});
+
 test("pedido grande termina rápido", () => {
   let semente = 7;
   const rnd = () => ((semente = (semente * 1103515245 + 12345) % 2147483648) / 2147483648);
