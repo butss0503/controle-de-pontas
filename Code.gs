@@ -53,8 +53,10 @@ const PERMISSOES = {
   baixar: ['vendedor', 'operador'],
   reservar: ['vendedor', 'operador'],
   cancelarReserva: ['vendedor', 'operador'], // por código: qualquer perfil; pelo ID da barra: só operador
+  movimentos: ['vendedor', 'operador'],
   cadastrar: ['operador'],
-  estornar: ['operador']
+  estornar: ['operador'],
+  estornarBarraNova: ['operador']
 };
 
 // ============================================================================
@@ -158,6 +160,75 @@ function registrarMovimentos(linhas) {
   if (!linhas || !linhas.length) return;
   const sheet = getMovSheet();
   sheet.getRange(sheet.getLastRow() + 1, 1, linhas.length, MOV_CAB.length).setValues(linhas);
+}
+
+/** Monta uma linha de Movimentos a partir de um objeto { 'Nome da coluna': valor }. */
+function linhaMov(o) {
+  return MOV_CAB.map(function (n) { return o[n] === undefined || o[n] === null ? '' : o[n]; });
+}
+
+/** Lê todas as linhas de Movimentos (sem o cabeçalho). Linha na planilha = índice + 2. */
+function lerMovimentos() {
+  const sheet = getMovSheet();
+  const ultima = sheet.getLastRow();
+  const vals = ultima > 1 ? sheet.getRange(2, 1, ultima - 1, MOV_CAB.length).getValues() : [];
+  return { sheet: sheet, vals: vals };
+}
+
+function marcarEstornado(sheet, indice) {
+  sheet.getRange(indice + 2, MC['Estornado'] + 1, 1, 1).setValues([['sim']]);
+}
+
+/** Peso com 4 casas: sucata e perda por corte são frações pequenas e não podem virar zero. */
+function pesoMov(bitola, medida) {
+  if (!bitola || !medida) return 0;
+  return arred((Math.pow(bitola, 2) / FATOR_PESO_ACO) * medida, 4);
+}
+
+/**
+ * Balanço de material de uma barra cortada (mesma regra do corte.js):
+ * medida = peças + perda por corte + resto; resto >= SOBRA_MINIMA volta como ponta, abaixo é sucata.
+ * Sem cortes = barra vendida inteira.
+ */
+function balancoCorte(medida, cortes, kerf) {
+  const n = cortes.length;
+  if (!n) return { soma: 0, sobraM: 0, sucataM: 0, perdaM: 0 };
+  const soma = cortes.reduce(function (s, c) { return s + c; }, 0);
+  const resto = Math.max(0, arred(medida - soma - kerf * n));
+  return {
+    soma: soma,
+    sobraM: resto >= SOBRA_MINIMA ? resto : 0,
+    sucataM: resto < SOBRA_MINIMA ? resto : 0,
+    perdaM: Math.max(0, arred(medida - soma - resto))
+  };
+}
+
+function movParaObjeto(r) {
+  const num = function (v) { return parseBRNumber(v); };
+  const ms = lerMs(r[MC['Data/hora']]);
+  const cortesTxt = String(r[MC['Cortes']] || '').trim();
+  return {
+    mov: String(r[MC['Mov']] || ''),
+    lote: String(r[MC['Lote']] || ''),
+    dataHora: ms ? new Date(ms).toISOString() : '',
+    acao: String(r[MC['Ação']] || ''),
+    perfil: String(r[MC['Perfil']] || ''),
+    cliente: String(r[MC['Cliente']] || ''),
+    idBarra: parseInt(r[MC['ID barra']], 10) || null,
+    origem: String(r[MC['Origem']] || ''),
+    bitola: num(r[MC['Bitola']]),
+    medidaOriginal: num(r[MC['Medida original']]),
+    cortes: cortesTxt ? cortesTxt.split(';').map(num).filter(function (c) { return c > 0; }) : [],
+    kgPecas: num(r[MC['Kg peças']]),
+    sobraM: num(r[MC['Sobra (m)']]),
+    idSobra: parseInt(r[MC['ID sobra']], 10) || null,
+    kgSobra: num(r[MC['Kg sobra']]),
+    sucataM: num(r[MC['Sucata (m)']]),
+    kgSucata: num(r[MC['Kg sucata']]),
+    kgPerda: num(r[MC['Kg perda corte']]),
+    precoKg: num(r[MC['Preço R$/kg']]) || null,
+    estornado: String(r[MC['Estornado']] || '').toLowerCase() === 'sim'
+  };
 }
 
 /** Código curto (8 hex maiúsculos) para reservas e lotes. */
@@ -315,11 +386,13 @@ function doPost(e) {
     if (!lock.tryLock(20000)) return erro('Sistema ocupado com outra operação. Tente novamente em instantes.', 'OCUPADO');
     try {
       const ctx = lerPlanilha();
-      if (action === 'cadastrar') return acaoCadastrar(ctx, params);
-      if (action === 'baixar') return acaoBaixar(ctx, params);
+      if (action === 'movimentos') return acaoMovimentos(params);
+      if (action === 'cadastrar') return acaoCadastrar(ctx, params, role);
+      if (action === 'baixar') return acaoBaixar(ctx, params, role);
+      if (action === 'estornarBarraNova') return acaoEstornarBarraNova(ctx, params, role);
       if (action === 'reservar') return acaoReservar(ctx, params);
       if (action === 'cancelarReserva') return acaoCancelarReserva(ctx, params, role);
-      if (action === 'estornar') return acaoEstornar(ctx, params);
+      if (action === 'estornar') return acaoEstornar(ctx, params, role);
     } finally {
       lock.releaseLock();
     }
@@ -377,7 +450,7 @@ function acaoListar(role) {
   return resposta({ sucesso: true, mensagem: 'OK', role: role, itens: itens });
 }
 
-function acaoCadastrar(ctx, params) {
+function acaoCadastrar(ctx, params, role) {
   const bitola = arred(parseBRNumber(params.bitola), 2);
   const medida = arred(parseBRNumber(params.medida), 3);
   const qtde = parseInt(params.qtde, 10) || 1;
@@ -396,6 +469,11 @@ function acaoCadastrar(ctx, params) {
     linhas.push(linhaNova(id, dataStr, bitola, medida, obs, null));
   }
   ctx.sheet.getRange(ctx.sheet.getLastRow() + 1, 1, linhas.length, NUM_COLS).setValues(linhas);
+  const agora = new Date(Date.now());
+  registrarMovimentos(ids.map(function (id) {
+    return linhaMov({ 'Data/hora': agora, 'Ação': 'cadastro', 'Perfil': role, 'Cliente': obs, 'ID barra': id, 'Origem': 'ponta',
+      'Bitola': bitola, 'Medida original': medida, 'Kg peças': pesoMov(bitola, medida) });
+  }));
   SpreadsheetApp.flush();
 
   return resposta({
@@ -490,26 +568,48 @@ function acaoCancelarReserva(ctx, params, role) {
 }
 
 /**
- * Baixa barras. Cada instrução: { id, cortes: [m, m, ...] }.
- * - cortes vazio = venda da barra inteira (sem sobra).
- * - A sobra é recalculada AQUI a partir da medida real da planilha — o valor
- *   do navegador não é confiável.
+ * Baixa barras. Cada instrução é uma ponta { id, cortes: [m, ...] } ou uma
+ * barra nova { nova: true, bitola, cortes } (estoque principal, BARRA_NOVA_M).
+ * - cortes vazio numa ponta = venda da barra inteira (sem sobra).
+ * - A sobra é recalculada AQUI a partir da medida real — o valor do navegador não é confiável.
  * - Tudo é validado antes de gravar: se uma barra falhar, nada é baixado.
+ * - Cada barra baixada vira uma linha em Movimentos (mesmo lote).
  */
-function acaoBaixar(ctx, params) {
+function acaoBaixar(ctx, params, role) {
   const instrucoes = Array.isArray(params.instrucoes) ? params.instrucoes : [];
   if (!instrucoes.length) return erro('Nenhuma barra informada para baixa.');
 
   const kerf = Math.min(KERF_MAXIMO, Math.max(0, parseBRNumber(params.kerf)));
   const cliente = limparTexto(params.cliente, 100);
   const codigoReserva = params.reserva ? String(params.reserva) : '';
+  const precoKg = parseBRNumber(params.precoKg);
   const dataStr = formatDateBR(new Date());
   const problemas = [];
   const vistos = {};
   const planos = [];
 
+  const lerCortes = function (inst) {
+    return Array.isArray(inst.cortes) ? inst.cortes.map(parseBRNumber) : [];
+  };
+  const cabe = function (cortes, medida) {
+    const soma = cortes.reduce(function (s, c) { return s + c; }, 0);
+    return { ok: !cortes.length || soma + kerf * (cortes.length - 1) <= medida + 0.0005, total: arred(soma + kerf * Math.max(0, cortes.length - 1)) };
+  };
+
   instrucoes.forEach(function (inst) {
-    const id = parseInt(inst && inst.id, 10);
+    inst = inst || {};
+    if (inst.nova === true) {
+      const bitola = arred(parseBRNumber(inst.bitola), 2);
+      const cortes = lerCortes(inst);
+      if (!(bitola >= 1 && bitola <= 100)) { problemas.push('Barra nova: bitola inválida'); return; }
+      if (!cortes.length || cortes.some(function (c) { return !(c > 0); })) { problemas.push('Barra nova: medida de corte inválida'); return; }
+      const c = cabe(cortes, BARRA_NOVA_M);
+      if (!c.ok) { problemas.push('Barra nova: cortes somam ' + c.total + ' m, mas a barra tem ' + BARRA_NOVA_M + ' m'); return; }
+      planos.push({ nova: true, bitola: bitola, medida: BARRA_NOVA_M, cortes: cortes });
+      return;
+    }
+
+    const id = parseInt(inst.id, 10);
     const item = ctx.porId[id];
     if (!item) { problemas.push('ID #' + id + ' não existe'); return; }
     if (vistos[id]) { problemas.push('ID #' + id + ' repetido'); return; }
@@ -517,16 +617,11 @@ function acaoBaixar(ctx, params) {
     if (item.status !== 'estoque') { problemas.push('ID #' + id + ' já está ' + (item.status === 'vendido' ? 'vendido' : 'cancelado')); return; }
     if (item.reserva && item.reserva.codigo !== codigoReserva) { problemas.push(textoReservada(item)); return; }
 
-    const cortes = Array.isArray(inst.cortes) ? inst.cortes.map(parseBRNumber) : [];
+    const cortes = lerCortes(inst);
     if (cortes.some(function (c) { return !(c > 0); })) { problemas.push('ID #' + id + ': medida de corte inválida'); return; }
-    const soma = cortes.reduce(function (s, c) { return s + c; }, 0);
-    const n = cortes.length;
-    if (n > 0 && soma + kerf * (n - 1) > item.medida + 0.0005) {
-      problemas.push('ID #' + id + ': cortes somam ' + arred(soma + kerf * (n - 1)) + ' m, mas a barra tem ' + item.medida + ' m');
-      return;
-    }
-    const sobra = n === 0 ? 0 : arred(Math.max(0, item.medida - soma - kerf * n));
-    planos.push({ item: item, sobra: sobra });
+    const c = cabe(cortes, item.medida);
+    if (!c.ok) { problemas.push('ID #' + id + ': cortes somam ' + c.total + ' m, mas a barra tem ' + item.medida + ' m'); return; }
+    planos.push({ item: item, bitola: item.bitola, medida: item.medida, cortes: cortes });
   });
 
   if (problemas.length) {
@@ -536,19 +631,39 @@ function acaoBaixar(ctx, params) {
   const obsVenda = cliente ? 'Vendido: ' + cliente : 'Vendido';
   const novasLinhas = [];
   const sobras = [];
+  const movLinhas = [];
+  const lote = gerarCodigo();
+  const agora = new Date(Date.now());
   let proximoId = ctx.maxId + 1;
 
-  planos.forEach(function (p) {
-    const it = p.item;
-    // G Situação | H Obs | I Data Saída | J ID Origem (preserva a origem de sobras antigas) | K-M reserva limpa
-    ctx.sheet.getRange(it.linha, COL.SITUACAO + 1, 1, 7).setValues([['Vendido', obsVenda, dataStr, it.idOrigem || '', '', '', '']]);
+  planos.forEach(function (p, k) {
+    const b = balancoCorte(p.medida, p.cortes, kerf);
+    const idOrigem = p.nova ? null : p.item.id;
 
-    if (p.sobra >= SOBRA_MINIMA) {
-      const id = proximoId++;
-      const obsSobra = 'Sobra do ID #' + it.id + (cliente ? ' (' + cliente + ')' : '');
-      novasLinhas.push(linhaNova(id, dataStr, it.bitola, p.sobra, obsSobra, it.id));
-      sobras.push({ id: id, idOrigem: it.id, bitola: it.bitola, medida: p.sobra, peso: calcularPeso(it.bitola, p.sobra), data: dataStr });
+    if (!p.nova) {
+      // G Situação | H Obs | I Data Saída | J ID Origem (preserva a origem de sobras antigas) | K-M reserva limpa
+      ctx.sheet.getRange(p.item.linha, COL.SITUACAO + 1, 1, 7).setValues([['Vendido', obsVenda, dataStr, p.item.idOrigem || '', '', '', '']]);
     }
+
+    let idSobra = '';
+    if (b.sobraM > 0) {
+      idSobra = proximoId++;
+      const obsSobra = p.nova
+        ? 'Sobra de barra nova ' + BARRA_NOVA_M + ' m'
+        : 'Sobra do ID #' + p.item.id + (cliente ? ' (' + cliente + ')' : '');
+      novasLinhas.push(linhaNova(idSobra, dataStr, p.bitola, b.sobraM, obsSobra, idOrigem));
+      sobras.push({ id: idSobra, idOrigem: idOrigem, bitola: p.bitola, medida: b.sobraM, peso: calcularPeso(p.bitola, b.sobraM), data: dataStr });
+    }
+
+    movLinhas.push(linhaMov({
+      'Data/hora': agora, 'Lote': lote, 'Mov': lote + '-' + (k + 1), 'Ação': 'baixa', 'Perfil': role, 'Cliente': cliente,
+      'ID barra': idOrigem, 'Origem': p.nova ? 'barra nova' : 'ponta', 'Bitola': p.bitola, 'Medida original': p.medida,
+      'Cortes': p.cortes.map(formatNumVirgula).join('; '),
+      'Kg peças': p.cortes.length ? pesoMov(p.bitola, b.soma) : pesoMov(p.bitola, p.medida),
+      'Sobra (m)': b.sobraM, 'ID sobra': idSobra, 'Kg sobra': pesoMov(p.bitola, b.sobraM),
+      'Sucata (m)': b.sucataM, 'Kg sucata': pesoMov(p.bitola, b.sucataM), 'Kg perda corte': pesoMov(p.bitola, b.perdaM),
+      'Preço R$/kg': precoKg > 0 ? precoKg : '', 'Estornado': ''
+    }));
   });
 
   if (novasLinhas.length) {
@@ -560,12 +675,16 @@ function acaoBaixar(ctx, params) {
       if (it.reserva && it.reserva.codigo === codigoReserva && !vistos[it.id]) limparReserva(ctx.sheet, it);
     });
   }
+  registrarMovimentos(movLinhas);
   SpreadsheetApp.flush();
 
+  const nNovas = planos.filter(function (p) { return p.nova; }).length;
   return resposta({
     sucesso: true,
-    mensagem: planos.length + ' barra(s) baixada(s). ' + sobras.length + ' sobra(s) gerada(s).',
-    baixados: planos.map(function (p) { return p.item.id; }),
+    mensagem: (planos.length - nNovas) + ' ponta(s) baixada(s)' + (nNovas ? ' + ' + nNovas + ' barra(s) nova(s)' : '') + '. ' +
+      sobras.length + ' sobra(s) gerada(s).',
+    lote: lote,
+    baixados: planos.filter(function (p) { return !p.nova; }).map(function (p) { return p.item.id; }),
     sobras: sobras
   });
 }
@@ -575,7 +694,7 @@ function acaoBaixar(ctx, params) {
  * estão em estoque são canceladas (senão o mesmo aço contaria duas vezes).
  * Se alguma sobra já foi vendida, o estorno é recusado: estorne a sobra antes.
  */
-function acaoEstornar(ctx, params) {
+function acaoEstornar(ctx, params, role) {
   const id = parseInt(params.id, 10);
   const item = ctx.porId[id];
   if (!item) return erro('ID #' + id + ' não encontrado na planilha.');
@@ -593,6 +712,18 @@ function acaoEstornar(ctx, params) {
     ctx.sheet.getRange(f.linha, COL.SITUACAO + 1, 1, 4).setValues([['Cancelado', 'Cancelado: estorno do ID #' + id, dataStr, id]]);
   });
   ctx.sheet.getRange(item.linha, COL.SITUACAO + 1, 1, 3).setValues([['Em estoque', 'Estornado em ' + dataStr, '']]);
+
+  // Movimentos: a baixa mais recente desta barra deixa de contar; baixas antigas (sem linha) seguem normais.
+  const mv = lerMovimentos();
+  for (let i = mv.vals.length - 1; i >= 0; i--) {
+    const r = mv.vals[i];
+    if (r[MC['Ação']] === 'baixa' && parseInt(r[MC['ID barra']], 10) === id && String(r[MC['Estornado']]).toLowerCase() !== 'sim') {
+      marcarEstornado(mv.sheet, i);
+      break;
+    }
+  }
+  registrarMovimentos([linhaMov({ 'Data/hora': new Date(Date.now()), 'Ação': 'estorno', 'Perfil': role, 'ID barra': id,
+    'Origem': 'ponta', 'Bitola': item.bitola, 'Medida original': item.medida })]);
   SpreadsheetApp.flush();
 
   return resposta({
@@ -600,4 +731,60 @@ function acaoEstornar(ctx, params) {
     mensagem: 'ID #' + id + ' devolvido ao estoque.' + (filhos.length ? ' Sobra(s) cancelada(s): ' + filhos.map(function (f) { return '#' + f.id; }).join(', ') + '.' : ''),
     cancelados: filhos.map(function (f) { return f.id; })
   });
+}
+
+/**
+ * Estorna o uso de uma barra nova (que não tem linha em "Pontas"): marca o
+ * movimento como estornado e cancela a sobra dela, se ainda estiver em estoque.
+ * Sobra já vendida bloqueia o estorno, como acontece com as pontas.
+ */
+function acaoEstornarBarraNova(ctx, params, role) {
+  const mov = String(params.mov || '');
+  const mv = lerMovimentos();
+  let indice = -1;
+  for (let i = 0; i < mv.vals.length; i++) {
+    if (String(mv.vals[i][MC['Mov']]) === mov && mv.vals[i][MC['Ação']] === 'baixa') { indice = i; break; }
+  }
+  if (!mov || indice < 0) return erro('Movimento ' + mov + ' não encontrado.');
+  const r = mv.vals[indice];
+  if (r[MC['Origem']] !== 'barra nova') return erro('Este movimento não é de barra nova: estorne pela própria ponta.');
+  if (String(r[MC['Estornado']]).toLowerCase() === 'sim') return erro('Esta barra nova já foi estornada.');
+
+  const idSobra = parseInt(r[MC['ID sobra']], 10);
+  const sobra = idSobra ? ctx.porId[idSobra] : null;
+  if (sobra && sobra.status === 'vendido') {
+    return erro('Não é possível estornar: a sobra #' + idSobra + ' desta barra nova já foi vendida. Estorne a sobra primeiro.', 'CONFLITO');
+  }
+
+  const dataStr = formatDateBR(new Date());
+  if (sobra && sobra.status === 'estoque') {
+    ctx.sheet.getRange(sobra.linha, COL.SITUACAO + 1, 1, 7).setValues([['Cancelado', 'Cancelado: estorno de barra nova', dataStr, '', '', '', '']]);
+  }
+  marcarEstornado(mv.sheet, indice);
+  registrarMovimentos([linhaMov({ 'Data/hora': new Date(Date.now()), 'Lote': r[MC['Lote']], 'Ação': 'estorno', 'Perfil': role,
+    'Origem': 'barra nova', 'Bitola': r[MC['Bitola']], 'Medida original': r[MC['Medida original']], 'ID sobra': idSobra || '' })]);
+  SpreadsheetApp.flush();
+
+  return resposta({
+    sucesso: true,
+    mensagem: 'Barra nova estornada.' + (sobra && sobra.status === 'estoque' ? ' Sobra #' + idSobra + ' cancelada.' : ''),
+    cancelados: sobra && sobra.status === 'estoque' ? [idSobra] : []
+  });
+}
+
+/** Linhas de Movimentos no período (datas yyyy-mm-dd inclusivas, fuso de São Paulo). */
+function acaoMovimentos(params) {
+  const de = /^\d{4}-\d{2}-\d{2}$/.test(params.de || '') ? params.de : '';
+  const ate = /^\d{4}-\d{2}-\d{2}$/.test(params.ate || '') ? params.ate : '';
+  const mv = lerMovimentos();
+  const lista = mv.vals
+    .filter(function (r) {
+      if (!r[MC['Ação']]) return false;
+      const ms = lerMs(r[MC['Data/hora']]);
+      if (!ms) return !de && !ate;
+      const dia = Utilities.formatDate(new Date(ms), TIMEZONE, 'yyyy-MM-dd');
+      return (!de || dia >= de) && (!ate || dia <= ate);
+    })
+    .map(movParaObjeto);
+  return resposta({ sucesso: true, mensagem: 'OK', movimentos: lista });
 }

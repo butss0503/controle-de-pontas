@@ -59,7 +59,13 @@ function criarAmbiente(linhasIniciais, opcoes = {}) {
       base64EncodeWebSafe: b64ws,
       base64DecodeWebSafe: (s) => [...Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64")],
       newBlob: (bytes) => ({ getDataAsString: () => Buffer.from(bytes).toString("utf8") }),
-      formatDate: () => "23/11/2026",
+      // Formatação real no fuso de São Paulo (UTC-3), para os filtros por data
+      formatDate: (d, tz, fmt) => {
+        const x = new Date(d.getTime() - 3 * 3600000);
+        const p = (n) => String(n).padStart(2, "0");
+        return fmt.replace("yyyy", x.getUTCFullYear()).replace("MM", p(x.getUTCMonth() + 1)).replace("dd", p(x.getUTCDate()))
+          .replace("HH", p(x.getUTCHours())).replace("mm", p(x.getUTCMinutes()));
+      },
       getUuid: () => crypto.randomUUID(),
       sleep: () => {}
     },
@@ -134,7 +140,7 @@ test("baixar recalcula a sobra no servidor e cria a nova ponta com ID e origem",
   assert.equal(r.sobras[0].medida, 1.994); // 5 - 3 - 2*0.003 (ignora a "sobra: 999" do cliente)
   assert.equal(env.grade[2][6], "Vendido");
   assert.equal(env.grade[2][7], "Vendido: Pedido 9");
-  assert.equal(env.grade[2][8], "23/11/2026");
+  assert.equal(env.grade[2][8], env.ctx.formatDateBR(new Date()));
   assert.equal(env.grade[3][9], 2); // ID origem
 });
 
@@ -317,6 +323,138 @@ test("vendedor cancela pelo código; só operador cancela pelo id", () => {
   const o = env.post({ action: "cancelarReserva", token: env.to, id: 2 });
   assert.equal(o.sucesso, true, o.mensagem);
   assert.equal(env.cod(2), "");
+});
+
+// ---------- Etapa 4: Movimentos, barra nova, estornos ----------
+const MOV = ["Data/hora", "Lote", "Mov", "Ação", "Perfil", "Cliente", "ID barra", "Origem", "Bitola", "Medida original", "Cortes",
+  "Kg peças", "Sobra (m)", "ID sobra", "Kg sobra", "Sucata (m)", "Kg sucata", "Kg perda corte", "Preço R$/kg", "Estornado"];
+const movs = (env) => (env.gradeDe("Movimentos") || [[]]).slice(1).map((r) => Object.fromEntries(MOV.map((n, i) => [n, r[i]])));
+
+test("baixa grava um movimento por barra com sucata e perda", () => {
+  const env = criarAmbiente([linha(1, 8, 5)], { agora: T0 });
+  const tv = env.login("vendedor", "venda123");
+  const r = env.post({ action: "baixar", token: tv, cliente: "Pedido 9", kerf: 0.003, precoKg: 7.8, instrucoes: [{ id: 1, cortes: [2.48, 2.48] }] });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.match(r.lote, /^[0-9A-F]{8}$/);
+  const m = movs(env);
+  assert.equal(m.length, 1);
+  assert.equal(m[0]["Ação"], "baixa");
+  assert.equal(m[0]["Origem"], "ponta");
+  assert.equal(m[0]["Perfil"], "vendedor");
+  assert.equal(m[0]["ID barra"], 1);
+  assert.equal(m[0]["Lote"], r.lote);
+  assert.equal(m[0]["Mov"], r.lote + "-1");
+  assert.equal(m[0]["Sucata (m)"], 0.034);
+  assert.ok(m[0]["Kg sucata"] > 0);
+  assert.ok(m[0]["Kg perda corte"] > 0);
+  assert.equal(m[0]["Sobra (m)"], 0);
+  assert.equal(m[0]["Preço R$/kg"], 7.8);
+  assert.equal(m[0]["Estornado"], "");
+});
+
+test("baixa com barra nova cria sobra e movimento de origem barra nova", () => {
+  const env = criarAmbiente([linha(1, 8, 2)], { agora: T0 });
+  const tv = env.login("vendedor", "venda123");
+  const r = env.post({ action: "baixar", token: tv, instrucoes: [{ nova: true, bitola: 8, cortes: [5] }] });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.equal(r.sobras.length, 1);
+  assert.equal(r.sobras[0].medida, 7);
+  const nova = env.grade.find((row) => row[0] === r.sobras[0].id);
+  assert.equal(nova[7], "Sobra de barra nova 12 m");
+  assert.equal(nova[9], "");
+  const m = movs(env);
+  assert.equal(m[0]["Origem"], "barra nova");
+  assert.equal(m[0]["ID barra"], "");
+  assert.equal(m[0]["ID sobra"], r.sobras[0].id);
+  assert.equal(m[0]["Medida original"], 12);
+});
+
+test("barra nova com cortes acima de 12 m é recusada", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  const r = env.post({ action: "baixar", token: env.login("vendedor", "venda123"), instrucoes: [{ nova: true, bitola: 8, cortes: [7, 6] }] });
+  assert.equal(r.sucesso, false);
+  assert.equal(env.grade.length, 1);
+});
+
+test("estorno marca o movimento como estornado", () => {
+  const env = criarAmbiente([linha(1, 8, 5)], { agora: T0 });
+  env.post({ action: "baixar", token: env.login("vendedor", "venda123"), instrucoes: [{ id: 1, cortes: [] }] });
+  const r = env.post({ action: "estornar", token: env.login("operador", "opera123"), id: 1 });
+  assert.equal(r.sucesso, true, r.mensagem);
+  const m = movs(env);
+  assert.equal(m[0]["Estornado"], "sim");
+  assert.equal(m[1]["Ação"], "estorno");
+  assert.equal(m[1]["ID barra"], 1);
+  assert.equal(m[1]["Perfil"], "operador");
+});
+
+test("estorno de baixa antiga sem movimento funciona", () => {
+  const env = criarAmbiente([linha(1, 8, 5, "Vendido", "Vendido: A")], { agora: T0 });
+  const r = env.post({ action: "estornar", token: env.login("operador", "opera123"), id: 1 });
+  assert.equal(r.sucesso, true, r.mensagem);
+  const m = movs(env);
+  assert.equal(m.length, 1);
+  assert.equal(m[0]["Ação"], "estorno");
+});
+
+test("estornarBarraNova cancela a sobra", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  const b = env.post({ action: "baixar", token: env.login("vendedor", "venda123"), instrucoes: [{ nova: true, bitola: 8, cortes: [5] }] });
+  const r = env.post({ action: "estornarBarraNova", token: env.login("operador", "opera123"), mov: b.lote + "-1" });
+  assert.equal(r.sucesso, true, r.mensagem);
+  const sobra = env.grade.find((row) => row[0] === b.sobras[0].id);
+  assert.equal(sobra[6], "Cancelado");
+  assert.equal(movs(env)[0]["Estornado"], "sim");
+  assert.equal(movs(env)[1]["Ação"], "estorno");
+  const de_novo = env.post({ action: "estornarBarraNova", token: env.login("operador", "opera123"), mov: b.lote + "-1" });
+  assert.equal(de_novo.sucesso, false);
+});
+
+test("estornarBarraNova recusa se a sobra já foi vendida", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  const tv = env.login("vendedor", "venda123");
+  const b = env.post({ action: "baixar", token: tv, instrucoes: [{ nova: true, bitola: 8, cortes: [5] }] });
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: b.sobras[0].id, cortes: [] }] });
+  const r = env.post({ action: "estornarBarraNova", token: env.login("operador", "opera123"), mov: b.lote + "-1" });
+  assert.equal(r.sucesso, false);
+  assert.match(r.mensagem, new RegExp("#" + b.sobras[0].id));
+});
+
+test("vendedor não pode estornarBarraNova", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  const r = env.post({ action: "estornarBarraNova", token: env.login("vendedor", "venda123"), mov: "X-1" });
+  assert.equal(r.codigo, "PERMISSAO");
+});
+
+test("cadastro registra movimento de entrada", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  env.post({ action: "cadastrar", token: env.login("operador", "opera123"), bitola: 10, medida: 2.5, qtde: 2 });
+  const m = movs(env);
+  assert.equal(m.length, 2);
+  assert.equal(m[0]["Ação"], "cadastro");
+  assert.equal(m[0]["Origem"], "ponta");
+});
+
+test("movimentos filtra por período", () => {
+  const env = criarAmbiente([linha(1, 8, 3), linha(2, 8, 4)], { agora: T0 });
+  let tv = env.login("vendedor", "venda123");
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: 1, cortes: [] }] });
+  env.setAgora(T0 + 86400000);
+  tv = env.login("vendedor", "venda123"); // o token de 12 h venceu no dia seguinte
+  env.post({ action: "baixar", token: tv, instrucoes: [{ id: 2, cortes: [1.5] }] });
+  const r = env.post({ action: "movimentos", token: tv, de: "2026-11-25", ate: "2026-11-25" });
+  assert.equal(r.sucesso, true, r.mensagem);
+  assert.equal(r.movimentos.length, 1);
+  const m = r.movimentos[0];
+  assert.equal(m.idBarra, 1);
+  assert.equal(m.acao, "baixa");
+  assert.equal(m.origem, "ponta");
+  assert.equal(m.estornado, false);
+  assert.deepEqual(m.cortes, []);
+  assert.ok(m.kgPecas > 0);
+  const todos = env.post({ action: "movimentos", token: tv });
+  assert.equal(todos.movimentos.length, 2);
+  assert.deepEqual(todos.movimentos[1].cortes, [1.5]);
 });
 
 test("bloqueia após muitas senhas erradas", () => {
