@@ -359,7 +359,7 @@ function linhaNova(id, dataStr, bitola, medida, obs, idOrigem) {
 // ENTRADAS HTTP
 // ============================================================================
 function doGet() {
-  return resposta({ sucesso: true, mensagem: 'API Controle de Pontas v2 ativa. Use POST.' });
+  return resposta({ sucesso: true, mensagem: 'API Controle de Pontas v3 ativa. Use POST.' });
 }
 
 function doPost(e) {
