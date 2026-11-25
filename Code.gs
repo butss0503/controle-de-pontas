@@ -32,9 +32,20 @@ const KERF_MAXIMO = 0.02;         // m — limite de segurança para a perda por
 const TOKEN_VALIDADE_HORAS = 12;
 const MAX_FALHAS_LOGIN = 20;      // por perfil, a cada 10 minutos
 
-const COL = { ID: 0, DATA: 1, QTDE: 2, BITOLA: 3, MEDIDA: 4, PESO: 5, SITUACAO: 6, OBS: 7, DATA_SAIDA: 8, ID_ORIGEM: 9 };
-const NUM_COLS = 10;
-const CABECALHO = ['Nº', 'Data', 'Nº de Pontas', 'Bitola (mm)', 'Medida (m)', 'Peso Estimado', 'Situação', 'Cliente', 'Data Saída', 'ID Origem'];
+const RESERVA_HORAS = 2;          // validade de uma reserva de pontas
+const BARRA_NOVA_M = 12;          // comprimento da barra inteira nova (estoque principal, fora deste sistema)
+
+const COL = { ID: 0, DATA: 1, QTDE: 2, BITOLA: 3, MEDIDA: 4, PESO: 5, SITUACAO: 6, OBS: 7, DATA_SAIDA: 8, ID_ORIGEM: 9,
+  RESERVA_ATE: 10, RESERVA_PARA: 11, RESERVA_COD: 12 };
+const NUM_COLS = 13;
+const CABECALHO = ['Nº', 'Data', 'Nº de Pontas', 'Bitola (mm)', 'Medida (m)', 'Peso Estimado', 'Situação', 'Cliente', 'Data Saída', 'ID Origem',
+  'Reserva até', 'Reserva para', 'Reserva código'];
+
+// Aba de registro: uma linha por barra afetada em cada operação (base do Painel).
+const SHEET_MOV = 'Movimentos';
+const MOV_CAB = ['Data/hora', 'Lote', 'Mov', 'Ação', 'Perfil', 'Cliente', 'ID barra', 'Origem', 'Bitola', 'Medida original', 'Cortes',
+  'Kg peças', 'Sobra (m)', 'ID sobra', 'Kg sobra', 'Sucata (m)', 'Kg sucata', 'Kg perda corte', 'Preço R$/kg', 'Estornado'];
+const MC = {}; MOV_CAB.forEach(function (n, i) { MC[n] = i; });
 
 // Quem pode fazer o quê. O servidor é quem decide — o site apenas esconde botões.
 const PERMISSOES = {
@@ -118,13 +129,46 @@ function getSheet() {
     sheet.setFrozenRows(1);
     return sheet;
   }
-  // Migração: garante as colunas I (Data Saída) e J (ID Origem) em planilhas antigas.
+  // Migração: garante as colunas novas (I em diante) em planilhas antigas.
   if (sheet.getMaxColumns() < NUM_COLS) sheet.insertColumnsAfter(sheet.getMaxColumns(), NUM_COLS - sheet.getMaxColumns());
-  const cab = sheet.getRange(1, COL.DATA_SAIDA + 1, 1, 2).getValues()[0];
-  if (!cab[0] || !cab[1]) {
-    sheet.getRange(1, COL.DATA_SAIDA + 1, 1, 2).setValues([[CABECALHO[COL.DATA_SAIDA], CABECALHO[COL.ID_ORIGEM]]]).setFontWeight('bold');
+  const extras = NUM_COLS - COL.DATA_SAIDA;
+  const cab = sheet.getRange(1, COL.DATA_SAIDA + 1, 1, extras).getValues()[0];
+  if (cab.some(function (c) { return !c; })) {
+    sheet.getRange(1, COL.DATA_SAIDA + 1, 1, extras).setValues([CABECALHO.slice(COL.DATA_SAIDA)]).setFontWeight('bold');
   }
   return sheet;
+}
+
+/** Aba "Movimentos", criada na primeira vez com o cabeçalho. */
+function getMovSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_MOV);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_MOV);
+    sheet.getRange(1, 1, 1, MOV_CAB.length).setValues([MOV_CAB]).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+/** Acrescenta linhas (arrays na ordem de MOV_CAB) de uma vez. */
+function registrarMovimentos(linhas) {
+  if (!linhas || !linhas.length) return;
+  const sheet = getMovSheet();
+  sheet.getRange(sheet.getLastRow() + 1, 1, linhas.length, MOV_CAB.length).setValues(linhas);
+}
+
+/** Código curto (8 hex maiúsculos) para reservas e lotes. */
+function gerarCodigo() {
+  return Utilities.getUuid().replace(/-/g, '').slice(0, 8).toUpperCase();
+}
+
+/** Lê uma data/hora da planilha como milissegundos (Date ou texto ISO); 0 se vazio/ilegível. */
+function lerMs(valor) {
+  if (valor instanceof Date) return valor.getTime();
+  if (!valor) return 0;
+  const t = new Date(valor).getTime();
+  return isNaN(t) ? 0 : t;
 }
 
 function parseBRNumber(val) {
@@ -219,8 +263,14 @@ function lerPlanilha() {
       obs: obs,
       dataSaida: lerData(r[COL.DATA_SAIDA]),
       idOrigem: idOrigem,
-      idOrigemLegado: idOrigemLegado
+      idOrigemLegado: idOrigemLegado,
+      reserva: null
     };
+    // Reserva só vale enquanto não venceu; vencida = barra livre (sem rotina de limpeza).
+    const ate = lerMs(r[COL.RESERVA_ATE]);
+    if (status === 'estoque' && ate > Date.now() && r[COL.RESERVA_COD]) {
+      item.reserva = { ate: ate, para: String(r[COL.RESERVA_PARA] || ''), codigo: String(r[COL.RESERVA_COD]) };
+    }
     itens.push(item);
     porId[id] = item;
   }
@@ -229,7 +279,7 @@ function lerPlanilha() {
 
 function linhaNova(id, dataStr, bitola, medida, obs, idOrigem) {
   return [id, dataStr, 1, formatNumVirgula(bitola), formatNumVirgula(medida), formatNumVirgula(calcularPeso(bitola, medida)),
-    'Em estoque', obs, '', idOrigem || ''];
+    'Em estoque', obs, '', idOrigem || '', '', '', ''];
 }
 
 // ============================================================================
@@ -310,9 +360,14 @@ function acaoListar(role) {
   const itens = ctx.itens
     .filter(function (i) { return i.status !== 'cancelado'; })
     .map(function (i) {
+      // O código da reserva é a prova de quem reservou: só o Operador o recebe.
+      const reserva = i.reserva
+        ? (role === 'operador' ? i.reserva : { ate: i.reserva.ate, para: i.reserva.para })
+        : null;
       return {
         id: i.id, data: i.data, bitola: i.bitola, medida: i.medida, peso: i.peso,
-        status: i.status, obs: i.obs, dataSaida: i.dataSaida, idOrigem: i.idOrigem, ordem: i.ordem
+        status: i.status, obs: i.obs, dataSaida: i.dataSaida, idOrigem: i.idOrigem, ordem: i.ordem,
+        reserva: reserva
       };
     });
   return resposta({ sucesso: true, mensagem: 'OK', role: role, itens: itens });

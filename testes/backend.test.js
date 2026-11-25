@@ -6,12 +6,11 @@ const path = require("node:path");
 const vm = require("node:vm");
 const crypto = require("node:crypto");
 
-function criarAmbiente(linhasIniciais) {
-  const grade = [["Nº", "Data", "Nº de Pontas", "Bitola (mm)", "Medida (m)", "Peso Estimado", "Situação", "Cliente"], ...linhasIniciais];
-  let maxCols = 8;
+/** Uma aba simulada: grade de linhas com largura (colunas) controlada. */
+function criarAba(grade, colsIniciais) {
+  let maxCols = colsIniciais;
   const largura = () => { grade.forEach((r) => { while (r.length < maxCols) r.push(""); }); };
   largura();
-
   const range = (r, c, nr, nc) => ({
     getValues: () => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => (grade[r - 1 + i] || [])[c - 1 + j] ?? "")),
     setValues: (v) => {
@@ -23,12 +22,22 @@ function criarAmbiente(linhasIniciais) {
     },
     setFontWeight: () => range(r, c, nr, nc)
   });
-  const sheet = {
+  return {
     getRange: range,
     getLastRow: () => grade.length,
     getMaxColumns: () => maxCols,
     insertColumnsAfter: (_, n) => { maxCols += n; largura(); },
     setFrozenRows: () => {}
+  };
+}
+
+function criarAmbiente(linhasIniciais, opcoes = {}) {
+  const grade = [["Nº", "Data", "Nº de Pontas", "Bitola (mm)", "Medida (m)", "Peso Estimado", "Situação", "Cliente"], ...linhasIniciais];
+  const grades = { Pontas: grade };
+  const abas = { Pontas: criarAba(grade, 8) };
+  const planilha = {
+    getSheetByName: (nome) => abas[nome] || null,
+    insertSheet: (nome) => { grades[nome] = []; abas[nome] = criarAba(grades[nome], 26); return abas[nome]; }
   };
   const props = {};
   const cache = {};
@@ -36,7 +45,7 @@ function criarAmbiente(linhasIniciais) {
   const b64ws = (x) => Buffer.from(typeof x === "string" ? Buffer.from(x, "utf8") : x).toString("base64").replace(/\+/g, "-").replace(/\//g, "_");
 
   const ctx = {
-    SpreadsheetApp: { openById: () => ({ getSheetByName: () => sheet, insertSheet: () => sheet }), flush: () => {} },
+    SpreadsheetApp: { openById: () => planilha, flush: () => {} },
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null, setProperties: (o) => Object.assign(props, o) }) },
     CacheService: { getScriptCache: () => ({ get: (k) => cache[k] ?? null, put: (k, v) => { cache[k] = v; }, remove: (k) => { delete cache[k]; } }) },
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
@@ -58,6 +67,9 @@ function criarAmbiente(linhasIniciais) {
   };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "Code.gs"), "utf8"), ctx);
+  // Relógio controlável (Date.now dentro do Code.gs)
+  const setAgora = (ms) => vm.runInContext(`Date.now = () => ${ms};`, ctx);
+  if (opcoes.agora) setAgora(opcoes.agora);
 
   // Equivale a executar configurarSenhas() com senhas de teste
   const salt = "sal";
@@ -70,7 +82,7 @@ function criarAmbiente(linhasIniciais) {
 
   const post = (body) => ctx.doPost({ postData: { contents: JSON.stringify(body) } });
   const login = (role, senha) => post({ action: "login", role, senha }).token;
-  return { grade, post, login, ctx };
+  return { grade, gradeDe: (nome) => grades[nome], setAgora, post, login, ctx };
 }
 
 const linha = (id, bitola, medida, situacao = "Em estoque", obs = "Em estoque") =>
@@ -173,6 +185,43 @@ test("sobras antigas (origem só no texto) mantêm a origem ao serem vendidas", 
   const tv = env.login("vendedor", "venda123");
   env.post({ action: "baixar", token: tv, cliente: "B", instrucoes: [{ id: 7, cortes: [] }] });
   assert.equal(env.grade[2][9], 1);
+});
+
+// ---------- Etapa 2: colunas de reserva e aba Movimentos ----------
+const T0 = Date.UTC(2026, 10, 25, 13, 0, 0); // 25/11/2026 10:00 em São Paulo
+
+test("planilha antiga ganha colunas K, L, M", () => {
+  const env = criarAmbiente([linha(1, 8, 3)], { agora: T0 });
+  env.post({ action: "listar", token: env.login("vendedor", "venda123") });
+  assert.deepEqual(env.grade[0].slice(10, 13), ["Reserva até", "Reserva para", "Reserva código"]);
+});
+
+test("listar esconde o código da reserva do vendedor", () => {
+  const r = linha(1, 8, 3);
+  r[10] = new Date(T0 + 3600000); r[11] = "Pedido 9"; r[12] = "ABCD1234";
+  const env = criarAmbiente([r], { agora: T0 });
+  const v = env.post({ action: "listar", token: env.login("vendedor", "venda123") }).itens[0];
+  assert.equal(v.reserva.para, "Pedido 9");
+  assert.equal(v.reserva.ate, T0 + 3600000);
+  assert.equal(v.reserva.codigo, undefined);
+  const o = env.post({ action: "listar", token: env.login("operador", "opera123") }).itens[0];
+  assert.equal(o.reserva.codigo, "ABCD1234");
+});
+
+test("reserva vencida aparece como livre", () => {
+  const r = linha(1, 8, 3);
+  r[10] = new Date(T0 - 1); r[11] = "Pedido 9"; r[12] = "ABCD1234";
+  const env = criarAmbiente([r], { agora: T0 });
+  const v = env.post({ action: "listar", token: env.login("operador", "opera123") }).itens[0];
+  assert.equal(v.reserva, null);
+});
+
+test("aba Movimentos é criada com o cabeçalho", () => {
+  const env = criarAmbiente([], { agora: T0 });
+  env.ctx.getMovSheet();
+  assert.deepEqual(env.gradeDe("Movimentos")[0].slice(0, 20), ["Data/hora", "Lote", "Mov", "Ação", "Perfil", "Cliente", "ID barra", "Origem", "Bitola",
+    "Medida original", "Cortes", "Kg peças", "Sobra (m)", "ID sobra", "Kg sobra", "Sucata (m)", "Kg sucata", "Kg perda corte", "Preço R$/kg", "Estornado"]);
+  assert.match(env.ctx.gerarCodigo(), /^[0-9A-F]{8}$/);
 });
 
 test("bloqueia após muitas senhas erradas", () => {
