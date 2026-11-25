@@ -140,6 +140,9 @@ const UI = {
       t.setAttribute("aria-selected", ativo ? "true" : "false");
     });
     document.querySelectorAll(".tab-content").forEach((c) => c.classList.toggle("active", c.id === id));
+    // Abas que buscam dados próprios ao abrir
+    if (id === "painel") PainelUI.carregar();
+    if (id === "historico") Historico.carregarMovimentos();
     // No celular a barra de abas rola: garante que a aba ativa fique à vista
     if (tab.scrollIntoView) tab.scrollIntoView({ block: "nearest", inline: "nearest" });
   },
@@ -414,6 +417,7 @@ const Dados = {
       BaixaManual.prever();
       Reservas.sincronizar(state.estoque);
       Plano.validarContraEstoque(idsEstoque);
+      if ($("painel").classList.contains("active")) PainelUI.renderizarParadas();
     } catch (e) {
       if (e.codigo !== "AUTH") UI.notificar("Erro ao sincronizar: " + e.message, true);
     } finally {
@@ -1228,6 +1232,102 @@ const Cadastro = {
 };
 
 // ============================================================================
+// PAINEL DE APROVEITAMENTO
+// ============================================================================
+const PainelUI = {
+  movs: [],
+
+  periodoEscolhido() {
+    const sel = $("painelPeriodo").value;
+    $("painelDatas").hidden = sel !== "custom";
+    if (sel !== "custom") return Painel.periodo(sel, new Date());
+    const de = $("painelDe").value, ate = $("painelAte").value;
+    if (!de || !ate) return null;
+    if (de > ate) { UI.notificar("A data inicial é depois da final.", true); return null; }
+    return { de, ate };
+  },
+
+  async carregar() {
+    if (!Auth.token()) return;
+    this.renderizarParadas();
+    const p = this.periodoEscolhido();
+    if (!p) return;
+    $("painelResumo").innerHTML = `<p class="td-dim">Carregando…</p>`;
+    try {
+      const r = await API.chamar("movimentos", p);
+      this.movs = r.movimentos || [];
+      this.renderizar(p);
+    } catch (e) {
+      if (e.codigo !== "AUTH") $("painelResumo").innerHTML = `<div class="notice danger">${icon("alert")}<span>${Utils.escapeHTML(e.message)}</span></div>`;
+    }
+  },
+
+  renderizar(p) {
+    const r = Painel.resumir(this.movs);
+    const kg = (v) => `${Utils.fmt(v, 1)} kg`;
+    const pct = (t) => (t === null ? "—" : `${Math.round(t * 100)}%`);
+    const dataBR = (iso) => iso.split("-").reverse().join("/");
+    const temBaixa = this.movs.some((m) => m.acao === "baixa" && !m.estornado);
+    $("painelBitolasBox").hidden = !temBaixa;
+    if (!temBaixa) {
+      $("painelResumo").innerHTML = `<div class="painel-vazio">Sem baixas de ${dataBR(p.de)} a ${dataBR(p.ate)}.</div>`;
+      return;
+    }
+    $("painelResumo").innerHTML = `
+      <p class="box-subtitle" style="margin:-8px 0 14px">${dataBR(p.de)} a ${dataBR(p.ate)}</p>
+      <div class="summary-grid">
+        <div class="kpi-card"><div class="kpi-label">Reaproveitado de pontas</div><div class="kpi-value destaque">${kg(r.kgReaproveitado)}</div><div class="kpi-sub">peças + pontas vendidas inteiras</div></div>
+        <div class="kpi-card"><div class="kpi-label">Aproveitamento</div><div class="kpi-value">${pct(r.taxa)}</div><div class="kpi-sub">das pontas usadas virou peça</div></div>
+        <div class="kpi-card"><div class="kpi-label">Valor recuperado</div><div class="kpi-value destaque">${Utils.moeda(r.valorRecuperado)}</div><div class="kpi-sub">${r.baixasSemPreco ? `${r.baixasSemPreco} baixa(s) sem preço` : "pelo preço informado"}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Voltou ao estoque</div><div class="kpi-value">${kg(r.kgVoltouPonta + r.kgVoltouDeBarraNova)}</div><div class="kpi-sub">${r.kgVoltouDeBarraNova ? `${kg(r.kgVoltouDeBarraNova)} de barra nova` : "como novas pontas"}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Sucata + perda</div><div class="kpi-value">${kg(r.kgSucataPerda)}</div><div class="kpi-sub">sobras &lt; ${Utils.fmt(CONFIG.SOBRA_MINIMA)} m e cortes</div></div>
+        <div class="kpi-card"><div class="kpi-label">Barra nova</div><div class="kpi-value">${r.barrasNovas}</div><div class="kpi-sub">${kg(r.kgBarraNova)} cortados (fora do aproveitamento)</div></div>
+      </div>`;
+    $("painelBitolas").innerHTML = `
+      <div class="table-container"><table class="tabela-blocos">
+        <thead><tr><th>Bitola</th><th>Reaproveitado</th><th>Aproveitamento</th><th>Sucata + perda</th><th>Barra nova</th></tr></thead>
+        <tbody>${r.porBitola.map((b) => `
+          <tr>
+            <td class="mono"><strong>Ø ${Utils.fmt(b.bitola)} mm</strong></td>
+            <td class="mono td-medida" data-rot="Reaproveitado">${kg(b.kgReaproveitado)}</td>
+            <td class="mono" data-rot="Aproveit.">${pct(b.taxa)}</td>
+            <td class="mono" data-rot="Sucata">${kg(b.kgSucataPerda)}</td>
+            <td class="mono" data-rot="Barra nova">${b.barrasNovas ? `${b.barrasNovas} · ${kg(b.kgBarraNova)}` : "—"}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>`;
+  },
+
+  renderizarParadas() {
+    const lista = Painel.pontasParadas(state.estoque, new Date(), 60);
+    const kgTotal = lista.reduce((s, x) => s + x.item.peso, 0);
+    const n90 = lista.filter((x) => x.dias >= 90).length;
+    $("painelParadasResumo").textContent = lista.length
+      ? `${lista.length} ponta(s) · ${Utils.fmt(kgTotal, 1)} kg · ${n90} com 90 dias ou mais`
+      : "60 dias ou mais no pátio";
+    if (!lista.length) {
+      $("painelParadas").innerHTML = `<div class="painel-vazio">Nenhuma ponta parada há 60 dias ou mais.</div>`;
+      return;
+    }
+    $("painelParadas").innerHTML = `
+      <div class="table-container"><table class="tabela-blocos">
+        <thead><tr><th>ID</th><th>Parada há</th><th>Bitola</th><th>Medida</th><th>Peso</th><th>Ações</th></tr></thead>
+        <tbody>${lista.map(({ item: b, dias }) => `
+          <tr class="${dias >= 90 ? "parada-90" : ""}">
+            <td><span class="badge">#${b.id}</span></td>
+            <td class="mono" data-rot="Parada há">${dias >= 90 ? `<span class="selo-reserva">${dias} dias</span>` : `${dias} dias`}</td>
+            <td class="mono" data-rot="Bitola">Ø ${Utils.fmt(b.bitola)} mm</td>
+            <td class="mono td-medida" data-rot="Medida">${Utils.fmt(b.medida)} m</td>
+            <td class="mono" data-rot="Peso">${Utils.fmt(b.peso)} kg</td>
+            <td class="acoes"><div class="td-acoes">
+              <button type="button" class="btn-pearl btn-sm btn-icon" data-action="imprimir-etiqueta" data-id="${b.id}" title="Imprimir etiqueta" aria-label="Imprimir etiqueta #${b.id}">${icon("tag")}</button>
+              ${b.reserva ? "" : `<button type="button" class="btn-danger contorno btn-sm so-operador" data-action="ir-baixa" data-id="${b.id}">Baixar</button>`}
+            </div></td>
+          </tr>`).join("")}</tbody>
+      </table></div>`;
+  }
+};
+
+// ============================================================================
 // BAIXA MANUAL
 // ============================================================================
 const BaixaManual = {
@@ -1329,6 +1429,68 @@ const Historico = {
   mostrarMais() {
     state.historicoLimite += CONFIG.HISTORICO_PAGINA;
     this.renderizar();
+  },
+
+  movsBarraNova: [],
+
+  /** Baixas com barra nova dos últimos 90 dias (não têm linha em "Pontas"; vêm de Movimentos). */
+  async carregarMovimentos() {
+    if (!Auth.token()) return;
+    const hoje = new Date();
+    const de = Utils.dataISO(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 90));
+    try {
+      const r = await API.chamar("movimentos", { de });
+      this.movsBarraNova = (r.movimentos || []).filter((m) => m.acao === "baixa" && m.origem === "barra nova")
+        .sort((a, b) => (b.dataHora > a.dataHora ? 1 : -1));
+    } catch (e) {
+      this.movsBarraNova = [];
+    }
+    this.renderizarBarraNova();
+  },
+
+  renderizarBarraNova() {
+    const area = $("historicoBarraNova");
+    const lista = this.movsBarraNova;
+    area.hidden = lista.length === 0;
+    if (!lista.length) { area.innerHTML = ""; return; }
+    area.innerHTML = `
+      <div class="box-header">
+        <h3 class="box-title">Barras novas usadas</h3>
+        <span class="box-subtitle">Últimos 90 dias</span>
+      </div>
+      <div class="table-container"><table class="tabela-blocos">
+        <thead><tr><th>Origem</th><th>Data</th><th>Bitola</th><th>Cortes</th><th>Cliente / Pedido</th><th>Ação</th></tr></thead>
+        <tbody>${lista.map((m) => `
+          <tr>
+            <td><span class="badge nova">BARRA NOVA</span></td>
+            <td class="mono td-dim" data-rot="Data">${new Date(m.dataHora).toLocaleDateString("pt-BR")}</td>
+            <td class="mono" data-rot="Bitola">Ø ${Utils.fmt(m.bitola)} mm</td>
+            <td class="mono" data-rot="Cortes">${Utils.descreverCortes(m.cortes)}${m.idSobra ? ` · sobra #${m.idSobra}` : ""}</td>
+            <td style="font-size:13px" data-rot="Cliente">${Utils.escapeHTML(m.cliente || "—")}</td>
+            <td class="acoes">${m.estornado
+              ? `<span class="selo-reserva">Estornada</span>`
+              : `<button type="button" class="btn-pearl btn-sm so-operador" data-action="estornar-barra-nova" data-mov="${Utils.escapeHTML(m.mov)}">Estornar</button>`}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>`;
+  },
+
+  async estornarBarraNova(btn, mov) {
+    const m = this.movsBarraNova.find((x) => x.mov === mov);
+    if (!m) return;
+    const ok = await UI.confirmar({
+      titulo: "Estornar barra nova",
+      html: `<p>Desfazer o uso da barra nova de <strong class="mono">Ø ${Utils.fmt(m.bitola)} mm</strong> (${Utils.descreverCortes(m.cortes)})?</p>
+        ${m.idSobra ? `<p>A sobra <strong class="mono">#${m.idSobra}</strong> gerada dela será <strong>cancelada</strong>, se ainda estiver no estoque.</p>` : ""}`,
+      ok: "Estornar",
+      perigo: true
+    });
+    if (!ok) return;
+    await executar(btn, "Estornando...", async () => {
+      const r = await API.chamar("estornarBarraNova", { mov });
+      UI.notificar(r.mensagem);
+      await Dados.carregar({ silencioso: true });
+      await this.carregarMovimentos();
+    });
   },
 
   async estornar(btn, id) {
@@ -1524,6 +1686,7 @@ const ACOES = {
   "cancelar-reserva": (el) => Plano.cancelarReserva(el.dataset.codigo, el),
   "abrir-reserva": (el) => Plano.abrirReserva(el.dataset.codigo),
   "cancelar-reserva-id": (el) => Estoque.cancelarReservaId(Number(el.dataset.id), el),
+  "estornar-barra-nova": (el) => Historico.estornarBarraNova(el, el.dataset.mov),
   "imprimir-sobras": () => Impressao.imprimirEtiquetas(state.ultimasSobras),
   "imprimir-cadastrados": () => Impressao.imprimirEtiquetas(state.ultimosCadastrados),
   "imprimir-selecionadas": () => Estoque.imprimirSelecionadas(),
@@ -1561,6 +1724,9 @@ function ligarEventos() {
     Armazenamento.gravar("pontas_barra_nova", $("buscaBarraNova").checked ? "1" : "0");
     Plano.invalidar();
   });
+  // Painel: período
+  ["painelPeriodo", "painelDe", "painelAte"].forEach((id) => $(id).addEventListener("change", () => PainelUI.carregar()));
+
   // Trocar a bitola começa outro pedido: a reserva aberta deixa de ser a do pedido em tela.
   $("buscaBitola").addEventListener("change", () => { state.reservaAtual = null; Reservas.renderizar(); });
   $("buscaPrecoKg").addEventListener("input", () => {
